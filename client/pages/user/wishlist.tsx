@@ -17,7 +17,7 @@ export default function WishlistPage() {
     const fetchProducts = async () => {
       try {
         const allProducts = await getProducts()
-        const wishlistProducts = allProducts.filter(product => wishlist.includes(product._id))
+        const wishlistProducts = allProducts.data.filter(product => wishlist.includes(product._id))
         setProducts(wishlistProducts)
       } catch (error) {
         console.error('Error fetching products:', error)

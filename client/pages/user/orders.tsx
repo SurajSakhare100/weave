@@ -3,22 +3,39 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { getUserOrders } from '../../services/userService';
+import { getUserToken } from '../../services/authService';
 import Link from 'next/link';
 
 export default function UserOrdersPage() {
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        if (isAuthenticated) {
-          const userOrders = await getUserOrders();
-          setOrders(userOrders);
+        setLoading(true);
+        setError('');
+        
+        // Check if user is authenticated and has a token
+        const token = getUserToken();
+        
+        if (!isAuthenticated || !token) {
+          setLoading(false);
+          return;
         }
-      } catch (error) {
+
+        const response = await getUserOrders();
+        setOrders(response.data || response || []);
+      } catch (error: any) {
         console.error('Error fetching orders:', error);
+        if (error.response?.status === 401) {
+          setError('Please login to view your orders.');
+        } else {
+          setError('Failed to load orders. Please try again.');
+        }
+        setOrders([]);
       } finally {
         setLoading(false);
       }
@@ -27,7 +44,13 @@ export default function UserOrdersPage() {
     fetchOrders();
   }, [isAuthenticated]);
 
-  if (!isAuthenticated) {
+  // Check if user has token but Redux state is not authenticated
+  const token = getUserToken();
+  const shouldShowLogin = !isAuthenticated && !token;
+
+  console.log('Orders page render:', { isAuthenticated, hasToken: !!token, shouldShowLogin, ordersCount: orders.length });
+
+  if (shouldShowLogin) {
     return (
       <Layout>
         <section className="py-16 bg-[#faf5f2] min-h-screen">
@@ -62,7 +85,15 @@ export default function UserOrdersPage() {
       <section className="py-16 bg-[#faf5f2] min-h-screen">
         <div className="max-w-3xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Order History</h1>
-          {orders.length === 0 ? (
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{error}</p>
+              <Link href="/login" className="text-red-500 underline mt-2 inline-block">Login here</Link>
+            </div>
+          )}
+          
+          {orders.length === 0 && !error ? (
             <div className="flex flex-col items-center justify-center py-20">
               <span className="text-6xl mb-4">📦</span>
               <p className="text-lg text-gray-500 mb-4">No orders found.</p>
@@ -78,17 +109,17 @@ export default function UserOrdersPage() {
                       <div className="text-sm text-gray-500">Date: {new Date(order.createdAt).toLocaleDateString()}</div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
                       order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {order.status}
+                      {order.status || 'Pending'}
                     </span>
                   </div>
-                  <div className="mb-2">Total: <span className="font-bold">₹{order.totalAmount}</span></div>
+                  <div className="mb-2">Total: <span className="font-bold">₹{order.totalPrice}</span></div>
                   <div className="text-sm text-gray-600">
-                    Items: {order.items?.length || 0} items
+                    Items: {order.orderItems?.length || 0} items
                   </div>
                   {order.shippingAddress && (
                     <div className="mt-2 text-sm text-gray-600">

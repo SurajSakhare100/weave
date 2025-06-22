@@ -10,8 +10,8 @@ export async function logoutUser() {
   return res.data;
 }
 
-export async function getUserOrders(userId: string) {
-  const res = await api.get(`/users/${userId}/orders`);
+export async function getUserOrders() {
+  const res = await api.get('/orders/myorders');
   return res.data;
 }
 
