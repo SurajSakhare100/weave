@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setDashboard, setLoading, setError } from '../../features/vendor/vendorSlice';
 import { getVendorDashboard } from '../../services/vendorService';
-import { isVendorAuthenticated } from '../../utils/vendorAuth';
+import { initializeVendorAuth, isVendorAuthenticated } from '../../utils/vendorAuth';
 import { 
   Package, 
   ShoppingCart, 
@@ -62,7 +62,7 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     // Check authentication
-    if (!isVendorAuthenticated()) {
+    if (!initializeVendorAuth()) {
       router.push('/vendor/login');
       return;
     }

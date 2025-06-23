@@ -1,3 +1,4 @@
+import { setupVendorAuthHeader } from '@/utils/vendorAuth';
 import api from './api';
 import Cookies from 'js-cookie';
 
@@ -7,6 +8,7 @@ export async function vendorLogin(credentials: { email: string; password: string
   // Set token in cookie
   if (res.data.token) {
     Cookies.set('vendorToken', res.data.token, { expires: 7, sameSite: 'Lax' });
+    setupVendorAuthHeader(res.data.token);
   }
   return res.data;
 }

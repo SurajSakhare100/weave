@@ -16,6 +16,7 @@ import {
   Plus,
   Minus
 } from 'lucide-react';
+import api from '@/services/api';
 
 // Product interface
 interface Product {
@@ -99,8 +100,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   const loadCategories = async () => {
     try {
       // Use the correct API endpoint
-      const response = await fetch('http://localhost:5000/api/categories');
-      const data = await response.json();
+      const { data } = await api.get('/categories');
       setCategories(data.data || []);
       
       // If no categories exist, create a default one
@@ -506,8 +506,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories');
-      const data = await response.json();
+      const { data } = await api.get('/categories');
       setCategories(data.data || []);
       
       // If no categories exist, create a default one
@@ -560,14 +559,11 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
     try {
       const formDataToSend = new FormData();
       
-      // Add form fields
       Object.keys(formData).forEach(key => {
-        let val = formData[key as keyof typeof formData];
-        if (key === 'return' || key === 'cancellation') {
-          formDataToSend.append(key, val.toString());
-        } else if (key === 'colors') {
+        let val = formData[key];
+        if (key === 'colors') {
           if (val) {
-            val.split(',').map((c: string) => c.trim()).forEach((color: string) => formDataToSend.append('colors', color));
+            val.split(',').map((c) => c.trim()).forEach((color) => formDataToSend.append('colors', color));
           }
         } else {
           formDataToSend.append(key, val.toString());

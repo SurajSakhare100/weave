@@ -51,7 +51,6 @@ export const getProducts = asyncHandler(async (req, res) => {
   // Filter for vendor products only
   if (vendorOnly === 'true') {
     filter.vendor = true;
-    // If vendor is authenticated, filter by their specific ID
     if (req.vendor) {
       filter.vendorId = req.vendor._id;
     }
@@ -80,12 +79,14 @@ export const getProducts = asyncHandler(async (req, res) => {
   }
 
   // Execute query
-  const products = await Product.find(filter)
-    .populate('vendorId', 'name email')
-    .sort(sortOption)
-    .skip(skip)
-    .limit(limit);
+  // const products = await Product.find(filter)
+  //   .populate('vendorId', 'name email')
+  //   .sort(sortOption)
+  //   .skip(skip)
+  //   .limit(limit);
 
+
+  const products = await Product.find({})
   const total = await Product.countDocuments(filter);
 
   res.json({

@@ -16,7 +16,6 @@ export const getVendorToken = (): string | null => {
 export const removeVendorToken = () => {
   Cookies.remove(VENDOR_TOKEN_KEY);
   clearVendorAuthHeader();
-  console.log('Vendor token removed');
 };
 
 // Authentication Check
