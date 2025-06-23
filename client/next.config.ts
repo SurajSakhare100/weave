@@ -10,6 +10,16 @@ const withPWA = require('next-pwa')({
 const nextConfig = withPWA({
   /* config options here */
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/uploads/**',
+      },
+    ],
+  },
 });
 
 module.exports = nextConfig;

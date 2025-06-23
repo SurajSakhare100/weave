@@ -16,41 +16,11 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react'
+import { Product } from '@/types'
 
-// Product interface
-interface Product {
-  _id: string
-  name: string
-  slug: string
-  price: number
-  mrp: number
-  discount: number
-  vendorId: string
-  vendor: boolean
-  available: string
-  category: string
-  categorySlug?: string
-  srtDescription?: string
-  description?: string
-  seoDescription?: string
-  seoKeyword?: string
-  seoTitle?: string
-  pickup_location?: string
-  return: boolean
-  cancellation: boolean
-  uni_id_1?: string
-  uni_id_2?: string
-  files: string[]
-  variant: boolean
-  variantDetails: Array<{
-    size: string
-    price: number
-    mrp: number
-    stock: number
-  }>
-  currVariantSize?: string
-  createdAt: string
-  updatedAt: string
+// Add reviews to the Product type
+interface ProductWithReviews extends Product {
+  reviews: any[]
 }
 
 export default function ProductDetailPage() {
@@ -58,14 +28,14 @@ export default function ProductDetailPage() {
   const { id } = router.query
   const dispatch = useDispatch()
   
-  const [product, setProduct] = useState<Product | null>(null)
+  const [product, setProduct] = useState<ProductWithReviews | null>(null)
   const [similarProducts, setSimilarProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
 
-  const wishlist = useSelector((state: RootState) => state.user.wishlist)
+  const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
 
   useEffect(() => {
@@ -116,6 +86,10 @@ export default function ProductDetailPage() {
   }
 
   const handleWishlistToggle = () => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/products/${id}`);
+      return;
+    }
     if (product) {
       if (inWishlist) {
         dispatch(removeFromWishlist(product._id))
@@ -160,7 +134,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-8">
@@ -191,7 +165,7 @@ export default function ProductDetailPage() {
               {/* Thumbnail Images */}
               {product.files && product.files.length > 1 && (
                 <div className="flex space-x-2">
-                  {product.files.map((file, index) => (
+                  {product.files.map((file: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
@@ -358,6 +332,38 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Reviews Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+          {/* Review submission form would go here */}
+
+          <div className="space-y-6">
+            {product.reviews && product.reviews.length > 0 ? (
+              product.reviews.map((review: any) => (
+                <div key={review._id} className="bg-white p-6 rounded-lg shadow-sm">
+                  <div className="flex items-center mb-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                          fill="currentColor"
+                        />
+                      ))}
+                    </div>
+                    <p className="ml-4 font-semibold text-gray-900">{review.userId?.name || 'Anonymous'}</p>
+                  </div>
+                  <p className="text-gray-600">{review.comment}</p>
+                </div>
+              ))
+            ) : (
+              <div className="bg-white p-6 rounded-lg shadow-sm text-center">
+                <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

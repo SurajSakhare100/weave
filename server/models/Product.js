@@ -87,10 +87,33 @@ const ProductSchema = new mongoose.Schema({
     },
     variantDetails: [{
         size: String,
+        color: String,
         price: Number,
         mrp: Number,
         stock: Number,
     }],
+    reviews: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review'
+    }],
+    colors: [String],
+    stock: {
+        type: Number,
+        default: 0,
+    },
+    totalReviews: {
+        type: Number,
+        default: 0,
+    },
+    averageRating: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'draft'],
+        default: 'active',
+    },
     currVariantSize: String,
 }, { timestamps: true });
 
@@ -99,6 +122,8 @@ ProductSchema.index({ name: 1 });
 ProductSchema.index({ categorySlug: 1 });
 ProductSchema.index({ vendorId: 1 });
 ProductSchema.index({ available: 1 });
+ProductSchema.index({ colors: 1 });
+ProductSchema.index({ status: 1 });
 
 const Product = mongoose.model('Product', ProductSchema);
 

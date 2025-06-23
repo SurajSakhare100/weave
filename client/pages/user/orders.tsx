@@ -5,9 +5,10 @@ import { RootState } from '../../store/store';
 import { getUserOrders } from '../../services/userService';
 import { getUserToken } from '../../services/authService';
 import Link from 'next/link';
+import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 
 export default function UserOrdersPage() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const loggedIn = useRequireUserAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,14 +19,6 @@ export default function UserOrdersPage() {
         setLoading(true);
         setError('');
         
-        // Check if user is authenticated and has a token
-        const token = getUserToken();
-        
-        if (!isAuthenticated || !token) {
-          setLoading(false);
-          return;
-        }
-
         const response = await getUserOrders();
         setOrders(response.data || response || []);
       } catch (error: any) {
@@ -42,29 +35,9 @@ export default function UserOrdersPage() {
     };
 
     fetchOrders();
-  }, [isAuthenticated]);
+  }, []);
 
-  // Check if user has token but Redux state is not authenticated
-  const token = getUserToken();
-  const shouldShowLogin = !isAuthenticated && !token;
-
-  console.log('Orders page render:', { isAuthenticated, hasToken: !!token, shouldShowLogin, ordersCount: orders.length });
-
-  if (shouldShowLogin) {
-    return (
-      <Layout>
-        <section className="py-16 bg-[#faf5f2] min-h-screen">
-          <div className="max-w-3xl mx-auto px-4">
-            <div className="flex flex-col items-center justify-center py-20">
-              <span className="text-6xl mb-4">🔒</span>
-              <p className="text-lg text-gray-500 mb-4">Please login to view your orders.</p>
-              <Link href="/login" className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition">Login</Link>
-            </div>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
+  console.log('Orders page render:', { loggedIn, ordersCount: orders.length });
 
   if (loading) {
     return (

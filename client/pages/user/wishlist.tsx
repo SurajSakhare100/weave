@@ -6,18 +6,20 @@ import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getProducts } from '../../services/productService'
+import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 
 export default function WishlistPage() {
+  useRequireUserAuth();
   const wishlist = useSelector((state: RootState) => state.user.wishlist)
   const dispatch = useDispatch()
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const allProducts = await getProducts()
-        const wishlistProducts = allProducts.data.filter(product => wishlist.includes(product._id))
+        const wishlistProducts = allProducts.data.filter((product:any) => wishlist.includes(product._id))
         setProducts(wishlistProducts)
       } catch (error) {
         console.error('Error fetching products:', error)
@@ -60,7 +62,7 @@ export default function WishlistPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {products.map(product => (
+              {products.map((product: any) => (
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>

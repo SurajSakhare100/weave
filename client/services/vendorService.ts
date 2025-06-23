@@ -1,8 +1,13 @@
 import api from './api';
+import Cookies from 'js-cookie';
 
 // Vendor Authentication
 export async function vendorLogin(credentials: { email: string; password: string }) {
   const res = await api.post('/auth/vendor/login', credentials);
+  // Set token in cookie
+  if (res.data.token) {
+    Cookies.set('vendorToken', res.data.token, { expires: 7, sameSite: 'Lax' });
+  }
   return res.data;
 }
 
@@ -23,6 +28,7 @@ export async function vendorRegister(vendorData: {
 }
 
 export async function vendorLogout() {
+  Cookies.remove('vendorToken');
   const res = await api.post('/auth/vendor/logout');
   return res.data;
 }

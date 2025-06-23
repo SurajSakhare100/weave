@@ -20,8 +20,9 @@ export default function LoginPage() {
     setError('');
     try {
       const data = await loginService({ email, password });
-      dispatch(loginAction({ name: data.name, role: 'user' }));
-      router.push('/');
+      dispatch(loginAction({ email: data.email, password:data.password}));
+      const redirectUrl = router.query.redirect as string || '/';
+      router.push(redirectUrl);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Login failed. Please try again.');
     } finally {

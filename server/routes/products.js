@@ -8,7 +8,8 @@ import {
   deleteProduct,
   getSimilarProducts,
   getProductsByCategory,
-  searchProducts
+  searchProducts,
+  createProductReview
 } from '../controllers/productController.js';
 import {
   validateProduct,
@@ -29,6 +30,9 @@ router.get('/category/:categorySlug', validatePriceRange, validatePagination, ge
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', validateId, getProductById);
 router.get('/:id/similar', validateId, getSimilarProducts);
+
+// Route for creating a review
+router.post('/:id/reviews', protect, validateId, createProductReview);
 
 // Protected routes (Vendor only)
 router.post('/', 

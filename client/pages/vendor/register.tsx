@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { loginStart, loginSuccess, loginFailure, clearError } from '../../features/vendor/vendorSlice';
 import { vendorRegister } from '../../services/vendorService';
-import { setVendorToken, setVendorProfile } from '../../utils/vendorAuth';
+import { setVendorToken } from '../../utils/vendorAuth';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Building, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function VendorRegisterPage() {
@@ -124,9 +124,8 @@ export default function VendorRegisterPage() {
       
       const response = await vendorRegister(vendorData);
       
-      // Store token and profile
+      // Store token
       setVendorToken(response.token);
-      setVendorProfile(response.vendor);
       
       dispatch(loginSuccess({
         token: response.token,

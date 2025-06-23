@@ -5,10 +5,7 @@ import NewArrivals from '@/components/NewArrivals';
 import Exhibitions from '@/components/Exhibitions';
 import Testimonials from '@/components/Testimonials';
 import About from '@/components/About';
-
 export default function Home() {
- 
-
   return (
     <Layout>
         <Hero />

@@ -2,15 +2,15 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface UserState {
   isAuthenticated: boolean
-  name: string | null
-  role: 'user' | 'vendor' | null
+  email: string | null
+  password: string | null
   wishlist: string[]
 }
 
 const initialState: UserState = {
   isAuthenticated: false,
-  name: null,
-  role: null,
+  email: null, 
+  password: null,
   wishlist: [],
 }
 
@@ -18,15 +18,15 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ name: string; role: 'user' | 'vendor' }>) => {
+    login: (state, action: PayloadAction<{ email: string; password: string }>) => {
       state.isAuthenticated = true
-      state.name = action.payload.name
-      state.role = action.payload.role
+      state.email = action.payload.email
+      state.password = action.payload.password
     },
     logout: (state) => {
       state.isAuthenticated = false
-      state.name = null
-      state.role = null
+      state.email = null
+      state.password = null
       state.wishlist = []
     },
     addToWishlist: (state, action: PayloadAction<string>) => {

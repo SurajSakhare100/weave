@@ -10,6 +10,7 @@ const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
   const { wishlist } = useSelector((state) => state.user);
   const isInWishlist = wishlist.includes(product._id);
+  const [selectedColor, setSelectedColor] = useState(product.colors ? product.colors[0] : null);
 
   const getImageUrl = (files, index = 0) => {
     if (files && files.length > index) {
@@ -30,7 +31,8 @@ const ProductCard = ({ product }) => {
         id: product._id,
         name: product.name,
         price: product.price,
-        quantity: 1
+        quantity: 1,
+        color: selectedColor
       }));
     }
   };
@@ -44,16 +46,18 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  const stock = product.variant ? product.variantDetails.reduce((acc, v) => acc + v.stock, 0) : product.stock;
+
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-lg transition-shadow duration-300 group">
-      <Link href={`/products/${product._id}`}>
+    <div className="bg-white rounded-2xl p-6 w-full shadow-sm hover:shadow-lg transition-shadow duration-300 group">
+      <Link href={`/products/${product.slug}`}>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
-            src={'/products/product.png'}
+            src={getImageUrl(product.files)}
             alt={product.name}
             width={400}
             height={400}
-            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
@@ -72,6 +76,13 @@ const ProductCard = ({ product }) => {
             </div>
           )}
           
+          {/* Stock Badge */}
+          {stock > 0 && stock <= 5 && (
+            <div className="absolute top-3 left-3 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-xs font-semibold">
+              Only {stock} left
+            </div>
+          )}
+          
           {/* Status Badge */}
           <div className="absolute bottom-3 left-3">
             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -86,38 +97,50 @@ const ProductCard = ({ product }) => {
       </Link>
       
       <div className="mt-4">
-        <Link href={`/products/${product._id}`}>
-          <h3 className="text-xl font-medium text-gray-800 hover:text-pink-500 transition-colors">
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="text-xl font-semibold text-gray-800 hover:text-pink-500 transition-colors duration-200">
             {product.name}
           </h3>
         </Link>
         
-        <p className="text-sm text-gray-600 mt-1">{product.category}</p>
+        {/* Color Swatches */}
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex items-center space-x-2 mt-2">
+            {product.colors.map((color) => (
+              <button
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={`w-6 h-6 rounded-full border-2 ${selectedColor === color ? 'border-pink-500' : 'border-transparent'}`}
+                style={{ backgroundColor: color, outline: 'none' }}
+                title={color}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-between items-center mt-3">
-          <div className="flex items-center space-x-2">
-            <p className="text-xl font-bold text-gray-900">₹{product.price}</p>
+          <div className="flex items-baseline space-x-2">
+            <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
             {product.mrp > product.price && (
-              <p className="text-sm text-gray-500 line-through">₹{product.mrp}</p>
+              <p className="text-md text-gray-500 line-through">₹{product.mrp}</p>
             )}
           </div>
           
-          {/* Rating (placeholder - you can add actual rating logic later) */}
-          <div className="flex items-center">
+          <div className="flex items-center w-full">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-4 w-4 text-gray-300" />
+              <Star key={i} className={`h-5 w-5 ${i < product.averageRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
             ))}
-            <span className="text-sm text-gray-500 ml-1">(0)</span>
+            <span className="text-sm text-gray-600 ml-2">({product.totalReviews})</span>
           </div>
         </div>
 
         <button 
           onClick={handleAddToCart}
-          className="mt-4 w-full bg-pink-500 text-white font-semibold py-2.5 rounded-lg hover:bg-pink-600 transition-colors duration-300 flex items-center justify-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          disabled={product.available !== 'true'}
+          className="mt-4 w-full border border-bg-pink-600 font-semibold py-3 rounded-xl hover:bg-pink-600 transition-colors duration-300 flex items-center justify-center space-x-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled={stock === 0}
         >
-          <ShoppingCart className="h-4 w-4" />
-          <span>{product.available === 'true' ? 'Add to cart' : 'Out of Stock'}</span>
+          <ShoppingCart className="h-5 w-5" />
+          <span>{stock > 0 ? 'Add to cart' : 'Out of Stock'}</span>
         </button>
       </div>
     </div>

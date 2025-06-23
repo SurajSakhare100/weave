@@ -51,6 +51,9 @@ interface Product {
   currVariantSize?: string;
   createdAt: string;
   updatedAt: string;
+  colors?: string[];
+  stock?: number;
+  status?: string;
 }
 
 // Category interface
@@ -78,7 +81,10 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
     pickup_location: '',
     return: true,
     cancellation: true,
-    available: 'true'
+    available: 'true',
+    colors: '',
+    stock: '',
+    status: 'active',
   });
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -127,6 +133,14 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
     setImagePreviews(newPreviews);
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
@@ -136,10 +150,16 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
       
       // Add form fields
       Object.keys(formData).forEach(key => {
+        let val = formData[key as keyof typeof formData];
         if (key === 'return' || key === 'cancellation') {
-          formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          formDataToSend.append(key, val.toString());
+        } else if (key === 'colors') {
+          // send as array
+          if (val) {
+            val.split(',').map((c: string) => c.trim()).forEach((color: string) => formDataToSend.append('colors', color));
+          }
         } else {
-          formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          formDataToSend.append(key, val.toString());
         }
       });
       
@@ -171,7 +191,10 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
       pickup_location: '',
       return: true,
       cancellation: true,
-      available: 'true'
+      available: 'true',
+      colors: '',
+      stock: '',
+      status: 'active',
     });
     setImages([]);
     setImagePreviews([]);
@@ -207,7 +230,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="Enter product name"
                   />
@@ -220,7 +243,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                   <select
                     required
                     value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="">Select category</option>
@@ -238,7 +261,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     type="number"
                     required
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
@@ -252,7 +275,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     type="number"
                     required
                     value={formData.mrp}
-                    onChange={(e) => setFormData({...formData, mrp: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
@@ -267,23 +290,26 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     min="0"
                     max="100"
                     value={formData.discount}
-                    onChange={(e) => setFormData({...formData, discount: parseInt(e.target.value) || 0})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={formData.available}
-                    onChange={(e) => setFormData({...formData, available: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
+                  <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
+                  <input type="text" name="colors" value={formData.colors} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Stock</label>
+                  <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select name="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="draft">Draft</option>
                   </select>
                 </div>
               </div>
@@ -296,7 +322,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                 <textarea
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Enter product description"
                 />
@@ -310,7 +336,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                 <input
                   type="text"
                   value={formData.pickup_location}
-                  onChange={(e) => setFormData({...formData, pickup_location: e.target.value})}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Enter pickup location"
                 />
@@ -323,7 +349,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     type="checkbox"
                     id="return"
                     checked={formData.return}
-                    onChange={(e) => setFormData({...formData, return: e.target.checked})}
+                    onChange={handleChange}
                     className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <label htmlFor="return" className="ml-2 text-sm text-gray-700">
@@ -336,7 +362,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                     type="checkbox"
                     id="cancellation"
                     checked={formData.cancellation}
-                    onChange={(e) => setFormData({...formData, cancellation: e.target.checked})}
+                    onChange={handleChange}
                     className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <label htmlFor="cancellation" className="ml-2 text-sm text-gray-700">
@@ -445,7 +471,10 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
     pickup_location: '',
     return: true,
     cancellation: true,
-    available: 'true'
+    available: 'true',
+    colors: '',
+    stock: '',
+    status: 'active',
   });
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -465,7 +494,10 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
         pickup_location: product.pickup_location || '',
         return: product.return || true,
         cancellation: product.cancellation || true,
-        available: product.available || 'true'
+        available: product.available || 'true',
+        colors: product.colors ? product.colors.join(', ') : '',
+        stock: product.stock?.toString() || '',
+        status: product.status || 'active',
       });
       setExistingImages(product.files || []);
     }
@@ -513,6 +545,14 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
     setImagePreviews(newPreviews);
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
@@ -522,10 +562,15 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       
       // Add form fields
       Object.keys(formData).forEach(key => {
+        let val = formData[key as keyof typeof formData];
         if (key === 'return' || key === 'cancellation') {
-          formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          formDataToSend.append(key, val.toString());
+        } else if (key === 'colors') {
+          if (val) {
+            val.split(',').map((c: string) => c.trim()).forEach((color: string) => formDataToSend.append('colors', color));
+          }
         } else {
-          formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          formDataToSend.append(key, val.toString());
         }
       });
       
@@ -580,7 +625,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="Enter product name"
                   />
@@ -593,7 +638,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   <select
                     required
                     value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="">Select category</option>
@@ -611,7 +656,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     type="number"
                     required
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
@@ -625,7 +670,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     type="number"
                     required
                     value={formData.mrp}
-                    onChange={(e) => setFormData({...formData, mrp: e.target.value})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
@@ -640,23 +685,26 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     min="0"
                     max="100"
                     value={formData.discount}
-                    onChange={(e) => setFormData({...formData, discount: parseInt(e.target.value) || 0})}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={formData.available}
-                    onChange={(e) => setFormData({...formData, available: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
+                  <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
+                  <input type="text" name="colors" value={formData.colors} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Stock</label>
+                  <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select name="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="draft">Draft</option>
                   </select>
                 </div>
               </div>
@@ -669,7 +717,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                 <textarea
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Enter product description"
                 />
@@ -683,7 +731,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                 <input
                   type="text"
                   value={formData.pickup_location}
-                  onChange={(e) => setFormData({...formData, pickup_location: e.target.value})}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Enter pickup location"
                 />
@@ -696,7 +744,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     type="checkbox"
                     id="return-edit"
                     checked={formData.return}
-                    onChange={(e) => setFormData({...formData, return: e.target.checked})}
+                    onChange={handleChange}
                     className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <label htmlFor="return-edit" className="ml-2 text-sm text-gray-700">
@@ -709,7 +757,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     type="checkbox"
                     id="cancellation-edit"
                     checked={formData.cancellation}
-                    onChange={(e) => setFormData({...formData, cancellation: e.target.checked})}
+                    onChange={handleChange}
                     className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <label htmlFor="cancellation-edit" className="ml-2 text-sm text-gray-700">

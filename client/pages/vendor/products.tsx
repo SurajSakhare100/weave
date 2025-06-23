@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { setProducts, setLoading, setError, removeProduct, addProduct } from '../../features/vendor/vendorSlice';
-import { getVendorProducts, deleteProduct } from '../../services/vendorService';
+import { setProducts, setLoading, setError } from '../../features/vendor/vendorSlice';
+import { getVendorProducts } from '../../services/vendorService';
 import { isVendorAuthenticated } from '../../utils/vendorAuth';
 import { AddProductModal, EditProductModal, DeleteProductModal } from '../../components/Vendor/ProductModals';
+import { Product } from '@/types/index';
 import { 
   Package, 
   Plus, 
@@ -20,49 +21,13 @@ import {
   List
 } from 'lucide-react';
 
-// Product interface
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  price: number;
-  mrp: number;
-  discount: number;
-  vendorId: string; // ObjectId reference to Vendor
-  vendor: boolean;
-  available: string;
-  category: string;
-  categorySlug?: string;
-  srtDescription?: string;
-  description?: string;
-  seoDescription?: string;
-  seoKeyword?: string;
-  seoTitle?: string;
-  pickup_location?: string;
-  return: boolean;
-  cancellation: boolean;
-  uni_id_1?: string;
-  uni_id_2?: string;
-  files: string[];
-  variant: boolean;
-  variantDetails: Array<{
-    size: string;
-    price: number;
-    mrp: number;
-    stock: number;
-  }>;
-  currVariantSize?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function VendorProductsPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state: RootState) => state.vendor);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'draft'>('all');
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -76,20 +41,21 @@ export default function VendorProductsPage() {
       router.push('/vendor/login');
       return;
     }
+  }, [router]);
 
-    // Load products
+  useEffect(() => {
     loadProducts();
-  }, [dispatch, router]);
+  }, [filterStatus]);
 
   const loadProducts = async (page = 1) => {
     try {
       dispatch(setLoading(true));
-      const params = {
+      const params: { page: number, limit: number, search?: string, status?: string } = {
         page,
         limit: 20,
-        search: searchTerm || undefined,
-        status: filterStatus !== 'all' ? filterStatus : undefined
       };
+      if (searchTerm) params.search = searchTerm;
+      if (filterStatus !== 'all') params.status = filterStatus;
       
       const response = await getVendorProducts(params);
       
@@ -131,9 +97,8 @@ export default function VendorProductsPage() {
     loadProducts(products?.page || 1);
   };
 
-  const handleStatusFilter = (status: 'all' | 'active' | 'inactive') => {
+  const handleStatusFilter = (status: 'all' | 'active' | 'inactive' | 'draft') => {
     setFilterStatus(status);
-    loadProducts(1);
   };
 
   // Safe access to products data with fallbacks
@@ -142,12 +107,7 @@ export default function VendorProductsPage() {
   const totalPages = products?.pages || 1;
   const totalProducts = products?.total || 0;
 
-  const filteredProducts = productsList.filter(product => {
-    if (!product) return false;
-    if (filterStatus === 'active') return product.available === 'true';
-    if (filterStatus === 'inactive') return product.available === 'false';
-    return true;
-  });
+  const filteredProducts = productsList;
 
   const getImageUrl = (files: string[], index: number = 0) => {
     if (files && files.length > index) {
@@ -212,6 +172,7 @@ export default function VendorProductsPage() {
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
+                    <option value="draft">Draft</option>
                   </select>
                 </div>
 

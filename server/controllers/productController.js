@@ -18,11 +18,19 @@ export const getProducts = asyncHandler(async (req, res) => {
     maxPrice,
     sort = '-createdAt',
     vendor,
-    vendorOnly
+    vendorOnly,
+    status,
+    size
   } = req.query;
 
   // Build filter object
-  const filter = { available: 'true' };
+  const filter = {};
+
+  if (status) {
+    filter.status = status;
+  } else {
+    filter.status = 'active';
+  }
 
   if (search) {
     filter.name = { $regex: search, $options: 'i' };
@@ -34,6 +42,10 @@ export const getProducts = asyncHandler(async (req, res) => {
 
   if (vendor) {
     filter.vendorId = vendor;
+  }
+
+  if (size) {
+    filter['variantDetails.size'] = size;
   }
 
   // Filter for vendor products only
@@ -51,10 +63,26 @@ export const getProducts = asyncHandler(async (req, res) => {
     if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
   }
 
+  // Sorting
+  let sortOption = {};
+  if (sort === 'price') {
+    sortOption = { price: 1 };
+  } else if (sort === '-price') {
+    sortOption = { price: -1 };
+  } else if (sort === 'createdAt') {
+    sortOption = { createdAt: 1 };
+  } else if (sort === '-createdAt') {
+    sortOption = { createdAt: -1 };
+  } else if (sort === 'discount') {
+    sortOption = { discount: -1 };
+  } else {
+    sortOption = { createdAt: -1 };
+  }
+
   // Execute query
   const products = await Product.find(filter)
     .populate('vendorId', 'name email')
-    .sort(sort)
+    .sort(sortOption)
     .skip(skip)
     .limit(limit);
 
@@ -140,7 +168,10 @@ export const createProduct = asyncHandler(async (req, res) => {
     return: returnPolicy,
     cancellation,
     variant,
-    variantDetails
+    variantDetails,
+    stock,
+    colors,
+    status
   } = req.body;
 
   // Generate slug from name
@@ -179,6 +210,9 @@ export const createProduct = asyncHandler(async (req, res) => {
     cancellation,
     variant,
     variantDetails: variant ? variantDetails : [],
+    stock,
+    colors,
+    status,
     files: req.files ? req.files.map(file => file.filename) : []
   });
 
@@ -203,6 +237,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (product.vendorId.toString() !== req.vendor._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to update this product');
+  }
+
+  const { colors, stock, status } = req.body;
+  if (colors) {
+    req.body.colors = Array.isArray(colors) ? colors : [colors];
   }
 
   // Handle file uploads
@@ -369,5 +408,54 @@ export const searchProducts = asyncHandler(async (req, res) => {
       total,
       pages: Math.ceil(total / limit)
     }
+  });
+});
+
+// @desc    Create a new review
+// @route   POST /api/products/:id/reviews
+// @access  Private (User)
+export const createProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+
+  // Check if user already reviewed
+  const alreadyReviewed = await Review.findOne({ 
+    userId: req.user._id, 
+    productId: product._id 
+  });
+
+  if (alreadyReviewed) {
+    res.status(400);
+    throw new Error('Product already reviewed');
+  }
+
+  const review = await Review.create({
+    userId: req.user._id,
+    productId: product._id,
+    rating: Number(rating),
+    comment
+  });
+
+  // Update product with new review
+  const updatedProduct = await Product.findById(product._id);
+  updatedProduct.reviews.push(review._id);
+  updatedProduct.totalReviews = updatedProduct.reviews.length;
+  
+  // Recalculate average rating
+  const reviews = await Review.find({ productId: product._id });
+  const totalRating = reviews.reduce((acc, item) => item.rating + acc, 0);
+  updatedProduct.averageRating = totalRating / reviews.length;
+
+  await updatedProduct.save();
+
+  res.status(201).json({
+    success: true,
+    message: 'Review added successfully',
+    data: review
   });
 }); 
