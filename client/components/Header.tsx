@@ -57,6 +57,7 @@ const Header = () => {
             </div>
             <Link href="/wholesale"  className="hover:text-pink-500 transition-colors">Wholesale & Bulk Inquiry</Link>
             <Link href="/about"  className="hover:text-pink-500 transition-colors">About Us</Link>
+            <Link href="/products"  className="hover:text-pink-500 transition-colors">Products</Link>
             
             {/* Vendor Navigation */}
             {isVendor && (
@@ -89,9 +90,9 @@ const Header = () => {
 
           {/* Right Icons */}
           <div className="flex items-center space-x-4">
-            <button className="hover:text-pink-500">
+            <Link href="/search"  className="hover:text-pink-500">
               <Search className="h-6 w-6" />
-            </button>
+            </Link>
             {!isVendor && (
               <>
                 <Link href="/cart" className="hover:text-pink-500 relative">

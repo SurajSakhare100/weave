@@ -14,7 +14,13 @@ const ProductCard = ({ product }) => {
 
   const getImageUrl = (files, index = 0) => {
     if (files && files.length > index) {
-      return `http://localhost:5000/uploads/${files[index]}`;
+      const file = files[index];
+      // If the file is a static image in public/products, use that path
+      if (file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.webp')) {
+        return `/products/${file}`;
+      }
+      // Otherwise, assume it's a backend upload
+      return `http://localhost:5000/uploads/${file}`;
     }
     return '/products/product.png';
   };
@@ -50,7 +56,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="bg-white rounded-2xl p-6 w-full shadow-sm hover:shadow-lg transition-shadow duration-300 group">
-      <Link href={`/products/${product.slug}`}>
+      <Link href={`/products/${product._id}`}>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
             src={getImageUrl(product.files)}
@@ -97,7 +103,7 @@ const ProductCard = ({ product }) => {
       </Link>
       
       <div className="mt-4">
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product._id}`}>
           <h3 className="text-xl font-semibold text-gray-800 hover:text-pink-500 transition-colors duration-200">
             {product.name}
           </h3>

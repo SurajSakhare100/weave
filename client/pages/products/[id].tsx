@@ -17,11 +17,66 @@ import {
   Loader2
 } from 'lucide-react'
 import { Product } from '@/types'
+import ProductImageGallery from '@/components/product/ProductImageGallery'
+import ProductCard from '@/components/ProductCard'
+import Layout from '@/components/Layout'
 
 // Add reviews to the Product type
 interface ProductWithReviews extends Product {
   reviews: any[]
 }
+
+// Dummy data for sections not yet implemented in backend
+const dummyFrequentlyBought = [
+  {
+    _id: '1',
+    name: 'Bag name',
+    price: 1999,
+    mrp: 1999,
+    colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'],
+    files: ['product.png'], // Use local static image
+    averageRating: 5,
+    totalReviews: 745,
+    slug: 'bag-1',
+    available: 'true',
+    stock: 10,
+    // Add all required ProductWithReviews fields with dummy values
+    reviews: [],
+    discount: 0,
+    vendorId: '',
+    vendor: {},
+    description: '',
+    pickup_location: '',
+    return: true,
+    cancellation: true,
+    category: 'Tote',
+    variant: [],
+    variantDetails: [],
+    createdAt: '',
+    updatedAt: '',
+    __v: 0,
+    status: '', // Add status property for type compatibility
+    // Add any other required fields as needed
+  },
+  { _id: '2', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-2', available: 'true', stock: 10 },
+  { _id: '3', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-3', available: 'true', stock: 10 },
+  { _id: '4', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-4', available: 'true', stock: 10 },
+];
+const dummyRelated = dummyFrequentlyBought;
+const dummyCompare = dummyFrequentlyBought;
+const dummyReviews = [
+  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
+  { name: 'Customer Name', rating: 4, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
+  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
+];
+
+const dummyProductDetails = [
+  { label: 'Product Weight', value: '500grams' },
+  { label: 'Dimensions', value: '12.5\"W x 8\"D x 12\"H' },
+  { label: 'Capacity', value: '12 Litre' },
+  { label: 'Materials', value: 'Sisal Fibres' },
+  { label: 'Product Category', value: 'Tote' },
+];
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -34,6 +89,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
@@ -52,6 +108,7 @@ export default function ProductDetailPage() {
       const response = await getProductById(id as string)
       const productData = response.data
       setProduct(productData)
+      setSelectedColor(productData.colors ? productData.colors[0] : null)
       
       // Load similar products
       try {
@@ -63,17 +120,18 @@ export default function ProductDetailPage() {
       }
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to load product')
+      // setProduct({ ...dummyFrequentlyBought[0] }) // fallback to dummy with all required fields
     } finally {
       setLoading(false)
     }
   }
 
-  const getImageUrl = (files: string[], index: number = 0) => {
-    if (files && files.length > index) {
-      return `http://localhost:5000/uploads/${files[index]}`
-    }
-    return '/products/product.png'
-  }
+  // const getImageUrl = (files: string[], index: number = 0) => {
+  //   if (files && files.length > index) {
+  //     return `http://localhost:5000/uploads/${files[index]}`
+  //   }
+  //   return '/products/product.png'
+  // }
 
   const handleAddToCart = () => {
     if (product) {
@@ -133,238 +191,205 @@ export default function ProductDetailPage() {
     )
   }
 
+  // Prepare images for gallery
+  const images = (product.files || []).map((file, i) => ({ src: `/products/${file}`, alt: `${product.name} ${i + 1}` }));
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 text-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-8">
-          <ol className="flex items-center space-x-2 text-sm text-gray-500">
-            <li><Link href="/" className="hover:text-pink-500">Home</Link></li>
-            <li>/</li>
-            <li><Link href="/products" className="hover:text-pink-500">Products</Link></li>
-            <li>/</li>
-            <li className="text-gray-900">{product.name}</li>
-          </ol>
-        </nav>
-
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-            {/* Product Images */}
-            <div className="space-y-4">
-              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={getImageUrl(product.files, selectedImage)}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/products/product.png'
-                  }}
-                />
-              </div>
-              
-              {/* Thumbnail Images */}
-              {product.files && product.files.length > 1 && (
-                <div className="flex space-x-2">
-                  {product.files.map((file: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${
-                        selectedImage === index ? 'border-pink-500' : 'border-gray-200'
-                      }`}
-                    >
-                      <img
-                        src={getImageUrl(product.files, index)}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/products/product.png'
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+    <Layout>
+      <div className="bg-white min-h-screen text-black">
+      <div className="max-w-7xl mx-auto py-16">
+        {/* Main Product Section */}
+        <div className=" rounded-2xl flex flex-col lg:flex-row gap-12">
+          {/* Image Gallery */}
+          <div className="flex-1 min-w-[350px]">
+            <ProductImageGallery images={images} productName={product.name} />
+          </div>
+          {/* Product Info */}
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="flex items-start justify-between">
+              <h1 className="text-2xl font-bold mb-1">{product.name}</h1>
+              <button
+                onClick={handleWishlistToggle}
+                className="ml-2 p-2 rounded-full border border-gray-200 hover:bg-gray-100"
+              >
+                <Heart className={`h-6 w-6 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+              </button>
             </div>
-
-            {/* Product Info */}
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-                <p className="text-gray-600">{product.category}</p>
-              </div>
-
-              {/* Price */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <span className="text-3xl font-bold text-gray-900">₹{product.price}</span>
-                  {product.mrp > product.price && (
-                    <>
-                      <span className="text-xl text-gray-500 line-through">₹{product.mrp}</span>
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
-                        {calculateDiscount()}% OFF
-                      </span>
-                    </>
-                  )}
-                </div>
-                {product.discount > 0 && (
-                  <p className="text-sm text-gray-600">Discount: {product.discount}%</p>
-                )}
-              </div>
-
-              {/* Description */}
-              {product.description && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                  <p className="text-gray-600 leading-relaxed">{product.description}</p>
-                </div>
-              )}
-
-              {/* Pickup Location */}
-              {product.pickup_location && (
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Package className="h-5 w-5" />
-                  <span>Pickup: {product.pickup_location}</span>
-                </div>
-              )}
-
-              {/* Policies */}
-              <div className="space-y-2">
-                {product.return && (
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <RotateCcw className="h-5 w-5" />
-                    <span>Returns accepted</span>
-                  </div>
-                )}
-                {product.cancellation && (
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Truck className="h-5 w-5" />
-                    <span>Cancellation allowed</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Quantity */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Quantity</label>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                  >
-                    -
-                  </button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-4">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={product.available !== 'true'}
-                  className="flex-1 bg-pink-500 text-white py-3 px-6 rounded-lg hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  <span>Add to Cart</span>
-                </button>
-                <button
-                  onClick={handleWishlistToggle}
-                  className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center"
-                >
-                  <Heart className={`h-5 w-5 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
-                </button>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center space-x-2">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  product.available === 'true' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {product.available === 'true' ? 'In Stock' : 'Out of Stock'}
-                </span>
+            <p className="text-gray-600 mb-2">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley</p>
+            <div className="flex items-center gap-2 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+              ))}
+              <span className="ml-2 text-gray-600 text-sm">(874)</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-semibold">Color:</span>
+              <span className="ml-2">Orange</span>
+              <div className="flex items-center ml-4 gap-2">
+                {product.colors?.map((color) => (
+                  <span key={color} className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: color }}></span>
+                ))}
               </div>
             </div>
+            <div className="flex items-center gap-4 mb-2">
+              <span className="text-2xl font-bold text-pink-600">-40%</span>
+              <span className="text-2xl font-bold">₹{product.price}</span>
+              <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-semibold">Limited Deal</span>
+              {product.mrp > product.price && (
+                <>
+                  <span className="text-gray-500 line-through ml-2">M.R.P: ₹{product.mrp}</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                    {calculateDiscount()}% OFF
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="text-xs text-pink-600 font-semibold mb-1">Note: We offer worldwide shipping for all orders.</div>
+            <div className="text-sm text-gray-700 mb-2">Delivery expected within the next 3-4 business days, to p 416734</div>
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={product.available !== 'true'}
+                className="bg-pink-500 text-white px-8 py-3 rounded font-semibold hover:bg-pink-600 transition"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Add to Cart
+              </button>
+              <button className="bg-white border border-pink-500 text-pink-500 px-8 py-3 rounded font-semibold hover:bg-pink-50 transition">Buy Now</button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm mb-2">
+              {dummyProductDetails.map((detail) => (
+                <div key={detail.label} className="flex flex-col">
+                  <span className="text-gray-500">{detail.label}</span>
+                  <span className="font-semibold">{detail.value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="text-xs text-gray-600">Enjoy a worry-free shopping experience.<br />5 days Return & Exchange</div>
           </div>
         </div>
 
-        {/* Similar Products */}
-        {similarProducts.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {similarProducts.map((similarProduct) => (
-                <Link 
-                  key={similarProduct._id} 
-                  href={`/products/${similarProduct._id}`}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  <div className="aspect-square bg-gray-100">
-                    <img
-                      src={getImageUrl(similarProduct.files)}
-                      alt={similarProduct.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/products/product.png'
-                      }}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{similarProduct.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{similarProduct.category}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900">₹{similarProduct.price}</span>
-                      {similarProduct.mrp > similarProduct.price && (
-                        <span className="text-sm text-gray-500 line-through">₹{similarProduct.mrp}</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Reviews Section */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
-          {/* Review submission form would go here */}
-
-          <div className="space-y-6">
-            {product.reviews && product.reviews.length > 0 ? (
-              product.reviews.map((review: any) => (
-                <div key={review._id} className="bg-white p-6 rounded-lg shadow-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                          fill="currentColor"
-                        />
-                      ))}
-                    </div>
-                    <p className="ml-4 font-semibold text-gray-900">{review.userId?.name || 'Anonymous'}</p>
-                  </div>
-                  <p className="text-gray-600">{review.comment}</p>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white p-6 rounded-lg shadow-sm text-center">
-                <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
+        {/* Frequently Bought Together */}
+        <div className="mt-16">
+          <h2 className="text-xl font-bold mb-4">Frequently Bought Together</h2>
+          <div className="flex gap-6 overflow-x-auto pb-2">
+            {dummyFrequentlyBought.map((item) => (
+              <div key={item._id} className="min-w-[250px] max-w-[250px]">
+                <ProductCard product={item} />
               </div>
-            )}
+            ))}
+          </div>
+        </div>
+
+        {/* Related Products */}
+        {/* <div className="mt-16">
+          <h2 className="text-xl font-bold mb-4">Related Products</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {dummyRelated.map((item) => (
+              <ProductCard key={item._id} product={item} />
+            ))}
+          </div>
+        </div> */}
+
+        {/* Compare With Similar Items */}
+        <div className="mt-16">
+          <h2 className="text-xl font-bold mb-4">Compare With Similar Items</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-xl shadow">
+              <thead>
+                <tr>
+                  <th className="p-4 text-left">Bag Image</th>
+                  <th className="p-4 text-left">Bag name</th>
+                  <th className="p-4 text-left">Color</th>
+                  <th className="p-4 text-left">Reviews</th>
+                  <th className="p-4 text-left">Price</th>
+                  <th className="p-4 text-left">Shipping</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dummyCompare.map((item) => (
+                  <tr key={item._id} className="border-t">
+                    <td className="p-4"><img src="/products/image.png" alt="Bag" className="w-20 h-20 object-cover rounded" /></td>
+                    <td className="p-4 font-semibold">Bag name</td>
+                    <td className="p-4">
+                      <div className="flex gap-1">
+                        {item.colors.map((color) => (
+                          <span key={color} className="w-5 h-5 rounded-full border" style={{ backgroundColor: color }}></span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4 flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`h-4 w-4 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                      ))}
+                      <span className="ml-2 text-gray-600 text-xs">(745)</span>
+                    </td>
+                    <td className="p-4 font-bold">₹1,999</td>
+                    <td className="p-4 text-xs">Free Delivery on orders over 999</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Review Summary */}
+        <div className="mt-16">
+          <h2 className="text-xl font-bold mb-4">Review Summary</h2>
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left: Bar summary */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-4xl font-bold">4.5</span>
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`h-6 w-6 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                  ))}
+                </div>
+                <span className="ml-2 text-gray-600">(745)</span>
+              </div>
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map((star) => (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="w-6 text-sm">{star}</span>
+                    <div className="flex-1 bg-gray-200 rounded h-2">
+                      <div className="bg-yellow-400 h-2 rounded" style={{ width: `${star * 20}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Right: Reviews */}
+            <div className="flex-1 space-y-4">
+              {dummyReviews.map((review, i) => (
+                <div key={i} className="bg-white rounded-lg p-4 shadow flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className={`h-4 w-4 ${j < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                    ))}
+                    <span className="ml-2 text-gray-700 font-semibold">{review.name}</span>
+                    <span className="ml-auto text-xs text-gray-400">{review.date}</span>
+                  </div>
+                  <p className="text-gray-700 text-sm">{review.text}</p>
+                </div>
+              ))}
+              {/* Review input (dummy) */}
+              <div className="flex items-center gap-2 mt-4">
+                <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-lg">S</span>
+                <div className="flex-1">
+                  <div className="flex gap-1 mb-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 text-gray-300" />
+                    ))}
+                  </div>
+                  <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Write a review..." disabled />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    </Layout>
   )
 } 

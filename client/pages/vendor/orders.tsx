@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setOrders, setLoading, setError, updateOrder, clearError } from '../../features/vendor/vendorSlice';
 import { getVendorOrders, updateOrderStatus } from '../../services/vendorService';
-import { requireVendorAuth } from '../../utils/vendorAuth';
+import { isVendorAuthenticated, requireVendorAuth } from '../../utils/vendorAuth';
 import { 
   ShoppingCart, 
   Search, 
@@ -30,11 +30,9 @@ export default function VendorOrdersPage() {
 
   useEffect(() => {
     // Check authentication
-    if (!requireVendorAuth(router)) {
+    if (!isVendorAuthenticated()) {
       return;
     }
-
-    // Load orders
     loadOrders();
   }, [dispatch, router]);
 

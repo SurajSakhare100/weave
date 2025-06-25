@@ -19,7 +19,7 @@ function UserHydrator() {
         try {
           const profile = await getUserProfile();
           if (profile.data) {
-            dispatch(login({ name: profile.data.name, role: 'user' }));
+            dispatch(login({ email: profile.data.email, password: profile.data.password}));
           } else {
             // If profile fetch fails, clear the token
             dispatch(logout());

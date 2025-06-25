@@ -3,7 +3,7 @@
 A scalable multivendor ecommerce platform built with Next.js, Tailwind CSS, Redux Toolkit, and PWA support.
 
 ## Features
-- Next.js (App Router)
+- Next.js 
 - Tailwind CSS
 - Redux Toolkit (with scalable feature structure)
 - PWA support (next-pwa)

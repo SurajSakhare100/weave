@@ -5,6 +5,25 @@ import { Heart, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 const ProductImageGallery = ({ images, productName }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full">
+        <div className="relative">
+          <Image
+            src="/products/product.png"
+            alt={productName || 'Product'}
+            width={600}
+            height={600}
+            className="w-full h-auto object-cover rounded-lg"
+          />
+        </div>
+        <div className="flex justify-center space-x-2 mt-4">
+          <div className="w-20 h-20 border-2 border-gray-200 rounded-md bg-gray-50" />
+        </div>
+      </div>
+    );
+  }
+
   const handlePrev = () => {
     setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
   };
