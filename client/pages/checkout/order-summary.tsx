@@ -3,6 +3,7 @@ import { OrderSummary } from "@/components/order-summary"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
+import Image from 'next/image'
 
 function CheckoutOrderSummaryPageContent() {
   const router = useRouter()
@@ -79,10 +80,12 @@ function CheckoutOrderSummaryPageContent() {
             <div className="space-y-4 mb-6">
               {cartItems.map((item, index) => (
                 <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <img 
+                  <Image 
                     src={item.image || "/products/product.png"}
                     alt={item.name}
-                    className="w-16 h-16 object-cover rounded"
+                    width={64}
+                    height={64}
+                    className="object-cover rounded"
                   />
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.name}</h3>

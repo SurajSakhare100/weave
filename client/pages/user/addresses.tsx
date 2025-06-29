@@ -33,7 +33,6 @@ export default function UserAddressesPage() {
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadAddresses()
@@ -55,7 +54,6 @@ export default function UserAddressesPage() {
 
   const handleAddAddress = async (addressData: AddressData) => {
     try {
-      setSubmitting(true)
       const response = await addUserAddress(addressData)
       if (response.success) {
         await loadAddresses()
@@ -63,14 +61,11 @@ export default function UserAddressesPage() {
       }
     } catch (error) {
       console.error('Error adding address:', error)
-    } finally {
-      setSubmitting(false)
     }
   }
 
   const handleEditAddress = async (addressData: AddressData) => {
     try {
-      setSubmitting(true)
       const response = await updateUserAddress(editingAddress!.id, addressData)
       if (response.success) {
         await loadAddresses()
@@ -79,8 +74,6 @@ export default function UserAddressesPage() {
       }
     } catch (error) {
       console.error('Error updating address:', error)
-    } finally {
-      setSubmitting(false)
     }
   }
 

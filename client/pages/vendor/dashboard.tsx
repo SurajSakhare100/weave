@@ -17,6 +17,7 @@ import {
   Plus,
   Eye
 } from 'lucide-react';
+import Image from 'next/image';
 
 // Product interface
 interface Product {
@@ -54,10 +55,19 @@ interface Product {
   updatedAt: string;
 }
 
+// Order interface
+interface Order {
+  _id: string;
+  orderId: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
 export default function VendorDashboard() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { profile, dashboard, loading, error } = useSelector((state: RootState) => state.vendor);
+  const { profile, dashboard, error } = useSelector((state: RootState) => state.vendor);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -128,7 +138,7 @@ export default function VendorDashboard() {
     completedOrders: 0
   };
   const recentProducts = (dashboard?.recentProducts || []) as Product[];
-  const recentOrders = dashboard?.recentOrders || [];
+  const recentOrders = (dashboard?.recentOrders || []) as Order[];
 
   const getImageUrl = (files: string[], index: number = 0) => {
     if (files && files.length > index) {
@@ -299,13 +309,12 @@ export default function VendorDashboard() {
                 {recentProducts.slice(0, 6).map((product) => (
                   <div key={product._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center space-x-3">
-                      <img
+                      <Image 
                         src={getImageUrl(product.files)}
                         alt={product.name}
-                        className="w-12 h-12 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.currentTarget.src = '/products/product.png';
-                        }}
+                        width={48}
+                        height={48}
+                        className="object-cover rounded"
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
@@ -345,7 +354,7 @@ export default function VendorDashboard() {
               </div>
               
               <div className="space-y-4">
-                {recentOrders.slice(0, 5).map((order: any) => (
+                {recentOrders.slice(0, 5).map((order: Order) => (
                   <div key={order._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">Order #{order.orderId}</p>

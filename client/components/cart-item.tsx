@@ -1,5 +1,6 @@
 import { Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Image from 'next/image'
 
 interface CartItemProps {
   id: string
@@ -25,7 +26,7 @@ export function CartItem({ id, name, price, size, color, quantity, image, onQuan
   return (
     <div className="flex items-center gap-6 p-6 bg-[#fff9f5] rounded-lg mb-4">
       <div className="w-20 h-20 bg-[#fff9f5] rounded-lg flex items-center justify-center">
-        <img src={image || "/products/product.png"} alt={name} className="w-16 h-16 object-contain" />
+        <Image src={image || "/products/product.png"} alt={name} width={64} height={64} className="object-contain" />
       </div>
 
       <div className="flex-1">

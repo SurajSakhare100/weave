@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
-import { getUserToken } from '../services/authService';
 import { getCart, updateCartItem, removeFromCart } from '../services/cartService';
 import { Trash2, Minus, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import Layout from "@/components/Layout"
-import { OrderSummary } from "@/components/order-summary"
+import Image from 'next/image';
 
 interface CartItem {
   proId: string;
@@ -126,10 +125,12 @@ const CartPage = () => {
           <div className="lg:col-span-2">
             {items.map((item: CartItem) => (
               <div key={item.proId} className="flex items-center border-b py-4">
-                <img 
+                <Image 
                   src={item.image || "/products/product.png"} 
                   alt={item.name} 
-                  className="w-20 h-20 object-cover rounded mr-4"
+                  width={80}
+                  height={80}
+                  className="object-cover rounded mr-4"
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.name}</h3>

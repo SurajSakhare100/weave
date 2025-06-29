@@ -1,5 +1,5 @@
 import VendorLayout from '@/components/VendorLayout';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -20,6 +20,7 @@ import {
   Grid,
   List
 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function VendorProductsPage() {
   const router = useRouter();
@@ -43,11 +44,7 @@ export default function VendorProductsPage() {
     }
   }, [router]);
 
-  useEffect(() => {
-    loadProducts();
-  }, [filterStatus, loadProducts]);
-
-  const loadProducts = async (page = 1) => {
+  const loadProducts = useCallback(async (page = 1) => {
     try {
       dispatch(setLoading(true));
       const params: { page: number, limit: number, search?: string, status?: string } = {
@@ -76,7 +73,11 @@ export default function VendorProductsPage() {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch, searchTerm, filterStatus]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +168,7 @@ export default function VendorProductsPage() {
                   <Filter className="h-5 w-5 text-gray-400" />
                   <select
                     value={filterStatus}
-                    onChange={(e) => handleStatusFilter(e.target.value as any)}
+                    onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'active' | 'inactive' | 'draft')}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="all">All Status</option>
@@ -229,13 +230,12 @@ export default function VendorProductsPage() {
                   {filteredProducts.map((product) => (
                     <div key={product._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative">
-                        <img
+                        <Image
                           src={getImageUrl(product.files)}
                           alt={product.name}
+                          width={400}
+                          height={192}
                           className="w-full h-48 object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/products/product.png';
-                          }}
                         />
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -322,13 +322,12 @@ export default function VendorProductsPage() {
                           <tr key={product._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <img
+                                <Image
                                   src={getImageUrl(product.files)}
                                   alt={product.name}
+                                  width={400}
+                                  height={192}
                                   className="h-10 w-10 rounded-lg object-cover mr-3"
-                                  onError={(e) => {
-                                    e.currentTarget.src = '/products/product.png';
-                                  }}
                                 />
                                 <div>
                                   <div className="text-sm font-medium text-gray-900">{product.name}</div>

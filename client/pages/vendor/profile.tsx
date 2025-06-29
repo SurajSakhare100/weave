@@ -1,5 +1,5 @@
 import VendorLayout from '@/components/VendorLayout';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -36,18 +36,7 @@ export default function VendorProfilePage() {
   });
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    // Check authentication
-    if (!isVendorAuthenticated()) {
-      router.push('/vendor/login');
-      return;
-    }
-
-    // Load profile data
-    loadProfile();
-  }, [dispatch, router, loadProfile]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       dispatch(setLoading(true));
       const data = await getVendorProfile();
@@ -72,7 +61,18 @@ export default function VendorProfilePage() {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Check authentication
+    if (!isVendorAuthenticated()) {
+      router.push('/vendor/login');
+      return;
+    }
+
+    // Load profile data
+    loadProfile();
+  }, [router, loadProfile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

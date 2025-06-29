@@ -1,9 +1,6 @@
 import Layout from '@/components/Layout';
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
 import { getUserOrders } from '../../services/userService';
-import { getUserToken } from '../../services/authService';
 import Link from 'next/link';
 import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 
@@ -13,7 +10,13 @@ interface Order {
   createdAt: string;
   status: string;
   totalPrice: number;
-  orderItems?: any[];
+  orderItems?: Array<{
+    product: {
+      name: string;
+      price: number;
+    };
+    quantity: number;
+  }>;
   shippingAddress?: {
     address: string;
     city: string;

@@ -1,5 +1,5 @@
 import VendorLayout from '@/components/VendorLayout';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
@@ -13,13 +13,13 @@ import {
   CheckCircle,
   Truck,
   XCircle,
-  Calendar,
   User,
   Package,
   MapPin,
   Phone,
   Mail
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface OrderItem {
   product?: {
@@ -58,7 +58,7 @@ export default function VendorOrderDetailPage() {
   const { loading, error } = useSelector((state: RootState) => state.vendor);
   const [order, setOrder] = useState<Order | null>(null);
 
-  const loadOrderDetails = async () => {
+  const loadOrderDetails = useCallback(async () => {
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
@@ -73,7 +73,7 @@ export default function VendorOrderDetailPage() {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [id, dispatch]);
 
   useEffect(() => {
     // Check authentication
@@ -222,15 +222,14 @@ export default function VendorOrderDetailPage() {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Order Items</h2>
                 <div className="space-y-4">
-                  {(order.orderItems || order.items || []).map((item: any, index: number) => (
+                  {(order.orderItems || order.items || []).map((item: OrderItem, index: number) => (
                     <div key={index} className="flex items-center space-x-4 p-4 border border-gray-100 rounded-lg">
-                      <img
-                        src={item.product?.files?.[0] || '/products/product.png'}
+                      <Image 
+                        src={item.product?.files?.[0] ? `http://localhost:5000/uploads/${item.product.files[0]}` : '/products/product.png'}
                         alt={item.product?.name || 'Product'}
-                        className="w-16 h-16 rounded object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/products/product.png';
-                        }}
+                        width={64}
+                        height={64}
+                        className="object-cover rounded"
                       />
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-800">{item.product?.name || item.name || 'Product'}</h3>

@@ -1,5 +1,5 @@
 import VendorLayout from '@/components/VendorLayout';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -20,6 +20,7 @@ import {
   User,
   Package
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Order {
   _id: string;
@@ -62,17 +63,7 @@ export default function VendorOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
 
-  useEffect(() => {
-    // Check authentication and load orders only if authenticated
-    if (!isVendorAuthenticated()) {
-      router.push('/vendor/login');
-      return;
-    }
-    loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
-  const loadOrders = async (page = 1) => {
+  const loadOrders = useCallback(async (page = 1) => {
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
@@ -95,7 +86,16 @@ export default function VendorOrdersPage() {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    // Check authentication and load orders only if authenticated
+    if (!isVendorAuthenticated()) {
+      router.push('/vendor/login');
+      return;
+    }
+    loadOrders();
+  }, [router, loadOrders]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,7 +207,7 @@ export default function VendorOrdersPage() {
                 <Filter className="h-5 w-5 text-gray-400" />
                 <select
                   value={statusFilter}
-                  onChange={(e) => handleStatusFilter(e.target.value as any)}
+                  onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled')}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="all">All Status</option>
@@ -278,17 +278,16 @@ export default function VendorOrdersPage() {
 
                         {/* Order Items */}
                         <div className="space-y-2">
-                          {(order.orderItems || order.items || []).slice(0, 3).map((item: any, index: number) => (
+                          {(order.orderItems || order.items || []).slice(0, 3).map((item: NonNullable<Order['orderItems']>[0], index: number) => (
                             <div key={index} className="flex items-center space-x-3 text-sm">
-                              <img
+                              <Image
                                 src={item.product?.files?.[0] || '/products/product.png'}
                                 alt={item.product?.name || 'Product'}
-                                className="w-8 h-8 rounded object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/products/product.png';
-                                }}
+                                width={32}
+                                height={32}
+                                className="rounded object-cover"
                               />
-                              <span className="flex-1">{item.product?.name || item.name || 'Product'}</span>
+                              <span className="flex-1">{item.product?.name || 'Product'}</span>
                               <span className="text-gray-500">Qty: {item.quantity}</span>
                               <span className="font-medium">₹{item.price}</span>
                             </div>

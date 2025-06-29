@@ -4,7 +4,6 @@ import { PaymentOption } from "@/components/payment-option"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
-import { placeOrder } from "@/services/orderService"
 
 function CheckoutPaymentPageContent() {
   const router = useRouter()

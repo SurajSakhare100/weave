@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux"
 import { clearCartAsync } from "@/features/cart/cartSlice"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 import { AppDispatch } from "@/store/store"
+import Image from 'next/image'
 
 function CheckoutSuccessPageContent() {
   const router = useRouter()
@@ -59,10 +60,12 @@ function CheckoutSuccessPageContent() {
                 {cartItems.map((item, index) => (
                   <div key={index} className="flex justify-between items-center">
                     <div className="flex items-center space-x-3">
-                      <img 
+                      <Image 
                         src={item.image || "/products/product.png"}
                         alt={item.name}
-                        className="w-12 h-12 object-cover rounded"
+                        width={48}
+                        height={48}
+                        className="object-cover rounded"
                       />
                       <div>
                         <p className="font-medium text-gray-900">{item.name}</p>
@@ -120,7 +123,7 @@ function CheckoutSuccessPageContent() {
             <div className="bg-blue-50 rounded-lg p-6 mb-8">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
                 <Package className="w-5 h-5 mr-2" />
-                What's Next?
+                What&apos;s Next?
               </h2>
               <div className="space-y-3 text-left">
                 <div className="flex items-start space-x-3">

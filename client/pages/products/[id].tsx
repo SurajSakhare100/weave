@@ -10,8 +10,6 @@ import {
   Heart, 
   ShoppingCart, 
   Star, 
-  Package, 
-  Truck, 
   AlertCircle,
   Loader2
 } from 'lucide-react'
@@ -19,11 +17,16 @@ import { Product } from '@/types'
 import ProductImageGallery from '@/components/product/ProductImageGallery'
 import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
-import { getGalleryImages } from '@/utils/imageUtils'
+import Image from 'next/image'
 
 // Add reviews to the Product type
 interface ProductWithReviews extends Product {
-  reviews: any[]
+  reviews: Array<{
+    name: string;
+    rating: number;
+    text: string;
+    date: string;
+  }>
 }
 
 // Dummy data for sections not yet implemented in backend
@@ -64,9 +67,9 @@ const dummyFrequentlyBought = [
 ];
 const dummyCompare = dummyFrequentlyBought;
 const dummyReviews = [
-  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
-  { name: 'Customer Name', rating: 4, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
-  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
+  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
+  { name: 'Customer Name', rating: 4, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
+  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
 ];
 
 const dummyProductDetails = [
@@ -85,7 +88,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ProductWithReviews | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
@@ -209,9 +212,6 @@ export default function ProductDetailPage() {
     )
   }
 
-  // Get gallery images using the new utility function
-  const galleryImages = getGalleryImages([], product.files || []);
-
   return (
     <Layout>
       <div className="bg-white min-h-screen text-black">
@@ -237,7 +237,7 @@ export default function ProductDetailPage() {
                 <Heart className={`h-6 w-6 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
               </button>
             </div>
-            <p className="text-gray-600 mb-2">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley</p>
+            <p className="text-gray-600 mb-2">Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer took a galley</p>
             <div className="flex items-center gap-2 mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
@@ -321,7 +321,7 @@ export default function ProductDetailPage() {
               <tbody>
                 {dummyCompare.map((item) => (
                   <tr key={item._id} className="border-t">
-                    <td className="p-4"><img src="/products/image.png" alt="Bag" className="w-20 h-20 object-cover rounded" /></td>
+                    <td className="p-4"><Image src="/products/image.png" alt="Bag" width={80} height={80} className="object-cover rounded" /></td>
                     <td className="p-4 font-semibold">Bag name</td>
                     <td className="p-4">
                       <div className="flex gap-1">

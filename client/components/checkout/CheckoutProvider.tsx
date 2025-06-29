@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
 import { getCart } from '../../services/cartService';
 import { placeOrder } from '../../services/orderService';
 
@@ -111,6 +109,19 @@ const setStoredPaymentMethod = (method: 'online' | 'cod') => {
   }
 };
 
+interface CartItem {
+  proId: string;
+  item?: {
+    name: string;
+    files?: string[];
+  };
+  name?: string;
+  price: number;
+  mrp: number;
+  quantity: number;
+  variantSize?: string;
+}
+
 export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CheckoutItem[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
@@ -163,9 +174,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         setCartItems([]);
       } else {
         const items = response.result || [];
-        setCartItems(items.map((item: any) => ({
+        setCartItems(items.map((item: CartItem) => ({
           proId: item.proId,
-          name: item.item?.name || item.name,
+          name: item.item?.name || item.name || 'Product',
           price: item.price,
           mrp: item.mrp,
           quantity: item.quantity,

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Image from 'next/image'
 
 interface ProductCardProps {
   name: string
@@ -13,7 +14,7 @@ export function ProductCard({ name, price, size, color, quantity, image }: Produ
   return (
     <div className="flex items-center gap-6 p-6 bg-[#fff9f5] rounded-lg mb-6">
       <div className="w-32 h-32 bg-[#fff9f5] rounded-lg flex items-center justify-center">
-        <img src={image || "/placeholder.svg"} alt={name} className="w-24 h-24 object-contain" />
+        <Image src={image || "/placeholder.svg"} alt={name} width={96} height={96} className="object-contain" />
       </div>
 
       <div className="flex-1">

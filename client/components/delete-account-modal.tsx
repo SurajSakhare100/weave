@@ -25,7 +25,7 @@ export function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccount
         <div className="p-8 text-center">
           <h2 className="text-[#6c4323] text-xl font-medium mb-4">Delete Weave account</h2>
           <p className="text-[#6c4323] text-sm mb-8">
-            Once deleted, you'll lose access to the account and saved details.
+            Once deleted, you&apos;ll lose access to the account and saved details.
           </p>
 
           <div className="flex gap-4">
