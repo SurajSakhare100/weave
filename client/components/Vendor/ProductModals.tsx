@@ -1,20 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { setError, setLoading } from '../../features/vendor/vendorSlice';
+import Image from 'next/image';
+import { setError } from '../../features/vendor/vendorSlice';
 import { createProduct, updateProduct, deleteProduct } from '../../services/vendorService';
 import { 
   X, 
   Package, 
-  DollarSign, 
-  Tag, 
-  FileText,
-  Image as ImageIcon,
   Save,
   Trash2,
   AlertCircle,
   Upload,
-  Plus,
-  Minus
 } from 'lucide-react';
 import api from '@/services/api';
 
@@ -65,6 +60,11 @@ interface Category {
   description?: string;
 }
 
+// Category API response type
+type CategoryApiResponse = {
+  data: Category[];
+};
+
 // Add Product Modal
 export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   isOpen: boolean;
@@ -97,14 +97,14 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
 
   const loadCategories = async () => {
     try {
-      const { data } = await api.get('/categories');
+      const { data } = await api.get<CategoryApiResponse>('/categories');
       setCategories(data.data || []);
       if (data.data && data.data.length === 0) {
         setCategories([
           { _id: 'default', name: 'General', slug: 'general' }
         ]);
       }
-    } catch (error) {
+    } catch {
       setCategories([
         { _id: 'default', name: 'General', slug: 'general' }
       ]);
@@ -145,8 +145,16 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
       onSuccess();
       onClose();
       resetForm();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to create product';
+    } catch (error: unknown) {
+      let errorMessage = 'Failed to create product';
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        errorMessage = (error as { response: { data: { message: string } } }).response.data.message;
+      }
       dispatch(setError(errorMessage));
     } finally {
       setLocalLoading(false);
@@ -265,7 +273,13 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative">
-                        <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <Image 
+                          src={preview} 
+                          alt={`Preview ${index + 1}`} 
+                          width={96} 
+                          height={96} 
+                          className="w-full h-24 object-cover rounded-lg" 
+                        />
                         <button type="button" onClick={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
@@ -340,14 +354,14 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
 
   const loadCategories = async () => {
     try {
-      const { data } = await api.get('/categories');
+      const { data } = await api.get<CategoryApiResponse>('/categories');
       setCategories(data.data || []);
       if (data.data && data.data.length === 0) {
         setCategories([
           { _id: 'default', name: 'General', slug: 'general' }
         ]);
       }
-    } catch (error) {
+    } catch {
       setCategories([
         { _id: 'default', name: 'General', slug: 'general' }
       ]);
@@ -394,8 +408,16 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
         onSuccess();
         onClose();
       }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to update product';
+    } catch (error: unknown) {
+      let errorMessage = 'Failed to update product';
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        errorMessage = (error as { response: { data: { message: string } } }).response.data.message;
+      }
       dispatch(setError(errorMessage));
     } finally {
       setLocalLoading(false);
@@ -487,7 +509,17 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {existingImages.map((image, index) => (
                       <div key={index} className="relative">
-                        <img src={`/uploads/${image}`} alt={`Product ${index + 1}`} className="w-full h-24 object-cover rounded-lg" onError={e => { (e.currentTarget as HTMLImageElement).src = '/products/product.png'; }} />
+                        <Image 
+                          src={`/uploads/${image}`} 
+                          alt={`Product ${index + 1}`} 
+                          width={96} 
+                          height={96} 
+                          className="w-full h-24 object-cover rounded-lg" 
+                          onError={(e) => { 
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = '/products/product.png'; 
+                          }} 
+                        />
                         <button type="button" onClick={() => removeExistingImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
@@ -511,7 +543,13 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative">
-                        <img src={preview} alt={`New Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <Image 
+                          src={preview} 
+                          alt={`New Preview ${index + 1}`} 
+                          width={96} 
+                          height={96} 
+                          className="w-full h-24 object-cover rounded-lg" 
+                        />
                         <button type="button" onClick={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
@@ -552,8 +590,16 @@ export const DeleteProductModal = ({ isOpen, onClose, onSuccess, product }: {
       await deleteProduct(product._id);
       onSuccess();
       onClose();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to delete product';
+    } catch (error: unknown) {
+      let errorMessage = 'Failed to delete product';
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        errorMessage = (error as { response: { data: { message: string } } }).response.data.message;
+      }
       dispatch(setError(errorMessage));
     } finally {
       setLocalLoading(false);
@@ -579,7 +625,7 @@ export const DeleteProductModal = ({ isOpen, onClose, onSuccess, product }: {
                 </h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                    Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
                   </p>
                 </div>
               </div>
