@@ -7,9 +7,22 @@ import { getUserToken } from '../../services/authService';
 import Link from 'next/link';
 import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 
+interface Order {
+  _id: string;
+  orderId?: string;
+  createdAt: string;
+  status: string;
+  totalPrice: number;
+  orderItems?: any[];
+  shippingAddress?: {
+    address: string;
+    city: string;
+  };
+}
+
 export default function UserOrdersPage() {
   const loggedIn = useRequireUserAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -32,13 +45,14 @@ export default function UserOrdersPage() {
         } else {
           setOrders([]);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching orders:', error);
         
         // Handle specific error cases
-        if (error.response?.status === 401) {
+        const err = error as { response?: { status?: number }; error?: string };
+        if (err.response?.status === 401) {
           setError('Please login to view your orders.');
-        } else if (error.error === 'NETWORK_ERROR') {
+        } else if (err.error === 'NETWORK_ERROR') {
           setError('Server is currently unavailable. Please try again later.');
         } else {
           setError('Failed to load orders. Please try again.');

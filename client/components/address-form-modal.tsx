@@ -8,11 +8,22 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+interface Address {
+  name: string;
+  number: string;
+  pin: string;
+  locality: string;
+  address: string;
+  city: string;
+  state: string;
+  addressType?: string;
+}
+
 interface AddressFormModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (address: any) => void
-  address?: any // For editing existing address
+  onSubmit: (address: Address) => void
+  address?: Address // For editing existing address
   isEditing?: boolean
 }
 

@@ -98,7 +98,7 @@ const ProductsPage = () => {
                                 <label htmlFor="category" className="block text-sm font-medium text-gray-700">Product Category</label>
                                 <select name="category" id="category" value={filters.category} onChange={handleFilterChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option value="">All</option>
-                                    {categories.map((cat: any) => <option key={cat._id} value={cat.slug}>{cat.name}</option>)}
+                                    {categories.map((cat: { _id: string; slug: string; name: string }) => <option key={cat._id} value={cat.slug}>{cat.name}</option>)}
                                 </select>
                             </div>
                             <div>

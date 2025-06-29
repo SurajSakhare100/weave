@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setDashboard, setLoading, setError } from '../../features/vendor/vendorSlice';
 import { getVendorDashboard } from '../../services/vendorService';
-import { initializeVendorAuth, isVendorAuthenticated } from '../../utils/vendorAuth';
+import { initializeVendorAuth } from '../../utils/vendorAuth';
 import { 
   Package, 
   ShoppingCart, 
@@ -73,8 +73,9 @@ export default function VendorDashboard() {
         dispatch(setLoading(true));
         const data = await getVendorDashboard();
         dispatch(setDashboard(data?.data || {}));
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'Failed to load dashboard';
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'Failed to load dashboard';
         dispatch(setError(errorMessage));
       } finally {
         dispatch(setLoading(false));
@@ -145,7 +146,7 @@ export default function VendorDashboard() {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               Welcome back, {profile?.name || 'Vendor'}!
             </h1>
-            <p className="text-gray-600">Here's what's happening with your business today.</p>
+            <p className="text-gray-600">Here&apos;s what&apos;s happening with your business today.</p>
           </div>
 
           {error && (

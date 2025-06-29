@@ -2,11 +2,27 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
-import { getUserProfile, updateUserProfile } from "@/services/userService"
+import { getUserProfile } from "@/services/userService"
+
+interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  createdAt: string;
+  addresses?: Array<{
+    _id: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    phone: string;
+  }>;
+}
 
 export default function SettingsPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,7 +109,7 @@ export default function SettingsPage() {
                   <h2 className="text-lg font-semibold mb-4">Addresses</h2>
                   {profile.addresses && profile.addresses.length > 0 ? (
                     <div className="space-y-4">
-                      {profile.addresses.map((address: any, index: number) => (
+                      {profile.addresses.map((address: UserProfile['addresses'][0], index: number) => (
                         <div key={address._id} className="border rounded-lg p-4">
                           <h3 className="font-medium mb-2">Address {index + 1}</h3>
                           <p className="text-gray-600">{address.address}</p>

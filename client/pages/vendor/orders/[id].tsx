@@ -21,12 +21,59 @@ import {
   Mail
 } from 'lucide-react';
 
+interface OrderItem {
+  product?: {
+    name: string;
+    files?: string[];
+  };
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  _id: string;
+  orderId?: string;
+  createdAt: string;
+  status: string;
+  orderItems?: OrderItem[];
+  items?: OrderItem[];
+  customer?: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  shippingAddress?: {
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  totalPrice: number;
+}
+
 export default function VendorOrderDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.vendor);
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+
+  const loadOrderDetails = async () => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(clearError());
+      
+      const data = await getVendorOrderById(id as string);
+      setOrder(data);
+    } catch (error: unknown) {
+      console.error('Error loading order details:', error);
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to load order details. Please try again.';
+      dispatch(setError(errorMessage));
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
 
   useEffect(() => {
     // Check authentication
@@ -38,33 +85,18 @@ export default function VendorOrderDetailPage() {
     if (id) {
       loadOrderDetails();
     }
-  }, [id, router]);
-
-  const loadOrderDetails = async () => {
-    try {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-      
-      const data = await getVendorOrderById(id as string);
-      setOrder(data);
-    } catch (error: any) {
-      console.error('Error loading order details:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to load order details. Please try again.';
-      dispatch(setError(errorMessage));
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
+  }, [id, router, loadOrderDetails]);
 
   const handleStatusUpdate = async (newStatus: string) => {
     try {
       dispatch(setLoading(true));
       await updateOrderStatus(id as string, newStatus);
-      setOrder(prev => ({ ...prev, status: newStatus }));
+      setOrder(prev => prev ? { ...prev, status: newStatus } : null);
       dispatch(clearError());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating order status:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to update order status. Please try again.';
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to update order status. Please try again.';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));
@@ -127,7 +159,7 @@ export default function VendorOrderDetailPage() {
             <div className="text-center py-20">
               <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Order not found</h3>
-              <p className="text-gray-500 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
+              <p className="text-gray-500 mb-4">The order you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.</p>
               <button
                 onClick={() => router.push('/vendor/orders')}
                 className="bg-pink-500 text-white px-6 py-2 rounded-lg hover:bg-pink-600 transition-colors"
@@ -219,18 +251,18 @@ export default function VendorOrderDetailPage() {
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <User className="h-5 w-5 text-gray-400 mr-3" />
-                    <span className="text-gray-700">{order.user?.name || order.customerName || 'Customer'}</span>
+                    <span className="text-gray-700">{order.customer?.name || 'Customer'}</span>
                   </div>
-                  {order.user?.email && (
+                  {order.customer?.email && (
                     <div className="flex items-center">
                       <Mail className="h-5 w-5 text-gray-400 mr-3" />
-                      <span className="text-gray-700">{order.user.email}</span>
+                      <span className="text-gray-700">{order.customer.email}</span>
                     </div>
                   )}
-                  {order.user?.phone && (
+                  {order.customer?.phone && (
                     <div className="flex items-center">
                       <Phone className="h-5 w-5 text-gray-400 mr-3" />
-                      <span className="text-gray-700">{order.user.phone}</span>
+                      <span className="text-gray-700">{order.customer.phone}</span>
                     </div>
                   )}
                 </div>
@@ -259,7 +291,7 @@ export default function VendorOrderDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">₹{order.totalPrice || order.totalAmount || 0}</span>
+                    <span className="font-medium">₹{order.totalPrice || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping:</span>
@@ -272,7 +304,7 @@ export default function VendorOrderDetailPage() {
                   <div className="border-t pt-3">
                     <div className="flex justify-between">
                       <span className="text-lg font-semibold text-gray-800">Total:</span>
-                      <span className="text-lg font-bold text-gray-800">₹{order.totalPrice || order.totalAmount || 0}</span>
+                      <span className="text-lg font-bold text-gray-800">₹{order.totalPrice || 0}</span>
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setOrders, setLoading, setError, updateOrder, clearError } from '../../features/vendor/vendorSlice';
 import { getVendorOrders, updateOrderStatus } from '../../services/vendorService';
-import { isVendorAuthenticated, requireVendorAuth } from '../../utils/vendorAuth';
+import { isVendorAuthenticated } from '../../utils/vendorAuth';
 import { 
   ShoppingCart, 
   Search, 
@@ -20,6 +20,40 @@ import {
   User,
   Package
 } from 'lucide-react';
+
+interface Order {
+  _id: string;
+  orderId?: string;
+  createdAt: string;
+  status: string;
+  totalPrice: number;
+  totalAmount?: number;
+  customer?: {
+    name: string;
+    email: string;
+  };
+  user?: {
+    name: string;
+    email: string;
+  };
+  customerName?: string;
+  orderItems?: Array<{
+    product: {
+      name: string;
+      files?: string[];
+    };
+    quantity: number;
+    price: number;
+  }>;
+  items?: Array<{
+    product: {
+      name: string;
+      files?: string[];
+    };
+    quantity: number;
+    price: number;
+  }>;
+}
 
 export default function VendorOrdersPage() {
   const router = useRouter();
@@ -53,9 +87,10 @@ export default function VendorOrdersPage() {
       const data = await getVendorOrders(params);
       console.log(data)
       dispatch(setOrders(data));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading orders:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to load orders. Please try again.';
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to load orders. Please try again.';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));
@@ -73,9 +108,10 @@ export default function VendorOrdersPage() {
       await updateOrderStatus(orderId, newStatus);
       dispatch(updateOrder({ id: orderId, data: { status: newStatus } }));
       dispatch(clearError());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating order status:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to update order status. Please try again.';
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to update order status. Please try again.';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));
@@ -121,7 +157,7 @@ export default function VendorOrdersPage() {
     }
   };
 
-  const filteredOrders = (orders.items || []).filter((order: any) => {
+  const filteredOrders = (orders.items || []).filter((order: Order) => {
     if (statusFilter === 'all') return true;
     return order.status?.toLowerCase() === statusFilter;
   });
@@ -205,7 +241,7 @@ export default function VendorOrdersPage() {
             <>
               {/* Orders List */}
               <div className="space-y-4">
-                {filteredOrders.map((order: any) => (
+                {filteredOrders.map((order: Order) => (
                   <div key={order._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                       {/* Order Info */}

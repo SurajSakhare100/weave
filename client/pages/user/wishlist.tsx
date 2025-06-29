@@ -1,25 +1,24 @@
 import Layout from '@/components/Layout';
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
-import { removeFromWishlist } from '../../features/user/userSlice'
 import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getProducts } from '../../services/productService'
 import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
+import { Product } from '@/types';
 
 export default function WishlistPage() {
   useRequireUserAuth();
   const wishlist = useSelector((state: RootState) => state.user.wishlist)
-  const dispatch = useDispatch()
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const allProducts = await getProducts()
-        const wishlistProducts = allProducts.data.filter((product:any) => wishlist.includes(product._id))
+        const wishlistProducts = allProducts.data.filter((product: Product) => wishlist.includes(product._id))
         setProducts(wishlistProducts)
       } catch (error) {
         console.error('Error fetching products:', error)
@@ -62,7 +61,7 @@ export default function WishlistPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {products.map((product: any) => (
+              {products.map((product: Product) => (
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>

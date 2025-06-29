@@ -82,8 +82,9 @@ export default function VendorLoginPage() {
       }));
       
       router.push('/vendor/dashboard');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
       dispatch(loginFailure(errorMessage));
     }
   };
@@ -176,7 +177,7 @@ export default function VendorLoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <button
                 onClick={() => router.push('/vendor/register')}
                 className="text-pink-500 hover:text-pink-600 font-medium"

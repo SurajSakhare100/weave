@@ -7,13 +7,35 @@ import Layout from "@/components/Layout"
 import { getUserAddresses, addUserAddress, updateUserAddress, deleteUserAddress, setDefaultAddress } from "@/services/userService"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 
+interface Address {
+  id: string;
+  name: string;
+  address: string;
+  locality: string;
+  city: string;
+  state: string;
+  pin: string;
+  number: string;
+  isDefault: boolean;
+}
+
+interface AddressData {
+  name: string;
+  address: string;
+  locality: string;
+  city: string;
+  state: string;
+  pin: string;
+  number: string;
+}
+
 function CheckoutAddressPageContent() {
   const router = useRouter()
   const { setShippingAddress } = useCheckout()
-  const [addresses, setAddresses] = useState<any[]>([])
+  const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
   const [showAddressModal, setShowAddressModal] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<any>(null)
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -27,7 +49,7 @@ function CheckoutAddressPageContent() {
       const response = await getUserAddresses()
       if (response.success) {
         setAddresses(response.data)
-        const defaultAddress = response.data.find((addr: any) => addr.isDefault)
+        const defaultAddress = response.data.find((addr: Address) => addr.isDefault)
         if (defaultAddress) {
           setSelectedAddress(defaultAddress.id)
         } else if (response.data.length > 0) {
@@ -45,7 +67,7 @@ function CheckoutAddressPageContent() {
     setSelectedAddress(addressId)
   }
 
-  const handleAddAddress = async (addressData: any) => {
+  const handleAddAddress = async (addressData: AddressData) => {
     try {
       setSubmitting(true)
       const response = await addUserAddress(addressData)
@@ -60,10 +82,10 @@ function CheckoutAddressPageContent() {
     }
   }
 
-  const handleEditAddress = async (addressData: any) => {
+  const handleEditAddress = async (addressData: AddressData) => {
     try {
       setSubmitting(true)
-      const response = await updateUserAddress(editingAddress.id, addressData)
+      const response = await updateUserAddress(editingAddress!.id, addressData)
       if (response.success) {
         await loadAddresses()
         setShowAddressModal(false)
@@ -99,7 +121,7 @@ function CheckoutAddressPageContent() {
     }
   }
 
-  const handleEditClick = (address: any) => {
+  const handleEditClick = (address: Address) => {
     setEditingAddress(address)
     setShowAddressModal(true)
   }

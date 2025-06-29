@@ -23,8 +23,9 @@ export default function RegisterPage() {
       const data = await registerService({ name, email, password });
       dispatch(loginAction({ email: data.email, password:data.password }));
       router.push('/');
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error?.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

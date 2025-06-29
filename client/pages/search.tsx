@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import ProductCard from '@/components/ProductCard';
-import axios from 'axios';
 import Layout from '@/components/Layout';
 import { searchProducts } from '@/services/productService';
+import { Product } from '@/types';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
@@ -20,8 +20,9 @@ export default function SearchPage() {
       const res = await searchProducts({ q: query });
       setResults(res.data || []);
       setSearched(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Search failed.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error?.response?.data?.message || 'Search failed.');
       setResults([]);
       setSearched(true);
     } finally {

@@ -133,8 +133,9 @@ export default function VendorRegisterPage() {
       }));
       
       router.push('/vendor/dashboard');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
       dispatch(loginFailure(errorMessage));
     }
   };

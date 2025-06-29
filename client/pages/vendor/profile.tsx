@@ -45,7 +45,7 @@ export default function VendorProfilePage() {
 
     // Load profile data
     loadProfile();
-  }, [dispatch, router]);
+  }, [dispatch, router, loadProfile]);
 
   const loadProfile = async () => {
     try {
@@ -65,8 +65,9 @@ export default function VendorProfilePage() {
         bankBranchName: data.data.bankBranchName || '',
         bankBranchNumber: data.data.bankBranchNumber || ''
       });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to load profile';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to load profile';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));
@@ -96,8 +97,9 @@ export default function VendorProfilePage() {
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to update profile';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to update profile';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));

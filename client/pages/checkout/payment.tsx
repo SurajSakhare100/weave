@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useRouter } from "next/router"
 import { PaymentOption } from "@/components/payment-option"
-import { BankOption } from "@/components/bank-option"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"

@@ -1,180 +1,202 @@
-import { useEffect, useState } from "react"
-import { useRouter } from "next/router"
-import { CartItem } from "@/components/cart-item"
-import { OrderSummary } from "@/components/order-summary"
-import { Button } from "@/components/ui/button"
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../store/store';
+import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
+import { getUserToken } from '../services/authService';
+import { getCart, updateCartItem, removeFromCart } from '../services/cartService';
+import { Trash2, Minus, Plus } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { useRouter } from 'next/router';
 import Layout from "@/components/Layout"
-import { getCart, updateCartItem, removeFromCart } from "@/services/cartService"
+import { OrderSummary } from "@/components/order-summary"
 
-export default function CartPage() {
-  const router = useRouter()
-  const [cartItems, setCartItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface CartItem {
+  proId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image?: string;
+}
+
+const CartPage = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const { items, loading } = useSelector((state: RootState) => state.cart);
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCart()
-  }, [])
+    if (isAuthenticated) {
+      loadCart();
+    }
+  }, [isAuthenticated]);
 
   const loadCart = async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const data = await getCart()
-      
-      console.log('Cart page - Raw data from server:', data)
-      
-      if (data.success === false) {
-        setError(data.message || 'Could not load cart')
-        setCartItems([])
-      } else {
-        // Process the cart items
-        const rawItems = data.result || data || []
-        console.log('Cart page - Raw items:', rawItems)
-        
-        const processedItems = rawItems.map((item: any) => {
-          console.log('Cart page - Processing item:', item)
-          return {
-            ...item,
-            proId: item.proId?.toString() || item.proId
-          }
-        })
-        
-        console.log('Cart page - Processed items:', processedItems)
-        setCartItems(processedItems)
+      const response = await getCart();
+      if (response.success) {
+        // Cart is already loaded via Redux, no need to dispatch again
       }
-    } catch (err: any) {
-      console.error('Cart loading error:', err)
-      setError('Could not load cart. Please try again.')
-      setCartItems([])
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Failed to load cart:', error);
     }
-  }
+  };
 
-  const handleQuantityChange = async (id: string, quantity: number) => {
-    if (quantity < 1) return;
+  const handleQuantityChange = async (proId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
     
+    setUpdating(proId);
     try {
-      console.log('Cart page - Updating quantity for ID:', id, 'Quantity:', quantity)
-      const result = await updateCartItem(id, quantity)
-      if (result.success === false) {
-        setError(result.message || 'Could not update cart')
-        return
+      const response = await updateCartItem(proId, newQuantity);
+      if (response.success) {
+        await dispatch(updateCartQuantity({ proId, quantity: newQuantity }));
       }
-      
-      // Update local state
-      setCartItems(items => items.map(item => 
-        item.proId === id ? { ...item, quantity } : item
-      ))
-      setError(null)
-    } catch (err: any) {
-      console.error('Update cart error:', err)
-      setError('Could not update cart. Please try again.')
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    } finally {
+      setUpdating(null);
     }
+  };
+
+  const handleRemoveItem = async (proId: string) => {
+    setRemoving(proId);
+    try {
+      const response = await removeFromCart(proId);
+      if (response.success) {
+        await dispatch(removeCartItem(proId));
+      }
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+    } finally {
+      setRemoving(null);
+    }
+  };
+
+  const calculateTotal = () => {
+    return items.reduce((total: number, item: CartItem) => total + (item.price * item.quantity), 0);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Please login to view your cart</h2>
+            <Button onClick={() => router.push('/login')}>Login</Button>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
-  const handleRemove = async (id: string) => {
-    try {
-      console.log('Cart page - Removing item with ID:', id)
-      const result = await removeFromCart(id)
-      if (result.success === false) {
-        setError(result.message || 'Could not remove item')
-        return
-      }
-      
-      // Update local state
-      setCartItems(items => items.filter(item => item.proId !== id))
-      setError(null)
-    } catch (err: any) {
-      console.error('Remove from cart error:', err)
-      setError('Could not remove item. Please try again.')
-    }
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
-  const itemTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
-  const deliveryFee = 40
-  const cashOnDeliveryFee = 10
-  const discount = 243
-
+  if (items.length === 0) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
+            <Button onClick={() => router.push('/products')}>Continue Shopping</Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#fafafa]">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-          <nav className="text-[#6c4323] mb-8">
-            <span>Home</span>
-            <span className="mx-2">{">"}</span>
-            <span>Cart</span>
-          </nav>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{error}</p>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {items.map((item: CartItem) => (
+              <div key={item.proId} className="flex items-center border-b py-4">
+                <img 
+                  src={item.image || "/products/product.png"} 
+                  alt={item.name} 
+                  className="w-20 h-20 object-cover rounded mr-4"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold">{item.name}</h3>
+                  <p className="text-gray-600">₹{item.price}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(item.proId, item.quantity - 1)}
+                    disabled={updating === item.proId}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(item.proId, item.quantity + 1)}
+                    disabled={updating === item.proId}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.proId)}
+                    disabled={removing === item.proId}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="lg:col-span-1">
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>₹{calculateTotal()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping:</span>
+                  <span>Free</span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between font-bold">
+                    <span>Total:</span>
+                    <span>₹{calculateTotal()}</span>
+                  </div>
+                </div>
+              </div>
               <Button 
-                onClick={loadCart}
-                className="mt-2 text-red-500 underline hover:no-underline"
+                className="w-full mt-4"
+                onClick={() => router.push('/checkout')}
               >
-                Try Again
+                Proceed to Checkout
               </Button>
             </div>
-          )}
-
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-              <p>Loading cart...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                {cartItems.length === 0 ? (
-                  <div className="text-center py-20">
-                    <span className="text-6xl mb-4">🛒</span>
-                    <p className="text-gray-500 mb-4">Your cart is empty.</p>
-                    <Button 
-                      onClick={() => router.push('/products')}
-                      className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition"
-                    >
-                      Start Shopping
-                    </Button>
-                  </div>
-                ) : (
-                  cartItems.map((item) => (
-                    <CartItem
-                      key={item.proId}
-                      id={item.proId}
-                      name={item.item?.name || item.name}
-                      price={item.price}
-                      size={item.variantSize || item.size}
-                      color={item.item?.colors?.[0] || item.color}
-                      quantity={item.quantity}
-                      image={item.item?.files?.[0] ? `/uploads/${item.item.files[0]}` : "/products/product.png"}
-                      onQuantityChange={handleQuantityChange}
-                      onRemove={handleRemove}
-                    />
-                  ))
-                )}
-              </div>
-              <div>
-                <OrderSummary
-                  itemTotal={itemTotal}
-                  deliveryFee={deliveryFee}
-                  cashOnDeliveryFee={cashOnDeliveryFee}
-                  discount={discount}
-                />
-                <Button
-                  onClick={() => router.push("/checkout/address")}
-                  className="w-full mt-6 bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
-                  disabled={cartItems.length === 0}
-                >
-                  Continue to checkout
-                </Button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </Layout>
-  )
-}
+  );
+};
+
+export default CartPage;

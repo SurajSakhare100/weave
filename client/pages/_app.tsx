@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
-import store, { persistor } from '../store/store'
+import store, { persistor, RootState } from '../store/store'
 import { useEffect } from 'react';
 import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
@@ -11,7 +11,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 
 function UserHydrator() {
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: any) => state.user.isAuthenticated);
+  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
 
   useEffect(() => {
     const hydrate = async () => {
@@ -40,10 +40,6 @@ function UserHydrator() {
       }
     };
     hydrate();
-
-
-
-    
   }, [dispatch, isAuthenticated]);
   return null;
 }

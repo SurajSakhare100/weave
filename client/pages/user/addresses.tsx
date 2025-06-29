@@ -6,10 +6,32 @@ import Layout from "@/components/Layout"
 import { getUserAddresses, addUserAddress, updateUserAddress, deleteUserAddress, setDefaultAddress } from "@/services/userService"
 import { Plus } from "lucide-react"
 
+interface Address {
+  id: string;
+  name: string;
+  address: string;
+  locality: string;
+  city: string;
+  state: string;
+  pin: string;
+  number: string;
+  isDefault: boolean;
+}
+
+interface AddressData {
+  name: string;
+  address: string;
+  locality: string;
+  city: string;
+  state: string;
+  pin: string;
+  number: string;
+}
+
 export default function UserAddressesPage() {
-  const [addresses, setAddresses] = useState<any[]>([])
+  const [addresses, setAddresses] = useState<Address[]>([])
   const [showAddressModal, setShowAddressModal] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<any>(null)
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -31,7 +53,7 @@ export default function UserAddressesPage() {
     }
   }
 
-  const handleAddAddress = async (addressData: any) => {
+  const handleAddAddress = async (addressData: AddressData) => {
     try {
       setSubmitting(true)
       const response = await addUserAddress(addressData)
@@ -46,10 +68,10 @@ export default function UserAddressesPage() {
     }
   }
 
-  const handleEditAddress = async (addressData: any) => {
+  const handleEditAddress = async (addressData: AddressData) => {
     try {
       setSubmitting(true)
-      const response = await updateUserAddress(editingAddress.id, addressData)
+      const response = await updateUserAddress(editingAddress!.id, addressData)
       if (response.success) {
         await loadAddresses()
         setShowAddressModal(false)
@@ -86,7 +108,7 @@ export default function UserAddressesPage() {
     }
   }
 
-  const handleEditClick = (address: any) => {
+  const handleEditClick = (address: Address) => {
     setEditingAddress(address)
     setShowAddressModal(true)
   }

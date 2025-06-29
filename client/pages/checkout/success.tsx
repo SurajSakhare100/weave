@@ -129,7 +129,7 @@ function CheckoutSuccessPageContent() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Order Confirmation</p>
-                    <p className="text-sm text-gray-600">You'll receive an email confirmation shortly</p>
+                    <p className="text-sm text-gray-600">You&apos;ll receive an email confirmation shortly</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
@@ -138,7 +138,7 @@ function CheckoutSuccessPageContent() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Order Processing</p>
-                    <p className="text-sm text-gray-600">We'll start processing your order within 24 hours</p>
+                    <p className="text-sm text-gray-600">We&apos;ll start processing your order within 24 hours</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
@@ -147,7 +147,7 @@ function CheckoutSuccessPageContent() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Shipping</p>
-                    <p className="text-sm text-gray-600">You'll receive tracking information once shipped</p>
+                    <p className="text-sm text-gray-600">You&apos;ll receive tracking information once shipped</p>
                   </div>
                 </div>
               </div>

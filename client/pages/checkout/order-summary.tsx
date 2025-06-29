@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { useRouter } from "next/router"
 import { OrderSummary } from "@/components/order-summary"
 import { Button } from "@/components/ui/button"
@@ -12,7 +11,6 @@ function CheckoutOrderSummaryPageContent() {
     selectedAddress, 
     itemTotal, 
     deliveryFee, 
-    totalAmount, 
     discount,
     cartLoading,
     cartError

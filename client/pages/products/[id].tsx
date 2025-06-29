@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addCartItem } from '../../features/cart/cartSlice'
 import { addToWishlist, removeFromWishlist } from '../../features/user/userSlice'
@@ -12,7 +12,6 @@ import {
   Star, 
   Package, 
   Truck, 
-  RotateCcw,
   AlertCircle,
   Loader2
 } from 'lucide-react'
@@ -63,7 +62,6 @@ const dummyFrequentlyBought = [
   { _id: '3', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-3', available: 'true', stock: 10 },
   { _id: '4', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-4', available: 'true', stock: 10 },
 ];
-const dummyRelated = dummyFrequentlyBought;
 const dummyCompare = dummyFrequentlyBought;
 const dummyReviews = [
   { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s...', date: '4 months ago' },
@@ -85,23 +83,15 @@ export default function ProductDetailPage() {
   const dispatch = useDispatch<AppDispatch>()
   
   const [product, setProduct] = useState<ProductWithReviews | null>(null)
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
 
-  useEffect(() => {
-    if (id) {
-      loadProduct()
-    }
-  }, [id])
-
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -128,29 +118,32 @@ export default function ProductDetailPage() {
         const similarResponse = await getSimilarProducts(id as string)
         if (similarResponse.success === false) {
           console.warn('Failed to load similar products:', similarResponse.message)
-          setSimilarProducts([])
-        } else {
-          setSimilarProducts(similarResponse.data || [])
         }
-      } catch (similarError: any) {
+      } catch (similarError: unknown) {
         console.error('Failed to load similar products:', similarError)
-        setSimilarProducts([])
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Product loading error:', error)
       
       // Handle specific error cases
-      if (error.error === 'NETWORK_ERROR') {
+      const err = error as { error?: string; response?: { status?: number; data?: { message?: string } } };
+      if (err.error === 'NETWORK_ERROR') {
         setError('Server is currently unavailable. Please try again later.')
-      } else if (error.response?.status === 404) {
+      } else if (err.response?.status === 404) {
         setError('Product not found')
       } else {
-        setError(error.response?.data?.message || 'Failed to load product')
+        setError(err.response?.data?.message || 'Failed to load product')
       }
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    if (id) {
+      loadProduct()
+    }
+  }, [id, loadProduct])
 
   const handleAddToCart = async () => {
     if (product) {
@@ -217,7 +210,7 @@ export default function ProductDetailPage() {
   }
 
   // Get gallery images using the new utility function
-  const galleryImages = getGalleryImages(product.images, product.files);
+  const galleryImages = getGalleryImages([], product.files || []);
 
   return (
     <Layout>
@@ -225,12 +218,12 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto py-16">
         {/* Main Product Section */}
         <div className=" rounded-2xl flex flex-col lg:flex-row gap-12">
-          {/* Image Gallery */}
-          <div className="flex-1 min-w-[350px]">
+          {/* Product Images */}
+          <div className="lg:w-1/2">
             <ProductImageGallery 
-              images={product.images} 
-              legacyFiles={product.files}
-              productName={product.name} 
+              images={product.files || []} 
+              legacyFiles={product.files || []}
+              productName={product.name}
             />
           </div>
           {/* Product Info */}
@@ -309,16 +302,6 @@ export default function ProductDetailPage() {
             ))}
           </div>
         </div>
-
-        {/* Related Products */}
-        {/* <div className="mt-16">
-          <h2 className="text-xl font-bold mb-4">Related Products</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {dummyRelated.map((item) => (
-              <ProductCard key={item._id} product={item} />
-            ))}
-          </div>
-        </div> */}
 
         {/* Compare With Similar Items */}
         <div className="mt-16">

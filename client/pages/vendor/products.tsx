@@ -45,7 +45,7 @@ export default function VendorProductsPage() {
 
   useEffect(() => {
     loadProducts();
-  }, [filterStatus]);
+  }, [filterStatus, loadProducts]);
 
   const loadProducts = async (page = 1) => {
     try {
@@ -69,8 +69,9 @@ export default function VendorProductsPage() {
       };
       
       dispatch(setProducts(transformedData));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to load products';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'Failed to load products';
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));

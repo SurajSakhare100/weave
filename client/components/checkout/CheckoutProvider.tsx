@@ -173,7 +173,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
           image: item.item?.files?.[0] ? `/uploads/${item.item.files[0]}` : "/products/product.png"
         })));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error refreshing cart:', error);
       setCartError('Failed to load cart');
       setCartItems([]);
@@ -227,7 +227,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       setCartItems([]);
       clearCheckoutState();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error placing order:', error);
       setOrderError('Failed to place order. Please try again.');
       return false;
