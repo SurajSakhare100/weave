@@ -49,6 +49,8 @@ interface Order {
     pincode: string;
   };
   totalPrice: number;
+  shippingCost?: number;
+  tax?: number;
 }
 
 export default function VendorOrderDetailPage() {
@@ -232,7 +234,7 @@ export default function VendorOrderDetailPage() {
                         className="object-cover rounded"
                       />
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-800">{item.product?.name || item.name || 'Product'}</h3>
+                        <h3 className="font-medium text-gray-800">{item.product?.name || 'Product'}</h3>
                         <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                         <p className="text-sm text-gray-500">Price: ₹{item.price} each</p>
                       </div>
