@@ -17,6 +17,7 @@ interface Address {
   pin: string;
   number: string;
   isDefault: boolean;
+  addressType?: string;
 }
 
 interface AddressData {
@@ -189,7 +190,7 @@ function CheckoutAddressPageContent() {
                 {addresses.map((address) => (
                   <AddressCard
                     key={address.id}
-                    address={address}
+                    address={{ ...address, addressType: address.addressType || 'Home' }}
                     isSelected={selectedAddress === address.id}
                     onSelect={() => handleAddressSelect(address.id)}
                     onEdit={() => handleEditClick(address)}
