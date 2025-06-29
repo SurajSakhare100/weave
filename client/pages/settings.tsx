@@ -109,7 +109,7 @@ export default function SettingsPage() {
                   <h2 className="text-lg font-semibold mb-4">Addresses</h2>
                   {profile.addresses && profile.addresses.length > 0 ? (
                     <div className="space-y-4">
-                      {profile.addresses.map((address: UserProfile['addresses'][0], index: number) => (
+                      {profile.addresses.map((address, index: number) => (
                         <div key={address._id} className="border rounded-lg p-4">
                           <h3 className="font-medium mb-2">Address {index + 1}</h3>
                           <p className="text-gray-600">{address.address}</p>

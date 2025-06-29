@@ -16,6 +16,7 @@ interface Address {
   pin: string;
   number: string;
   isDefault: boolean;
+  addressType?: string;
 }
 
 interface AddressData {
@@ -156,7 +157,7 @@ export default function UserAddressesPage() {
                 {addresses.map((address) => (
                   <AddressCard
                     key={address.id}
-                    address={address}
+                    address={{ ...address, addressType: address.addressType || 'Home' }}
                     onEdit={() => handleEditClick(address)}
                     onDelete={() => handleDeleteAddress(address.id)}
                     onSetDefault={() => handleSetDefaultAddress(address.id)}
@@ -175,7 +176,7 @@ export default function UserAddressesPage() {
             setEditingAddress(null)
           }}
           onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
-          address={editingAddress}
+          address={editingAddress || undefined}
           isEditing={!!editingAddress}
         />
       </div>

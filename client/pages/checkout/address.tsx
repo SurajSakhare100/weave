@@ -231,7 +231,7 @@ function CheckoutAddressPageContent() {
             setEditingAddress(null)
           }}
           onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
-          address={editingAddress}
+          address={editingAddress || undefined}
           isEditing={!!editingAddress}
         />
       </div>
