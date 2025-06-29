@@ -206,17 +206,55 @@ const validateOrder = [
   handleValidationErrors
 ];
 
+// @desc    Address validation
+// @route   POST /api/users/addresses
+// @access  Private
+const validateAddress = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Name must be between 2 and 50 characters'),
+  body('number')
+    .matches(/^\d{10}$/)
+    .withMessage('Mobile number must be exactly 10 digits'),
+  body('pin')
+    .matches(/^\d{6}$/)
+    .withMessage('Pincode must be exactly 6 digits'),
+  body('locality')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Locality must be between 2 and 100 characters'),
+  body('address')
+    .trim()
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Address must be between 5 and 200 characters'),
+  body('city')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('City must be between 2 and 50 characters'),
+  body('state')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('State must be between 2 and 50 characters'),
+  body('addressType')
+    .optional()
+    .isIn(['Home', 'Work', 'Other'])
+    .withMessage('Address type must be Home, Work, or Other'),
+  handleValidationErrors
+];
+
 export {
   handleValidationErrors,
   validateUserRegistration,
   validateUserLogin,
-  validateVendorRegistration,
-  validateVendorLogin,
   validateProduct,
   validateCategory,
-  validateOrder,
   validateId,
   validatePagination,
   validateSearch,
-  validatePriceRange
+  validatePriceRange,
+  validateVendorRegistration,
+  validateVendorLogin,
+  validateOrder,
+  validateAddress
 }; 

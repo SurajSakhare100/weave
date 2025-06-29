@@ -3,22 +3,27 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Wishlist from '../models/Wishlist.js';
+import mongoose from 'mongoose';
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
 export const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password');
+  try {
+    const user = await User.findById(req.user._id).select('-password');
 
-  if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  res.json({
-    success: true,
-    data: user
-  });
 });
 
 // @desc    Update user profile
@@ -338,4 +343,196 @@ export const getUserStats = asyncHandler(async (req, res) => {
       dailyStats
     }
   });
+});
+
+// @desc    Get user addresses
+// @route   GET /api/users/addresses
+// @access  Private
+export const getUserAddresses = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate('addresses');
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    res.json({
+      success: true,
+      data: user.addresses || []
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Add new address
+// @route   POST /api/users/addresses
+// @access  Private
+export const addUserAddress = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const { name, number, pin, locality, address, city, state, addressType = 'Home' } = req.body;
+
+    // Validate required fields
+    if (!name || !number || !pin || !locality || !address || !city || !state) {
+      res.status(400);
+      throw new Error('All address fields are required');
+    }
+
+    const newAddress = {
+      id: new mongoose.Types.ObjectId().toHexString(),
+      name,
+      number,
+      pin,
+      locality,
+      address,
+      city,
+      state,
+      addressType
+    };
+
+    // Initialize addresses array if it doesn't exist
+    if (!user.addresses) {
+      user.addresses = [];
+    }
+
+    user.addresses.push(newAddress);
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      data: newAddress,
+      message: 'Address added successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Update address
+// @route   PUT /api/users/addresses/:addressId
+// @access  Private
+export const updateUserAddress = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const { addressId } = req.params;
+    const { name, number, pin, locality, address, city, state, addressType } = req.body;
+
+    // Find the address in user's addresses array
+    const addressIndex = user.addresses.findIndex(addr => addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      res.status(404);
+      throw new Error('Address not found');
+    }
+
+    // Update address fields
+    if (name) user.addresses[addressIndex].name = name;
+    if (number) user.addresses[addressIndex].number = number;
+    if (pin) user.addresses[addressIndex].pin = pin;
+    if (locality) user.addresses[addressIndex].locality = locality;
+    if (address) user.addresses[addressIndex].address = address;
+    if (city) user.addresses[addressIndex].city = city;
+    if (state) user.addresses[addressIndex].state = state;
+    if (addressType) user.addresses[addressIndex].addressType = addressType;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user.addresses[addressIndex],
+      message: 'Address updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Delete address
+// @route   DELETE /api/users/addresses/:addressId
+// @access  Private
+export const deleteUserAddress = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const { addressId } = req.params;
+
+    // Find and remove the address from user's addresses array
+    const addressIndex = user.addresses.findIndex(addr => addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      res.status(404);
+      throw new Error('Address not found');
+    }
+
+    user.addresses.splice(addressIndex, 1);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Address deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Set default address
+// @route   PUT /api/users/addresses/:addressId/default
+// @access  Private
+export const setDefaultAddress = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const { addressId } = req.params;
+
+    // Find the address in user's addresses array
+    const addressIndex = user.addresses.findIndex(addr => addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      res.status(404);
+      throw new Error('Address not found');
+    }
+
+    // Remove default from all addresses
+    user.addresses.forEach(addr => {
+      addr.isDefault = false;
+    });
+
+    // Set the selected address as default
+    user.addresses[addressIndex].isDefault = true;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user.addresses[addressIndex],
+      message: 'Default address updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }); 

@@ -1,9 +1,10 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { validateImageFile } from '../utils/imageUpload.js';
 
 // Ensure uploads directory exists
-const ensureUploadsDir = (req, res, next) => {
+export const ensureUploadsDir = (req, res, next) => {
   const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -11,99 +12,155 @@ const ensureUploadsDir = (req, res, next) => {
   next();
 };
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
-});
+// Multer configuration for file uploads
+const storage = multer.memoryStorage();
 
-// File filter function
 const fileFilter = (req, file, cb) => {
-  // Allow only images
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed!'), false);
+  // Validate image file
+  if (!validateImageFile(file)) {
+    cb(new Error('Invalid file type or size. Only JPEG, PNG, and WebP files up to 10MB are allowed.'), false);
+    return;
   }
+  cb(null, true);
 };
 
-// Configure multer
-const upload = multer({
+// Multer instance for multiple files
+export const uploadMultiple = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB
     files: 10 // Maximum 10 files
   }
-});
+}).array('images', 10);
 
-// Single file upload
-const uploadSingle = upload.single('image');
+// Multer instance for single file
+export const uploadSingle = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  }
+}).single('image');
 
-// Multiple files upload
-const uploadMultiple = upload.array('images', 10);
-
-// Handle upload errors
-const handleUploadError = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
+// Error handling middleware
+export const handleUploadError = (error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message: 'File too large. Maximum size is 5MB'
+        message: 'File too large. Maximum size is 10MB.'
       });
     }
-    if (err.code === 'LIMIT_FILE_COUNT') {
+    if (error.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
         success: false,
-        message: 'Too many files. Maximum is 10 files'
+        message: 'Too many files. Maximum 10 files allowed.'
       });
     }
-    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
       return res.status(400).json({
         success: false,
-        message: 'Unexpected file field'
+        message: 'Unexpected file field.'
       });
     }
   }
   
-  if (err.message === 'Only image files are allowed!') {
+  if (error.message.includes('Invalid file type')) {
     return res.status(400).json({
       success: false,
-      message: err.message
+      message: error.message
     });
   }
-  
-  next(err);
-};
 
-// Process uploaded files
-const processUploadedFiles = (req, res, next) => {
-  if (!req.files && !req.file) {
-    return next();
-  }
-
-  const files = req.files || [req.file];
-  const fileUrls = files.map(file => {
-    // Return relative path for storage
-    return `/uploads/${file.filename}`;
+  console.error('Upload error:', error);
+  return res.status(500).json({
+    success: false,
+    message: 'File upload failed. Please try again.'
   });
-
-  req.fileUrls = fileUrls;
-  next();
 };
 
-export {
-  ensureUploadsDir,
-  uploadSingle,
-  uploadMultiple,
-  handleUploadError,
-  processUploadedFiles
+// Middleware to process uploaded files for Cloudinary
+export const processUploadedFiles = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No images uploaded. Please select at least one image.'
+      });
+    }
+
+    // Validate all files
+    for (const file of req.files) {
+      if (!validateImageFile(file)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid file: ${file.originalname}. Only JPEG, PNG, and WebP files up to 10MB are allowed.`
+        });
+      }
+    }
+
+    // Add processed files to request
+    req.processedFiles = req.files;
+    next();
+  } catch (error) {
+    console.error('File processing error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing uploaded files.'
+    });
+  }
+};
+
+// Middleware to handle single file upload
+export const handleSingleUpload = (req, res, next) => {
+  uploadSingle(req, res, (err) => {
+    if (err) {
+      return handleUploadError(err, req, res, next);
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image uploaded. Please select an image.'
+      });
+    }
+
+    if (!validateImageFile(req.file)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type or size. Only JPEG, PNG, and WebP files up to 10MB are allowed.'
+      });
+    }
+
+    next();
+  });
+};
+
+// Middleware to handle multiple file uploads
+export const handleMultipleUpload = (req, res, next) => {
+  uploadMultiple(req, res, (err) => {
+    if (err) {
+      return handleUploadError(err, req, res, next);
+    }
+    
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No images uploaded. Please select at least one image.'
+      });
+    }
+
+    // Validate all files
+    for (const file of req.files) {
+      if (!validateImageFile(file)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid file: ${file.originalname}. Only JPEG, PNG, and WebP files up to 10MB are allowed.`
+        });
+      }
+    }
+
+    next();
+  });
 }; 

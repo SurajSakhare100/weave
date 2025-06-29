@@ -22,15 +22,12 @@ import { protect, admin, vendorAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes are protected
-router.use(protect);
-
-// User routes
-router.post('/', validateOrder, createOrder);
-router.get('/myorders', validatePagination, getMyOrders);
-router.get('/:id', validateId, getOrderById);
-router.put('/:id/pay', validateId, updateOrderToPaid);
-router.put('/:id/cancel', validateId, cancelOrder);
+// User routes - require authentication
+router.post('/', protect, createOrder);
+router.get('/myorders', protect, validatePagination, getMyOrders);
+router.get('/:id', protect, validateId, getOrderById);
+router.put('/:id/pay', protect, validateId, updateOrderToPaid);
+router.put('/:id/cancel', protect, validateId, cancelOrder);
 
 // Vendor routes
 router.get('/vendor', vendorAuth, validatePagination, getVendorOrders);

@@ -1,94 +1,150 @@
-"use client"
-
-import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { useRouter } from "next/router"
 import { OrderSummary } from "@/components/order-summary"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
+import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 
-export default function OrderSummaryPage() {
+function CheckoutOrderSummaryPageContent() {
   const router = useRouter()
+  const { 
+    cartItems, 
+    selectedAddress, 
+    itemTotal, 
+    deliveryFee, 
+    totalAmount, 
+    discount,
+    cartLoading,
+    cartError
+  } = useCheckout()
 
-  const cartItems = [
-    {
-      id: "1",
-      name: "Bag name",
-      price: 1999,
-      size: "Large",
-      color: "Pink",
-      quantity: 1,
-      image: "/products/product.png",
-    },
-    {
-      id: "2",
-      name: "Bag name",
-      price: 1999,
-      size: "Large",
-      color: "Pink",
-      quantity: 2,
-      image: "/products/product.png",
-    },
-  ]
+  const handleContinue = () => {
+    if (!selectedAddress) {
+      alert('Please select a delivery address first')
+      router.push("/checkout/address")
+      return
+    }
+    router.push("/checkout/payment")
+  }
 
-  const itemTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  if (cartLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (cartError) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{cartError}</p>
+            <Button onClick={() => router.push('/cart')}>Back to Cart</Button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Your cart is empty</p>
+            <Button onClick={() => router.push('/products')}>Start Shopping</Button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
+      <div className="min-h-screen bg-[#fafafa]">
+        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+          <nav className="text-[#6c4323] mb-8">
+            <span>Home</span>
+            <span className="mx-2">{">"}</span>
+            <span>Cart</span>
+            <span className="mx-2">{">"}</span>
+            <span>Order Summary</span>
+          </nav>
 
-    <div className="min-h-screen bg-[#fafafa]">
-
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-        <nav className="text-[#6c4323] mb-8">
-          <span>Home</span>
-          <span className="mx-2">{">"}</span>
-          <span>Cart</span>
-          <span className="mx-2">{">"}</span>
-          <span>Select Address</span>
-          <span className="mx-2">{">"}</span>
-          <span>Place Your Order</span>
-        </nav>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-6 p-6 bg-[#fff9f5] rounded-lg mb-4">
-                <div className=" bg-[#fff9f5] rounded-lg flex items-center justify-center">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-32 h-32 object-contain" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-[#6c4323] font-medium text-lg mb-1">{item.name}</h3>
-                  <p className="text-[#6c4323] font-semibold text-lg mb-2">₹ {item.price}</p>
-                  <div className="text-[#6c4323] text-sm space-y-1">
-                    <p>Size: {item.size}</p>
-                    <p>Color: {item.color}</p>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h1 className="text-2xl font-bold mb-6">Order Summary</h1>
+            
+            <div className="space-y-4 mb-6">
+              {cartItems.map((item, index) => (
+                <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <img 
+                    src={item.image || "/products/product.png"}
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{item.name}</h3>
+                    <p className="text-gray-600">Qty: {item.quantity}</p>
+                    {item.variantSize && <p className="text-gray-600">Size: {item.variantSize}</p>}
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">₹{item.price * item.quantity}</p>
                   </div>
                 </div>
-                <div className="text-[#6c4323] text-sm">Quantity: {item.quantity}</div>
-              </div>
-            ))}
-
-            <div className="bg-white p-6 rounded-lg mt-6">
-              <h3 className="text-[#6c4323] font-medium mb-2">Delivering to Snehal Dinde</h3>
-              <p className="text-[#6c4323] text-sm">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-                dolore magna aliqua.
-              </p>
+              ))}
             </div>
-          </div>
 
-          <div>
-            <OrderSummary itemTotal={itemTotal} deliveryFee={40} cashOnDeliveryFee={10} discount={243} />
+            <OrderSummary
+              itemTotal={itemTotal}
+              deliveryFee={deliveryFee}
+              cashOnDeliveryFee={0}
+              discount={discount}
+            />
 
-            <Button
-              onClick={() => router.push("/checkout/payment")}
-              className="w-full mt-6 bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
-            >
-              Continue to checkout
-            </Button>
+            {selectedAddress && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold mb-2">Delivery Address</h3>
+                <div className="space-y-1">
+                  <p className="font-medium">{selectedAddress.name}</p>
+                  {selectedAddress.address.map((line, index) => (
+                    <p key={index} className="text-gray-600">{line}</p>
+                  ))}
+                  <p className="text-gray-600">{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}</p>
+                  <p className="text-gray-600">Phone: {selectedAddress.phone}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex justify-between">
+              <Button 
+                onClick={() => router.back()}
+                variant="outline"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleContinue}
+                className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
+              >
+                Continue to Payment
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </Layout>
-
   )
 }
+
+export default function CheckoutOrderSummaryPage() {
+  return (
+    <CheckoutProvider>
+      <CheckoutOrderSummaryPageContent />
+    </CheckoutProvider>
+  )
+}
+

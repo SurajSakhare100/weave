@@ -30,7 +30,33 @@ export async function getUserDashboard() {
   return res.data;
 }
 
-// Admin
+// Address management functions
+export async function getUserAddresses() {
+  const res = await api.get('/users/addresses');
+  return res.data;
+}
+
+export async function addUserAddress(addressData: any) {
+  const res = await api.post('/users/addresses', addressData);
+  return res.data;
+}
+
+export async function updateUserAddress(addressId: string, addressData: any) {
+  const res = await api.put(`/users/addresses/${addressId}`, addressData);
+  return res.data;
+}
+
+export async function deleteUserAddress(addressId: string) {
+  const res = await api.delete(`/users/addresses/${addressId}`);
+  return res.data;
+}
+
+export async function setDefaultAddress(addressId: string) {
+  const res = await api.put(`/users/addresses/${addressId}/default`);
+  return res.data;
+}
+
+// Admin functions - these use ID parameters but are admin-only
 export async function getUsers(params?: any) {
   const res = await api.get('/users', { params });
   return res.data;

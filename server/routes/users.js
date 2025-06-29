@@ -8,7 +8,12 @@ import {
   updateUser,
   deleteUser,
   getUserOrders,
-  getUserStats
+  getUserStats,
+  getUserAddresses,
+  addUserAddress,
+  updateUserAddress,
+  deleteUserAddress,
+  setDefaultAddress
 } from '../controllers/userController.js';
 import {
   validateId,
@@ -16,6 +21,7 @@ import {
   validateSearch
 } from '../middleware/validation.js';
 import { protect, admin } from '../middleware/auth.js';
+import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '../controllers/cartController.js';
 
 const router = express.Router();
 
@@ -26,6 +32,20 @@ router.use(protect);
 router.get('/profile', getUserProfile);
 router.put('/profile', updateUserProfile);
 router.get('/dashboard', getUserDashboard);
+
+// Address routes
+router.get('/addresses', getUserAddresses);
+router.post('/addresses', addUserAddress);
+router.put('/addresses/:addressId', updateUserAddress);
+router.delete('/addresses/:addressId', deleteUserAddress);
+router.put('/addresses/:addressId/default', setDefaultAddress);
+
+// Cart routes - Fixed to use token-based auth instead of ID parameters
+router.get('/cart', getCart);
+router.post('/cart', addToCart);
+router.put('/cart/:itemId', updateCartItem);
+router.delete('/cart/:itemId', removeFromCart);
+router.delete('/cart', clearCart);
 
 // Admin routes
 router.get('/', admin, validatePagination, validateSearch, getUsers);

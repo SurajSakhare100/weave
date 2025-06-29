@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react"
-import { useRouter } from "next/router"
 import { AddressCard } from "@/components/address-card"
 import { AddressFormModal } from "@/components/address-form-modal"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { getUserAddresses, addUserAddress, updateUserAddress, deleteUserAddress, setDefaultAddress } from "@/services/userService"
-import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
+import { Plus } from "lucide-react"
 
-function CheckoutAddressPageContent() {
-  const router = useRouter()
-  const { setShippingAddress } = useCheckout()
+export default function UserAddressesPage() {
   const [addresses, setAddresses] = useState<any[]>([])
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [editingAddress, setEditingAddress] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -27,22 +23,12 @@ function CheckoutAddressPageContent() {
       const response = await getUserAddresses()
       if (response.success) {
         setAddresses(response.data)
-        const defaultAddress = response.data.find((addr: any) => addr.isDefault)
-        if (defaultAddress) {
-          setSelectedAddress(defaultAddress.id)
-        } else if (response.data.length > 0) {
-          setSelectedAddress(response.data[0].id)
-        }
       }
     } catch (error) {
       console.error('Error loading addresses:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleAddressSelect = (addressId: string) => {
-    setSelectedAddress(addressId)
   }
 
   const handleAddAddress = async (addressData: any) => {
@@ -78,6 +64,7 @@ function CheckoutAddressPageContent() {
 
   const handleDeleteAddress = async (addressId: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return
+
     try {
       const response = await deleteUserAddress(addressId)
       if (response.success) {
@@ -109,24 +96,6 @@ function CheckoutAddressPageContent() {
     setShowAddressModal(true)
   }
 
-  const handleContinue = () => {
-    if (selectedAddress) {
-      const address = addresses.find(addr => addr.id === selectedAddress)
-      if (address) {
-        const shippingAddress = {
-          name: address.name,
-          address: [address.address, `${address.locality}, ${address.city}`, `${address.state} - ${address.pin}`],
-          city: address.city,
-          state: address.state,
-          pincode: address.pin,
-          phone: address.number
-        }
-        setShippingAddress(shippingAddress)
-        router.push("/checkout/order-summary")
-      }
-    }
-  }
-
   if (loading) {
     return (
       <Layout>
@@ -141,61 +110,44 @@ function CheckoutAddressPageContent() {
     <Layout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-          <nav className="text-[#6c4323] mb-8">
-            <span>Home</span>
-            <span className="mx-2">{">"}</span>
-            <span>Cart</span>
-            <span className="mx-2">{">"}</span>
-            <span>Address</span>
-          </nav>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-[#6c4323]">My Addresses</h1>
+            <Button 
+              onClick={handleAddNewClick}
+              className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Address
+            </Button>
+          </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-2xl font-bold mb-6">Select Delivery Address</h1>
-            
             {addresses.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No addresses found.</p>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No addresses yet</h3>
+                <p className="text-gray-500 mb-6">Add your first delivery address to get started.</p>
                 <Button 
                   onClick={handleAddNewClick}
-                  className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition"
+                  className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
                 >
-                  Add New Address
+                  Add Your First Address
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {addresses.map((address) => (
                   <AddressCard
                     key={address.id}
                     address={address}
-                    isSelected={selectedAddress === address.id}
-                    onSelect={() => handleAddressSelect(address.id)}
                     onEdit={() => handleEditClick(address)}
                     onDelete={() => handleDeleteAddress(address.id)}
                     onSetDefault={() => handleSetDefaultAddress(address.id)}
                     showActions={true}
                   />
                 ))}
-                
-                <Button 
-                  onClick={handleAddNewClick}
-                  variant="outline"
-                  className="w-full mt-4"
-                >
-                  + Add New Address
-                </Button>
-              </div>
-            )}
-
-            {addresses.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <Button 
-                  onClick={handleContinue}
-                  disabled={!selectedAddress || submitting}
-                  className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white py-3"
-                >
-                  {submitting ? 'Processing...' : 'Continue to Order Summary'}
-                </Button>
               </div>
             )}
           </div>
@@ -213,13 +165,5 @@ function CheckoutAddressPageContent() {
         />
       </div>
     </Layout>
-  )
-}
-
-export default function CheckoutAddressPage() {
-  return (
-    <CheckoutProvider>
-      <CheckoutAddressPageContent />
-    </CheckoutProvider>
   )
 } 

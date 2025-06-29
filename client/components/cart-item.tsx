@@ -1,4 +1,3 @@
-"use client"
 import { Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -11,12 +10,15 @@ interface CartItemProps {
   quantity: number
   image: string
   onQuantityChange: (id: string, quantity: number) => void
+  onRemove?: (id: string) => void
 }
 
-export function CartItem({ id, name, price, size, color, quantity, image, onQuantityChange }: CartItemProps) {
+export function CartItem({ id, name, price, size, color, quantity, image, onQuantityChange, onRemove }: CartItemProps) {
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1) {
       onQuantityChange(id, newQuantity)
+    } else if (onRemove) {
+      onRemove(id)
     }
   }
 
@@ -53,6 +55,16 @@ export function CartItem({ id, name, price, size, color, quantity, image, onQuan
         >
           <Plus className="h-4 w-4" />
         </Button>
+        {onRemove && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(id)}
+            className="ml-2 text-red-500"
+          >
+            Remove
+          </Button>
+        )}
       </div>
     </div>
   )

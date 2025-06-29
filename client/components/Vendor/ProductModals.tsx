@@ -72,46 +72,39 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   onSuccess: () => void;
 }) => {
   const dispatch = useDispatch();
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    mrp: '',
-    discount: 0,
-    category: '',
-    description: '',
-    pickup_location: '',
-    return: true,
-    cancellation: true,
-    available: 'true',
-    colors: '',
-    stock: '',
-    status: 'active',
-  });
+  // Individual state for each input
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [mrp, setMrp] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [allowReturn, setAllowReturn] = useState(true);
+  const [allowCancellation, setAllowCancellation] = useState(true);
+  const [available, setAvailable] = useState('true');
+  const [colors, setColors] = useState('');
+  const [stock, setStock] = useState('');
+  const [status, setStatus] = useState('active');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLocalLoading] = useState(false);
 
   useEffect(() => {
-    // Load categories (you'll need to implement this API)
     loadCategories();
   }, []);
 
   const loadCategories = async () => {
     try {
-      // Use the correct API endpoint
       const { data } = await api.get('/categories');
       setCategories(data.data || []);
-      
-      // If no categories exist, create a default one
       if (data.data && data.data.length === 0) {
         setCategories([
           { _id: 'default', name: 'General', slug: 'general' }
         ]);
       }
     } catch (error) {
-      console.error('Failed to load categories:', error);
-      // Set a default category if API fails
       setCategories([
         { _id: 'default', name: 'General', slug: 'general' }
       ]);
@@ -121,54 +114,33 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setImages(files);
-    
-    const previews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    setImagePreviews(files.map(file => URL.createObjectURL(file)));
   };
 
   const removeImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setImages(newImages);
-    setImagePreviews(newPreviews);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    console.log(e.target);
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setImages(images.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
-    
     try {
       const formDataToSend = new FormData();
-      
-      // Add form fields
-      Object.keys(formData).forEach(key => {
-        let val = formData[key as keyof typeof formData];
-        if (key === 'return' || key === 'cancellation') {
-          formDataToSend.append(key, val.toString());
-        } else if (key === 'colors') {
-          // send as array
-          if (val) {
-            val.split(',').map((c: string) => c.trim()).forEach((color: string) => formDataToSend.append('colors', color));
-          }
-        } else {
-          formDataToSend.append(key, val.toString());
-        }
-      });
-      
-      // Add images with correct field name
-      images.forEach(image => {
-        formDataToSend.append('images', image);
-      });
-      
+      formDataToSend.append('name', name);
+      formDataToSend.append('price', price);
+      formDataToSend.append('mrp', mrp);
+      formDataToSend.append('discount', discount.toString());
+      formDataToSend.append('category', category);
+      formDataToSend.append('description', description);
+      formDataToSend.append('pickup_location', pickupLocation);
+      formDataToSend.append('return', allowReturn.toString());
+      formDataToSend.append('cancellation', allowCancellation.toString());
+      formDataToSend.append('available', available);
+      formDataToSend.append('status', status);
+      formDataToSend.append('stock', stock);
+      if (colors) colors.split(',').map(c => c.trim()).forEach(color => formDataToSend.append('colors', color));
+      images.forEach(image => formDataToSend.append('images', image));
       await createProduct(formDataToSend);
       onSuccess();
       onClose();
@@ -182,21 +154,19 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      price: '',
-      mrp: '',
-      discount: 0,
-      category: '',
-      description: '',
-      pickup_location: '',
-      return: true,
-      cancellation: true,
-      available: 'true',
-      colors: '',
-      stock: '',
-      status: 'active',
-    });
+    setName('');
+    setPrice('');
+    setMrp('');
+    setDiscount(0);
+    setCategory('');
+    setDescription('');
+    setPickupLocation('');
+    setAllowReturn(true);
+    setAllowCancellation(true);
+    setAvailable('true');
+    setColors('');
+    setStock('');
+    setStatus('active');
     setImages([]);
     setImagePreviews([]);
   };
@@ -207,7 +177,6 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-        
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative z-[10000]">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-6">
@@ -219,198 +188,85 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                 <X className="h-6 w-6" />
               </button>
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e)=>handleChange(e as React.ChangeEvent<HTMLInputElement>)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="Enter product name"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                  <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product name" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                  <select required value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                     <option value="" disabled>Select category</option>
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat.name}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+                  <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MRP (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.mrp}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">MRP (₹) *</label>
+                  <input type="number" required value={mrp} onChange={e => setMrp(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Discount (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.discount}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
+                  <input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
-                  <input type="text" name="colors" value={formData.colors} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                  <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>
-                  <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
+                  <input type="number" value={stock} onChange={e => setStock(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select name="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
+                  <select value={status} onChange={e => setStatus(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="draft">Draft</option>
                   </select>
                 </div>
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter product description"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product description" />
               </div>
-
-              {/* Pickup Location */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pickup Location
-                </label>
-                <input
-                  type="text"
-                  value={formData.pickup_location}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter pickup location"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                <input type="text" value={pickupLocation} onChange={e => setPickupLocation(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter pickup location" />
               </div>
-
-              {/* Policies */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="return"
-                    checked={formData.return}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="return" className="ml-2 text-sm text-gray-700">
-                    Allow Returns
-                  </label>
+                  <input type="checkbox" id="return" checked={allowReturn} onChange={e => setAllowReturn(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+                  <label htmlFor="return" className="ml-2 text-sm text-gray-700">Allow Returns</label>
                 </div>
-
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="cancellation"
-                    checked={formData.cancellation}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="cancellation" className="ml-2 text-sm text-gray-700">
-                    Allow Cancellation
-                  </label>
+                  <input type="checkbox" id="cancellation" checked={allowCancellation} onChange={e => setAllowCancellation(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+                  <label htmlFor="cancellation" className="ml-2 text-sm text-gray-700">Allow Cancellation</label>
                 </div>
               </div>
-
-              {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Images
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload"
-                  />
+                  <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
                   <label htmlFor="image-upload" className="cursor-pointer">
                     <div className="text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-600">
-                        Click to upload images or drag and drop
-                      </p>
+                      <p className="mt-2 text-sm text-gray-600">Click to upload images or drag and drop</p>
                     </div>
                   </label>
                 </div>
-
-                {/* Image Previews */}
                 {imagePreviews.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative">
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                        <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <button type="button" onClick={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -418,32 +274,10 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                   </div>
                 )}
               </div>
-
-              {/* Form Actions */}
               <div className="flex justify-end space-x-3 pt-6 border-t">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 flex items-center"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Create Product
-                    </>
-                  )}
+                <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={loading} className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 flex items-center">
+                  {loading ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Creating...</>) : (<><Save className="h-4 w-4 mr-2" />Create Product</>)}
                 </button>
               </div>
             </form>
@@ -462,21 +296,20 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   product: Product | null;
 }) => {
   const dispatch = useDispatch();
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    mrp: '',
-    discount: 0,
-    category: '',
-    description: '',
-    pickup_location: '',
-    return: true,
-    cancellation: true,
-    available: 'true',
-    colors: '',
-    stock: '',
-    status: 'active',
-  });
+  // Individual state for each input
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [mrp, setMrp] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [allowReturn, setAllowReturn] = useState(true);
+  const [allowCancellation, setAllowCancellation] = useState(true);
+  const [available, setAvailable] = useState('true');
+  const [colors, setColors] = useState('');
+  const [stock, setStock] = useState('');
+  const [status, setStatus] = useState('active');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -485,22 +318,22 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
 
   useEffect(() => {
     if (product && isOpen) {
-      setFormData({
-        name: product.name || '',
-        price: product.price?.toString() || '',
-        mrp: product.mrp?.toString() || '',
-        discount: product.discount || 0,
-        category: product.category || '',
-        description: product.description || '',
-        pickup_location: product.pickup_location || '',
-        return: product.return || true,
-        cancellation: product.cancellation || true,
-        available: product.available || 'true',
-        colors: product.colors ? product.colors.join(', ') : '',
-        stock: product.stock?.toString() || '',
-        status: product.status || 'active',
-      });
+      setName(product.name || '');
+      setPrice(product.price?.toString() || '');
+      setMrp(product.mrp?.toString() || '');
+      setDiscount(product.discount || 0);
+      setCategory(product.category || '');
+      setDescription(product.description || '');
+      setPickupLocation(product.pickup_location || '');
+      setAllowReturn(product.return || true);
+      setAllowCancellation(product.cancellation || true);
+      setAvailable(product.available || 'true');
+      setColors(product.colors ? product.colors.join(', ') : '');
+      setStock(product.stock?.toString() || '');
+      setStatus(product.status || 'active');
       setExistingImages(product.files || []);
+      setImages([]);
+      setImagePreviews([]);
     }
     loadCategories();
   }, [product, isOpen]);
@@ -509,16 +342,12 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
     try {
       const { data } = await api.get('/categories');
       setCategories(data.data || []);
-      
-      // If no categories exist, create a default one
       if (data.data && data.data.length === 0) {
         setCategories([
           { _id: 'default', name: 'General', slug: 'general' }
         ]);
       }
     } catch (error) {
-      console.error('Failed to load categories:', error);
-      // Set a default category if API fails
       setCategories([
         { _id: 'default', name: 'General', slug: 'general' }
       ]);
@@ -528,57 +357,38 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setImages(files);
-    
-    const previews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    setImagePreviews(files.map(file => URL.createObjectURL(file)));
   };
 
   const removeExistingImage = (index: number) => {
-    const newImages = existingImages.filter((_, i) => i !== index);
-    setExistingImages(newImages);
+    setExistingImages(existingImages.filter((_, i) => i !== index));
   };
 
   const removeNewImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setImages(newImages);
-    setImagePreviews(newPreviews);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setImages(images.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
-    
     try {
       const formDataToSend = new FormData();
-      
-      Object.keys(formData).forEach(key => {
-        let val = formData[key];
-        if (key === 'colors') {
-          if (val) {
-            val.split(',').map((c) => c.trim()).forEach((color) => formDataToSend.append('colors', color));
-          }
-        } else {
-          formDataToSend.append(key, val.toString());
-        }
-      });
-      
-      // Add existing images
+      formDataToSend.append('name', name);
+      formDataToSend.append('price', price);
+      formDataToSend.append('mrp', mrp);
+      formDataToSend.append('discount', discount.toString());
+      formDataToSend.append('category', category);
+      formDataToSend.append('description', description);
+      formDataToSend.append('pickup_location', pickupLocation);
+      formDataToSend.append('return', allowReturn.toString());
+      formDataToSend.append('cancellation', allowCancellation.toString());
+      formDataToSend.append('available', available);
+      formDataToSend.append('status', status);
+      formDataToSend.append('stock', stock);
+      if (colors) colors.split(',').map(c => c.trim()).forEach(color => formDataToSend.append('colors', color));
       formDataToSend.append('existingImages', JSON.stringify(existingImages));
-      
-      // Add new images
-      images.forEach(image => {
-        formDataToSend.append('images', image);
-      });
-      
+      images.forEach(image => formDataToSend.append('images', image));
       if (product) {
         await updateProduct(product._id, formDataToSend);
         onSuccess();
@@ -598,7 +408,6 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-        
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative z-[10000]">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-6">
@@ -610,181 +419,76 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                 <X className="h-6 w-6" />
               </button>
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="Enter product name"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                  <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product name" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                  <select required value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                     <option value="">Select category</option>
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat.name}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+                  <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MRP (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.mrp}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">MRP (₹) *</label>
+                  <input type="number" required value={mrp} onChange={e => setMrp(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Discount (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.discount}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
+                  <input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
-                  <input type="text" name="colors" value={formData.colors} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                  <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>
-                  <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
+                  <input type="number" value={stock} onChange={e => setStock(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select name="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
+                  <select value={status} onChange={e => setStatus(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="draft">Draft</option>
                   </select>
                 </div>
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter product description"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product description" />
               </div>
-
-              {/* Pickup Location */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pickup Location
-                </label>
-                <input
-                  type="text"
-                  value={formData.pickup_location}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter pickup location"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                <input type="text" value={pickupLocation} onChange={e => setPickupLocation(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter pickup location" />
               </div>
-
-              {/* Policies */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="return-edit"
-                    checked={formData.return}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="return-edit" className="ml-2 text-sm text-gray-700">
-                    Allow Returns
-                  </label>
+                  <input type="checkbox" id="return-edit" checked={allowReturn} onChange={e => setAllowReturn(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+                  <label htmlFor="return-edit" className="ml-2 text-sm text-gray-700">Allow Returns</label>
                 </div>
-
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="cancellation-edit"
-                    checked={formData.cancellation}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="cancellation-edit" className="ml-2 text-sm text-gray-700">
-                    Allow Cancellation
-                  </label>
+                  <input type="checkbox" id="cancellation-edit" checked={allowCancellation} onChange={e => setAllowCancellation(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+                  <label htmlFor="cancellation-edit" className="ml-2 text-sm text-gray-700">Allow Cancellation</label>
                 </div>
               </div>
-
-              {/* Existing Images */}
               {existingImages.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Images
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Images</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {existingImages.map((image, index) => (
                       <div key={index} className="relative">
-                        <img
-                          src={`/uploads/${image}`}
-                          alt={`Product ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = '/products/product.png';
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeExistingImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                        <img src={`/uploads/${image}`} alt={`Product ${index + 1}`} className="w-full h-24 object-cover rounded-lg" onError={e => { (e.currentTarget as HTMLImageElement).src = '/products/product.png'; }} />
+                        <button type="button" onClick={() => removeExistingImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -792,46 +496,23 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   </div>
                 </div>
               )}
-
-              {/* Add New Images */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Add New Images
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Add New Images</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload-edit"
-                  />
+                  <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload-edit" />
                   <label htmlFor="image-upload-edit" className="cursor-pointer">
                     <div className="text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-600">
-                        Click to upload additional images
-                      </p>
+                      <p className="mt-2 text-sm text-gray-600">Click to upload additional images</p>
                     </div>
                   </label>
                 </div>
-
-                {/* New Image Previews */}
                 {imagePreviews.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative">
-                        <img
-                          src={preview}
-                          alt={`New Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeNewImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                        <img src={preview} alt={`New Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <button type="button" onClick={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -839,32 +520,10 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   </div>
                 )}
               </div>
-
-              {/* Form Actions */}
               <div className="flex justify-end space-x-3 pt-6 border-t">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 flex items-center"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Update Product
-                    </>
-                  )}
+                <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={loading} className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 flex items-center">
+                  {loading ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Updating...</>) : (<><Save className="h-4 w-4 mr-2" />Update Product</>)}
                 </button>
               </div>
             </form>

@@ -7,6 +7,7 @@ import Wishlist from '../models/Wishlist.js';
 import Order from '../models/Order.js';
 import Address from '../models/Address.js';
 import Product from '../models/Product.js';
+import { toObjectId } from '../utils/generateToken.js';
 
 export default {
     CheckUser: async (details) => {
@@ -94,16 +95,57 @@ export default {
     },
 
     addToCart: async ({ userId, item }) => {
-        const cart = await Cart.findOneAndUpdate(
-            { user: userId },
-            { $addToSet: { items: item } },
-            { upsert: true, new: true }
-        );
-        return { found: false };
+        console.log('User helper - Input:', { userId, item });
+        
+        // Ensure proId is an ObjectId
+        const proId = toObjectId(item.proId);
+        if (!proId) {
+            throw new Error('Invalid product ID');
+        }
+        
+        const cartItem = {
+            ...item,
+            proId: proId
+        };
+        
+        console.log('User helper - Cart item:', cartItem);
+        
+        // First check if item already exists in cart
+        const existingCart = await Cart.findOne({ 
+            user: userId, 
+            'items.proId': proId 
+        });
+        
+        console.log('User helper - Existing cart:', existingCart);
+        
+        if (existingCart) {
+            // Item exists, update quantity
+            const result = await Cart.updateOne(
+                { user: userId, 'items.proId': proId },
+                { $inc: { 'items.$.quantity': item.quantity } }
+            );
+            console.log('User helper - Update result:', result);
+            return { found: true, updated: true };
+        } else {
+            // Item doesn't exist, add new item
+            const result = await Cart.findOneAndUpdate(
+                { user: userId },
+                { $push: { items: cartItem } },
+                { upsert: true, new: true }
+            );
+            console.log('User helper - Add result:', result);
+            return { found: false, added: true };
+        }
     },
 
     checkItemInCart: async ({ userId, proId }) => {
-        const cart = await Cart.findOne({ user: userId, 'items.proId': proId });
+        // Ensure proId is an ObjectId
+        const objectId = toObjectId(proId);
+        if (!objectId) {
+            throw new Error('Invalid product ID');
+        }
+        
+        const cart = await Cart.findOne({ user: userId, 'items.proId': objectId });
         return { incart: !!cart };
     },
 
@@ -114,11 +156,14 @@ export default {
             match: { available: true }
         });
         
+        console.log('User helper - Raw cart data:', JSON.stringify(cart, null, 2));
+        
         if (!cart) {
             return { result: [], amount: { _id: userId, totalPrice: 0, totalDiscount: 0, totalMrp: 0 } };
         }
 
         const result = cart.items.filter(item => item.proId);
+        console.log('User helper - Filtered items:', JSON.stringify(result, null, 2));
         
         const amount = result.reduce((acc, item) => {
             acc.totalPrice += item.quantity * item.price;
@@ -128,13 +173,35 @@ export default {
 
         amount.totalDiscount = amount.totalMrp - amount.totalPrice;
 
-        return { result: result.map(i => ({...i.toObject(), item: i.proId})), amount };
+        // Process each item to ensure proper structure
+        const processedResult = result.map(i => {
+            const itemObj = i.toObject();
+            console.log('User helper - Item object:', JSON.stringify(itemObj, null, 2));
+            
+            // The proId field should be the original ObjectId (string) for API calls
+            // The item field should contain the populated product data
+            return {
+                ...itemObj,
+                proId: itemObj.proId?._id?.toString() || itemObj.proId?.toString() || itemObj.proId,
+                item: i.proId // This contains the populated product data
+            };
+        });
+
+        console.log('User helper - Final processed result:', JSON.stringify(processedResult, null, 2));
+
+        return { result: processedResult, amount };
     },
     
     addToWishlist: async ({ userId, item }) => {
+        // Ensure proId is an ObjectId
+        const proId = toObjectId(item.proId);
+        if (!proId) {
+            throw new Error('Invalid product ID');
+        }
+        
         return Wishlist.findOneAndUpdate(
             { user: userId },
-            { $addToSet: { items: { proId: item.proId, price: item.price, mrp: item.mrp, variantSize: item.variantSize } } },
+            { $addToSet: { items: { proId: proId, price: item.price, mrp: item.mrp, variantSize: item.variantSize } } },
             { upsert: true, new: true }
         );
     },
@@ -144,19 +211,37 @@ export default {
     },
 
     removeItemWihslist: ({ userId, proId }) => {
-        return Wishlist.updateOne({ user: userId }, { $pull: { items: { proId: proId } } });
+        // Ensure proId is an ObjectId
+        const objectId = toObjectId(proId);
+        if (!objectId) {
+            throw new Error('Invalid product ID');
+        }
+        
+        return Wishlist.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
     },
 
     removeItemCart: ({ userId, proId }) => {
-        return Cart.updateOne({ user: userId }, { $pull: { items: { proId: proId } } });
+        // Ensure proId is an ObjectId
+        const objectId = toObjectId(proId);
+        if (!objectId) {
+            throw new Error('Invalid product ID');
+        }
+        
+        return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
     },
 
     changeQuantityCart: ({ userId, proId, action, quantity }) => {
+        // Ensure proId is an ObjectId
+        const objectId = toObjectId(proId);
+        if (!objectId) {
+            throw new Error('Invalid product ID');
+        }
+        
         if (quantity + action === 0) {
-            return Cart.updateOne({ user: userId }, { $pull: { items: { proId: proId } } });
+            return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
         }
         return Cart.updateOne(
-            { user: userId, 'items.proId': proId },
+            { user: userId, 'items.proId': objectId },
             { $inc: { 'items.$.quantity': action } }
         );
     },

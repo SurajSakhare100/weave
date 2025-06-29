@@ -6,12 +6,16 @@ import Product from '../models/Product.js';
 // @route   GET /api/categories
 // @access  Public
 export const getCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find().sort('name');
+  try {
+    const categories = await Category.find().sort('name');
 
-  res.json({
-    success: true,
-    data: categories
-  });
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // @desc    Get single category by ID

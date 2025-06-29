@@ -16,7 +16,14 @@ export default function UserProfile() {
           <span className="text-2xl mb-4">👤</span>
           <h1 className="text-2xl font-bold mb-2">{user.email}</h1>
           <div className="mb-2">Wishlist: <Link href="/user/wishlist" className="text-pink-500 underline">{user.wishlist.length} items</Link></div>
-          <Link href="/user/orders" className="mt-4 bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition">View Orders</Link>
+          <div className="flex flex-col gap-3 mt-4 w-full">
+            <Link href="/user/orders" className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition text-center">
+              View Orders
+            </Link>
+            <Link href="/user/addresses" className="bg-[#6c4323] text-white px-6 py-2 rounded hover:bg-[#6c4323]/90 transition text-center">
+              Manage Addresses
+            </Link>
+          </div>
         </div>
       </section>
     </Layout>

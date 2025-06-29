@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 function UserHydrator() {
   const dispatch = useDispatch();
@@ -18,8 +19,12 @@ function UserHydrator() {
       if (token && !isAuthenticated) {
         try {
           const profile = await getUserProfile();
-          if (profile.data) {
-            dispatch(login({ email: profile.data.email, password: profile.data.password}));
+          if (profile.success && profile.data) {
+            // Just set authentication state without trying to login again
+            dispatch(login({ 
+              email: profile.data.email, 
+              password: '' // We don't have the password, just mark as authenticated
+            }));
           } else {
             // If profile fetch fails, clear the token
             dispatch(logout());
@@ -35,17 +40,23 @@ function UserHydrator() {
       }
     };
     hydrate();
+
+
+
+    
   }, [dispatch, isAuthenticated]);
   return null;
 }
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <UserHydrator />
-        <Component {...pageProps} />
-      </PersistGate>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <UserHydrator />
+          <Component {...pageProps} />
+        </PersistGate>
+      </Provider>
+    </ErrorBoundary>
   );
 }

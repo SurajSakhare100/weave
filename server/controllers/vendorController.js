@@ -7,17 +7,21 @@ import Order from '../models/Order.js';
 // @route   GET /api/vendors/profile
 // @access  Private (Vendor)
 export const getVendorProfile = asyncHandler(async (req, res) => {
-  const vendor = await Vendor.findById(req.vendor._id).select('-password');
+  try {
+    const vendor = await Vendor.findById(req.vendor._id).select('-password');
 
-  if (!vendor) {
-    res.status(404);
-    throw new Error('Vendor not found');
+    if (!vendor) {
+      res.status(404);
+      throw new Error('Vendor not found');
+    }
+
+    res.json({
+      success: true,
+      data: vendor
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  res.json({
-    success: true,
-    data: vendor
-  });
 });
 
 // @desc    Update vendor profile

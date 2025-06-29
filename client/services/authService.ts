@@ -20,9 +20,19 @@ export async function register(data: { name: string; email: string; password: st
 }
 
 export async function logout() {
+  // Clear cookies
   Cookies.remove('userToken');
-  const res = await api.post('/auth/logout');
-  return res.data;
+  Cookies.remove('vendorToken');
+  
+  // Call logout endpoint if possible
+  try {
+    await api.post('/auth/logout');
+  } catch (error) {
+    // Ignore errors on logout
+    console.log('Logout endpoint error (ignored):', error);
+  }
+  
+  return { success: true, message: 'Logged out successfully' };
 }
 
 export function getUserToken() {

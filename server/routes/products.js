@@ -19,12 +19,12 @@ import {
   validatePriceRange
 } from '../middleware/validation.js';
 import { protect, vendorAuth, optionalVendorAuth } from '../middleware/auth.js';
-import { uploadMultiple, handleUploadError, ensureUploadsDir } from '../middleware/upload.js';
+import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload.js';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', optionalVendorAuth, validatePagination, validateSearch, validatePriceRange, getProducts);
+router.get('/', validatePagination, validateSearch, validatePriceRange, getProducts);
 router.get('/search', validateSearch, validatePriceRange, validatePagination, searchProducts);
 router.get('/category/:categorySlug', validatePriceRange, validatePagination, getProductsByCategory);
 router.get('/slug/:slug', getProductBySlug);
@@ -37,9 +37,8 @@ router.post('/:id/reviews', protect, validateId, createProductReview);
 // Protected routes (Vendor only)
 router.post('/', 
   vendorAuth, 
-  ensureUploadsDir,
-  uploadMultiple,
-  handleUploadError,
+  handleMultipleUpload,
+  processUploadedFiles,
   validateProduct, 
   createProduct
 );
@@ -47,9 +46,8 @@ router.post('/',
 router.put('/:id', 
   vendorAuth, 
   validateId,
-  ensureUploadsDir,
-  uploadMultiple,
-  handleUploadError,
+  handleMultipleUpload,
+  processUploadedFiles,
   validateProduct, 
   updateProduct
 );

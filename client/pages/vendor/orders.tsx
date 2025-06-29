@@ -29,12 +29,14 @@ export default function VendorOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
 
   useEffect(() => {
-    // Check authentication
+    // Check authentication and load orders only if authenticated
     if (!isVendorAuthenticated()) {
+      router.push('/vendor/login');
       return;
     }
     loadOrders();
-  }, [dispatch, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   const loadOrders = async (page = 1) => {
     try {
@@ -49,6 +51,7 @@ export default function VendorOrdersPage() {
       };
       
       const data = await getVendorOrders(params);
+      console.log(data)
       dispatch(setOrders(data));
     } catch (error: any) {
       console.error('Error loading orders:', error);
@@ -118,7 +121,7 @@ export default function VendorOrdersPage() {
     }
   };
 
-  const filteredOrders = orders.items.filter(order => {
+  const filteredOrders = (orders.items || []).filter((order: any) => {
     if (statusFilter === 'all') return true;
     return order.status?.toLowerCase() === statusFilter;
   });

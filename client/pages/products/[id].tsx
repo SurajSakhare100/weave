@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { addItem } from '../../features/cart/cartSlice'
+import { addCartItem } from '../../features/cart/cartSlice'
 import { addToWishlist, removeFromWishlist } from '../../features/user/userSlice'
-import { RootState } from '../../store/store'
+import { RootState, AppDispatch } from '../../store/store'
 import { getProductById, getSimilarProducts } from '../../services/productService'
 import Link from 'next/link'
 import { 
@@ -20,6 +20,7 @@ import { Product } from '@/types'
 import ProductImageGallery from '@/components/product/ProductImageGallery'
 import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
+import { getGalleryImages } from '@/utils/imageUtils'
 
 // Add reviews to the Product type
 interface ProductWithReviews extends Product {
@@ -72,7 +73,7 @@ const dummyReviews = [
 
 const dummyProductDetails = [
   { label: 'Product Weight', value: '500grams' },
-  { label: 'Dimensions', value: '12.5\"W x 8\"D x 12\"H' },
+  { label: 'Dimensions', value: '12.5"W x 8"D x 12"H' },
   { label: 'Capacity', value: '12 Litre' },
   { label: 'Materials', value: 'Sisal Fibres' },
   { label: 'Product Category', value: 'Tote' },
@@ -81,7 +82,7 @@ const dummyProductDetails = [
 export default function ProductDetailPage() {
   const router = useRouter()
   const { id } = router.query
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
   
   const [product, setProduct] = useState<ProductWithReviews | null>(null)
   const [similarProducts, setSimilarProducts] = useState<Product[]>([])
@@ -106,40 +107,64 @@ export default function ProductDetailPage() {
       setError(null)
       
       const response = await getProductById(id as string)
-      const productData = response.data
+      
+      // Handle different response formats
+      if (response.success === false) {
+        setError(response.message || 'Failed to load product')
+        return
+      }
+      
+      const productData = response.data || response
+      if (!productData) {
+        setError('Product not found')
+        return
+      }
+      
       setProduct(productData)
       setSelectedColor(productData.colors ? productData.colors[0] : null)
       
       // Load similar products
       try {
         const similarResponse = await getSimilarProducts(id as string)
-        setSimilarProducts(similarResponse.data || [])
-      } catch (similarError) {
+        if (similarResponse.success === false) {
+          console.warn('Failed to load similar products:', similarResponse.message)
+          setSimilarProducts([])
+        } else {
+          setSimilarProducts(similarResponse.data || [])
+        }
+      } catch (similarError: any) {
         console.error('Failed to load similar products:', similarError)
         setSimilarProducts([])
       }
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to load product')
-      // setProduct({ ...dummyFrequentlyBought[0] }) // fallback to dummy with all required fields
+      console.error('Product loading error:', error)
+      
+      // Handle specific error cases
+      if (error.error === 'NETWORK_ERROR') {
+        setError('Server is currently unavailable. Please try again later.')
+      } else if (error.response?.status === 404) {
+        setError('Product not found')
+      } else {
+        setError(error.response?.data?.message || 'Failed to load product')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // const getImageUrl = (files: string[], index: number = 0) => {
-  //   if (files && files.length > index) {
-  //     return `http://localhost:5000/uploads/${files[index]}`
-  //   }
-  //   return '/products/product.png'
-  // }
-
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product) {
-      dispatch(addItem({ 
-        ...product, 
-        quantity,
-        id: product._id // Ensure cart uses _id
-      }))
+      try {
+        await dispatch(addCartItem({
+          product,
+          quantity,
+          variantSize: selectedColor || product.currVariantSize
+        })).unwrap()
+        // Show success message or update UI
+      } catch (error) {
+        console.error('Failed to add to cart:', error)
+        // Handle error - could show a toast notification
+      }
     }
   }
 
@@ -191,8 +216,8 @@ export default function ProductDetailPage() {
     )
   }
 
-  // Prepare images for gallery
-  const images = (product.files || []).map((file, i) => ({ src: `/products/${file}`, alt: `${product.name} ${i + 1}` }));
+  // Get gallery images using the new utility function
+  const galleryImages = getGalleryImages(product.images, product.files);
 
   return (
     <Layout>
@@ -202,7 +227,11 @@ export default function ProductDetailPage() {
         <div className=" rounded-2xl flex flex-col lg:flex-row gap-12">
           {/* Image Gallery */}
           <div className="flex-1 min-w-[350px]">
-            <ProductImageGallery images={images} productName={product.name} />
+            <ProductImageGallery 
+              images={product.images} 
+              legacyFiles={product.files}
+              productName={product.name} 
+            />
           </div>
           {/* Product Info */}
           <div className="flex-1 flex flex-col gap-4">
@@ -367,29 +396,17 @@ export default function ProductDetailPage() {
                     {[...Array(5)].map((_, j) => (
                       <Star key={j} className={`h-4 w-4 ${j < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                     ))}
-                    <span className="ml-2 text-gray-700 font-semibold">{review.name}</span>
-                    <span className="ml-auto text-xs text-gray-400">{review.date}</span>
+                    <span className="font-semibold">{review.name}</span>
+                    <span className="text-gray-500 text-sm">{review.date}</span>
                   </div>
-                  <p className="text-gray-700 text-sm">{review.text}</p>
+                  <p className="text-gray-700">{review.text}</p>
                 </div>
               ))}
-              {/* Review input (dummy) */}
-              <div className="flex items-center gap-2 mt-4">
-                <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-lg">S</span>
-                <div className="flex-1">
-                  <div className="flex gap-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-gray-300" />
-                    ))}
-                  </div>
-                  <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Write a review..." disabled />
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
     </Layout>
   )
 } 

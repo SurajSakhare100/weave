@@ -1,143 +1,229 @@
-"use client"
-
 import { useState } from "react"
+import { useRouter } from "next/router"
 import { PaymentOption } from "@/components/payment-option"
 import { BankOption } from "@/components/bank-option"
-import { SuccessModal } from "@/components/success-modal"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 import Layout from "@/components/Layout"
+import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
+import { placeOrder } from "@/services/orderService"
 
-export default function PaymentPage() {
+function CheckoutPaymentPageContent() {
   const router = useRouter()
-  const [selectedPayment, setSelectedPayment] = useState("online")
-  const [selectedBank, setSelectedBank] = useState("")
-  const [showSuccess, setShowSuccess] = useState(false)
+  const { 
+    selectedAddress, 
+    cartItems, 
+    itemTotal, 
+    deliveryFee, 
+    totalAmount, 
+    discount,
+    paymentMethod,
+    setPaymentMethod,
+    placeOrder: checkoutPlaceOrder,
+    orderLoading,
+    orderError
+  } = useCheckout()
+  const [selectedBank, setSelectedBank] = useState<string>('')
 
-  const handlePayment = () => {
-    setShowSuccess(true)
+  const handlePaymentMethodSelect = (method: 'online' | 'cod') => {
+    setPaymentMethod(method)
+    if (method !== 'online') {
+      setSelectedBank('')
+    }
+  }
+
+  const handleBankSelect = (bank: string) => {
+    setSelectedBank(bank)
+  }
+
+  const handlePlaceOrder = async () => {
+    if (!selectedAddress) {
+      alert('Please select a delivery address')
+      return
+    }
+
+    if (!paymentMethod) {
+      alert('Please select a payment method')
+      return
+    }
+
+    if (paymentMethod === 'online' && !selectedBank) {
+      alert('Please select a bank')
+      return
+    }
+
+    if (cartItems.length === 0) {
+      alert('Your cart is empty')
+      return
+    }
+
+    try {
+      const success = await checkoutPlaceOrder()
+      if (success) {
+        router.push('/checkout/success')
+      } else {
+        alert('Failed to place order. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error placing order:', error)
+      alert('Failed to place order. Please try again.')
+    }
+  }
+
+  if (!selectedAddress) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Please select a delivery address first</p>
+            <Button onClick={() => router.push('/checkout/address')}>
+              Go to Address Selection
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Your cart is empty</p>
+            <Button onClick={() => router.push('/products')}>
+              Start Shopping
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
   return (
     <Layout>
+      <div className="min-h-screen bg-[#fafafa]">
+        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+          <nav className="text-[#6c4323] mb-8">
+            <span>Home</span>
+            <span className="mx-2">{">"}</span>
+            <span>Cart</span>
+            <span className="mx-2">{">"}</span>
+            <span>Address</span>
+            <span className="mx-2">{">"}</span>
+            <span>Payment</span>
+          </nav>
 
-    <div className="min-h-screen bg-[#fafafa]">
-
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-        <nav className="text-[#6c4323] mb-8">
-          <span>Home</span>
-          <span className="mx-2">{">"}</span>
-          <span>Cart</span>
-          <span className="mx-2">{">"}</span>
-          <span>Select Address</span>
-          <span className="mx-2">{">"}</span>
-          <span>Place Your Order</span>
-          <span className="mx-2">{">"}</span>
-          <span>Payment Method</span>
-        </nav>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <PaymentOption
-              label="Pay Online"
-              amount="2200"
-              isSelected={selectedPayment === "online"}
-              onSelect={() => setSelectedPayment("online")}
-            >
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border border-[#e5e5e5] rounded">
-                  <div className="text-blue-600 font-bold text-sm">UPI</div>
-                  <span className="text-[#6c4323]">Pay by any UPI App</span>
-                </div>
-                <Button variant="link" className="text-[#cf1a53] p-0 h-auto font-normal">
-                  Add UPI ID +
-                </Button>
-
-                <div className="border border-[#e5e5e5] rounded p-3">
-                  <span className="text-[#6c4323]">Debit/Credit Cards</span>
-                </div>
-
-                <div className="border border-[#e5e5e5] rounded p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[#6c4323] font-medium">Net Banking</span>
-                  </div>
-                  <div className="space-y-2">
-                    <BankOption
-                      icon={
-                        <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          S
-                        </div>
-                      }
-                      name="State Bank of India"
-                      isSelected={selectedBank === "sbi"}
-                      onSelect={() => setSelectedBank("sbi")}
-                    />
-                    <BankOption
-                      icon={
-                        <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          H
-                        </div>
-                      }
-                      name="HDFC Bank"
-                      isSelected={selectedBank === "hdfc"}
-                      onSelect={() => setSelectedBank("hdfc")}
-                    />
-                    <BankOption
-                      icon={
-                        <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          I
-                        </div>
-                      }
-                      name="ICICI Netbanking"
-                      isSelected={selectedBank === "icici"}
-                      onSelect={() => setSelectedBank("icici")}
-                    />
-                    <BankOption
-                      icon={
-                        <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          A
-                        </div>
-                      }
-                      name="Axis Bank"
-                      isSelected={selectedBank === "axis"}
-                      onSelect={() => setSelectedBank("axis")}
-                    />
-                  </div>
-                  <Button variant="link" className="text-[#cf1a53] p-0 h-auto font-normal mt-4">
-                    View all banks
-                  </Button>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h1 className="text-2xl font-bold mb-6">Payment Method</h1>
+            
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Select Payment Method</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <PaymentOption
+                    label="Cash on Delivery"
+                    icon="💳"
+                    isSelected={paymentMethod === 'cod'}
+                    onSelect={() => handlePaymentMethodSelect('cod')}
+                  />
+                  <PaymentOption
+                    label="Online Payment"
+                    icon="🏦"
+                    isSelected={paymentMethod === 'online'}
+                    onSelect={() => handlePaymentMethodSelect('online')}
+                  />
                 </div>
               </div>
-            </PaymentOption>
-          </div>
 
-          <div className="bg-[#fff9f5] p-6 rounded-lg h-fit">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#6c4323] text-white rounded text-xs flex items-center justify-center font-bold">
-                  ₹
+              {paymentMethod === 'online' && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">Select Payment Option</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <PaymentOption
+                      label="Credit/Debit Card"
+                      icon="💳"
+                      isSelected={selectedBank === 'card'}
+                      onSelect={() => handleBankSelect('card')}
+                    />
+                    <PaymentOption
+                      label="UPI"
+                      icon="📱"
+                      isSelected={selectedBank === 'upi'}
+                      onSelect={() => handleBankSelect('upi')}
+                    />
+                    <PaymentOption
+                      label="Net Banking"
+                      icon="🏦"
+                      isSelected={selectedBank === 'netbanking'}
+                      onSelect={() => handleBankSelect('netbanking')}
+                    />
+                  </div>
                 </div>
-                <span className="text-[#6c4323] font-medium">To Pay</span>
-                <span className="text-[#6c4323] line-through text-sm">₹ 6,997</span>
-                <span className="text-[#6c4323] font-bold">₹ 5,754</span>
-              </div>
+              )}
+
+              {paymentMethod && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Order Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Items Total:</span>
+                      <span>₹{itemTotal}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Fee:</span>
+                      <span>₹{deliveryFee}</span>
+                    </div>
+                    {paymentMethod === 'cod' && (
+                      <div className="flex justify-between">
+                        <span>Cash on Delivery Fee:</span>
+                        <span>₹10</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Discount:</span>
+                      <span>-₹{discount}</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between font-semibold">
+                      <span>Total:</span>
+                      <span>₹{totalAmount}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {orderError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-600">{orderError}</p>
+                </div>
+              )}
             </div>
-            <div className="text-[#cf1a53] text-sm mb-4">₹ 243 saved on the total!</div>
 
-            <Button onClick={handlePayment} className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white">
-              Continue to checkout
-            </Button>
+            <div className="mt-8 flex justify-between">
+              <Button 
+                onClick={() => router.back()}
+                variant="outline"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={!paymentMethod || (paymentMethod === 'online' && !selectedBank) || orderLoading}
+                className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
+              >
+                {orderLoading ? 'Placing Order...' : 'Place Order'}
+              </Button>
+            </div>
           </div>
         </div>
-
-        <SuccessModal
-          isOpen={showSuccess}
-          onClose={() => setShowSuccess(false)}
-          onContinueShopping={() => router.push("/")}
-        />
       </div>
-    </div>
     </Layout>
+  )
+}
 
+export default function CheckoutPaymentPage() {
+  return (
+    <CheckoutProvider>
+      <CheckoutPaymentPageContent />
+    </CheckoutProvider>
   )
 }

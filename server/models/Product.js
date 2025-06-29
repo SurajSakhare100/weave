@@ -80,7 +80,32 @@ const ProductSchema = new mongoose.Schema({
     },
     uni_id_1: String,
     uni_id_2: String,
+    
+    // Cloudinary Images
+    images: [{
+        url: {
+            type: String,
+            required: true
+        },
+        public_id: {
+            type: String,
+            required: true
+        },
+        width: Number,
+        height: Number,
+        format: String,
+        bytes: Number,
+        thumbnail_url: String,
+        small_thumbnail_url: String,
+        is_primary: {
+            type: Boolean,
+            default: false
+        }
+    }],
+    
+    // Legacy files field for backward compatibility
     files: [String],
+    
     variant: {
         type: Boolean,
         default: false,
@@ -124,6 +149,29 @@ ProductSchema.index({ vendorId: 1 });
 ProductSchema.index({ available: 1 });
 ProductSchema.index({ colors: 1 });
 ProductSchema.index({ status: 1 });
+
+// Virtual for primary image
+ProductSchema.virtual('primaryImage').get(function() {
+    if (this.images && this.images.length > 0) {
+        const primary = this.images.find(img => img.is_primary);
+        return primary ? primary.url : this.images[0].url;
+    }
+    return null;
+});
+
+// Virtual for thumbnail
+ProductSchema.virtual('thumbnail').get(function() {
+    if (this.images && this.images.length > 0) {
+        const primary = this.images.find(img => img.is_primary);
+        const image = primary || this.images[0];
+        return image.thumbnail_url || image.url;
+    }
+    return null;
+});
+
+// Ensure virtuals are serialized
+ProductSchema.set('toJSON', { virtuals: true });
+ProductSchema.set('toObject', { virtuals: true });
 
 const Product = mongoose.model('Product', ProductSchema);
 

@@ -20,11 +20,26 @@ export default function UserOrdersPage() {
         setError('');
         
         const response = await getUserOrders();
-        setOrders(response.data || response || []);
+        
+        // Handle different response formats
+        if (response.success === false) {
+          setError(response.message || 'Failed to load orders');
+          setOrders([]);
+        } else if (response.data) {
+          setOrders(response.data);
+        } else if (Array.isArray(response)) {
+          setOrders(response);
+        } else {
+          setOrders([]);
+        }
       } catch (error: any) {
         console.error('Error fetching orders:', error);
+        
+        // Handle specific error cases
         if (error.response?.status === 401) {
           setError('Please login to view your orders.');
+        } else if (error.error === 'NETWORK_ERROR') {
+          setError('Server is currently unavailable. Please try again later.');
         } else {
           setError('Failed to load orders. Please try again.');
         }
@@ -34,8 +49,10 @@ export default function UserOrdersPage() {
       }
     };
 
-    fetchOrders();
-  }, []);
+    if (loggedIn) {
+      fetchOrders();
+    }
+  }, [loggedIn]);
 
   console.log('Orders page render:', { loggedIn, ordersCount: orders.length });
 
@@ -62,7 +79,17 @@ export default function UserOrdersPage() {
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600">{error}</p>
-              <Link href="/login" className="text-red-500 underline mt-2 inline-block">Login here</Link>
+              {error.includes('login') && (
+                <Link href="/login" className="text-red-500 underline mt-2 inline-block">Login here</Link>
+              )}
+              {!error.includes('login') && (
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="text-red-500 underline mt-2 inline-block"
+                >
+                  Try Again
+                </button>
+              )}
             </div>
           )}
           

@@ -8,200 +8,228 @@ import Coupon from '../models/Coupon.js';
 // @route   POST /api/orders
 // @access  Private
 const createOrder = asyncHandler(async (req, res) => {
-  const {
-    orderItems,
-    shippingAddress,
-    paymentMethod,
-    couponCode,
-    itemsPrice,
-    taxPrice,
-    shippingPrice,
-    totalPrice
-  } = req.body;
+  try {
+    const {
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      couponCode,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice
+    } = req.body;
 
-  if (orderItems && orderItems.length === 0) {
-    res.status(400);
-    throw new Error('No order items');
-  }
-
-  // Calculate prices if not provided
-  let calculatedItemsPrice = 0;
-  let calculatedTaxPrice = 0;
-  let calculatedShippingPrice = 0;
-  let calculatedTotalPrice = 0;
-
-  // Verify products and calculate prices
-  for (const item of orderItems) {
-    const product = await Product.findById(item.productId);
-    if (!product) {
-      res.status(404);
-      throw new Error(`Product not found: ${item.productId}`);
-    }
-    if (product.available !== 'true') {
+    if (orderItems && orderItems.length === 0) {
       res.status(400);
-      throw new Error(`Product not available: ${product.name}`);
+      throw new Error('No order items');
     }
-    calculatedItemsPrice += product.price * item.quantity;
+
+    // Calculate prices if not provided
+    let calculatedItemsPrice = 0;
+    let calculatedTaxPrice = 0;
+    let calculatedShippingPrice = 0;
+    let calculatedTotalPrice = 0;
+
+    // Verify products and calculate prices
+    for (const item of orderItems) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        res.status(404);
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+      if (product.available !== 'true') {
+        res.status(400);
+        throw new Error(`Product not available: ${product.name}`);
+      }
+      calculatedItemsPrice += product.price * item.quantity;
+    }
+
+    // Apply coupon if provided
+    let discountAmount = 0;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
+      if (!coupon) {
+        res.status(400);
+        throw new Error('Invalid coupon code');
+      }
+      
+      const now = new Date();
+      if (now < coupon.validFrom || now > coupon.validTo) {
+        res.status(400);
+        throw new Error('Coupon is not valid');
+      }
+
+      if (coupon.type === 'percentage') {
+        discountAmount = (calculatedItemsPrice * coupon.discount) / 100;
+      } else {
+        discountAmount = coupon.discount;
+      }
+      
+      discountAmount = Math.min(discountAmount, calculatedItemsPrice);
+    }
+
+    // Calculate tax and shipping
+    calculatedTaxPrice = (calculatedItemsPrice - discountAmount) * 0.18; // 18% GST
+    calculatedShippingPrice = calculatedItemsPrice > 500 ? 0 : 50; // Free shipping above 500
+    calculatedTotalPrice = calculatedItemsPrice - discountAmount + calculatedTaxPrice + calculatedShippingPrice;
+
+    const order = new Order({
+      orderItems,
+      user: req.user._id,
+      shippingAddress,
+      paymentMethod,
+      couponCode,
+      itemsPrice: calculatedItemsPrice,
+      taxPrice: calculatedTaxPrice,
+      shippingPrice: calculatedShippingPrice,
+      discountAmount,
+      totalPrice: calculatedTotalPrice
+    });
+
+    const createdOrder = await order.save();
+
+    // Clear the user's cart after successful order creation
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.cart = [];
+      await user.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      data: createdOrder,
+      message: 'Order created successfully and cart cleared'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  // Apply coupon if provided
-  let discountAmount = 0;
-  if (couponCode) {
-    const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
-    if (!coupon) {
-      res.status(400);
-      throw new Error('Invalid coupon code');
-    }
-    
-    const now = new Date();
-    if (now < coupon.validFrom || now > coupon.validTo) {
-      res.status(400);
-      throw new Error('Coupon is not valid');
-    }
-
-    if (coupon.type === 'percentage') {
-      discountAmount = (calculatedItemsPrice * coupon.discount) / 100;
-    } else {
-      discountAmount = coupon.discount;
-    }
-    
-    discountAmount = Math.min(discountAmount, calculatedItemsPrice);
-  }
-
-  // Calculate tax and shipping
-  calculatedTaxPrice = (calculatedItemsPrice - discountAmount) * 0.18; // 18% GST
-  calculatedShippingPrice = calculatedItemsPrice > 500 ? 0 : 50; // Free shipping above 500
-  calculatedTotalPrice = calculatedItemsPrice - discountAmount + calculatedTaxPrice + calculatedShippingPrice;
-
-  const order = new Order({
-    orderItems,
-    user: req.user._id,
-    shippingAddress,
-    paymentMethod,
-    couponCode,
-    itemsPrice: calculatedItemsPrice,
-    taxPrice: calculatedTaxPrice,
-    shippingPrice: calculatedShippingPrice,
-    discountAmount,
-    totalPrice: calculatedTotalPrice
-  });
-
-  const createdOrder = await order.save();
-
-  res.status(201).json({
-    success: true,
-    data: createdOrder
-  });
 });
 
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id)
-    .populate('user', 'name email')
-    .populate({
-      path: 'orderItems.productId',
-      select: 'name price mrp discount files vendorId',
-      populate: {
-        path: 'vendorId',
-        select: 'name'
-      }
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate({
+        path: 'orderItems.productId',
+        select: 'name price mrp discount files vendorId',
+        populate: {
+          path: 'vendorId',
+          select: 'name'
+        }
+      });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    // Check if user owns this order or is admin
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      res.status(401);
+      throw new Error('Not authorized to view this order');
+    }
+
+    res.json({
+      success: true,
+      data: order
     });
-
-  if (!order) {
-    res.status(404);
-    throw new Error('Order not found');
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  // Check if user owns this order or is admin
-  if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-    res.status(401);
-    throw new Error('Not authorized to view this order');
-  }
-
-  res.json({
-    success: true,
-    data: order
-  });
 });
 
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  try {
+    const order = await Order.findById(req.params.id);
 
-  if (!order) {
-    res.status(404);
-    throw new Error('Order not found');
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    order.paymentResult = {
+      id: req.body.id,
+      status: req.body.status,
+      update_time: req.body.update_time,
+      email_address: req.body.payer.email_address
+    };
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      data: updatedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  order.isPaid = true;
-  order.paidAt = Date.now();
-  order.paymentResult = {
-    id: req.body.id,
-    status: req.body.status,
-    update_time: req.body.update_time,
-    email_address: req.body.payer.email_address
-  };
-
-  const updatedOrder = await order.save();
-
-  res.json({
-    success: true,
-    data: updatedOrder
-  });
 });
 
 // @desc    Update order to delivered
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 const updateOrderToDelivered = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  try {
+    const order = await Order.findById(req.params.id);
 
-  if (!order) {
-    res.status(404);
-    throw new Error('Order not found');
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    order.isDelivered = true;
+    order.deliveredAt = Date.now();
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      data: updatedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  order.isDelivered = true;
-  order.deliveredAt = Date.now();
-
-  const updatedOrder = await order.save();
-
-  res.json({
-    success: true,
-    data: updatedOrder
-  });
 });
 
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  const orders = await Order.find({ user: req.user._id })
-    .populate('orderItems.productId', 'name price files')
-    .sort('-createdAt')
-    .skip(skip)
-    .limit(limit);
+    const orders = await Order.find({ user: req.user._id })
+      .populate('orderItems.productId', 'name price files')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
 
-  const total = await Order.countDocuments({ user: req.user._id });
+    const total = await Order.countDocuments({ user: req.user._id });
 
-  res.json({
-    success: true,
-    data: orders,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
-    }
-  });
+    res.json({
+      success: true,
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // @desc    Get all orders (Admin)
@@ -367,6 +395,8 @@ const getOrderStats = asyncHandler(async (req, res) => {
 // @route   GET /api/orders/vendor
 // @access  Private (Vendor)
 const getVendorOrders = asyncHandler(async (req, res) => {
+  console.log('getVendorOrders called');
+  console.log('Vendor ID from token:', req.vendor?._id);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
   const skip = (page - 1) * limit;
@@ -374,6 +404,7 @@ const getVendorOrders = asyncHandler(async (req, res) => {
 
   // Get vendor's product IDs
   const vendorProducts = await Product.find({ vendorId: req.vendor._id }).distinct('_id');
+  console.log('Vendor product IDs:', vendorProducts);
 
   // Build filter
   const filter = {
@@ -391,6 +422,8 @@ const getVendorOrders = asyncHandler(async (req, res) => {
     ];
   }
 
+  console.log('Order filter:', filter);
+
   const orders = await Order.find(filter)
     .populate('user', 'name email')
     .populate({
@@ -401,6 +434,8 @@ const getVendorOrders = asyncHandler(async (req, res) => {
     .sort('-createdAt')
     .skip(skip)
     .limit(limit);
+
+  console.log('Orders found:', orders.length);
 
   const total = await Order.countDocuments(filter);
 

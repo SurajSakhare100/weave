@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { addItem } from '../features/cart/cartSlice';
+import { addCartItem } from '../features/cart/cartSlice';
 import { addToWishlist, removeFromWishlist } from '../features/user/userSlice';
+import { getPrimaryImageUrl, getThumbnailUrl, convertLegacyFilesToImages } from '../utils/imageUtils';
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
@@ -12,16 +13,20 @@ const ProductCard = ({ product }) => {
   const isInWishlist = wishlist.includes(product._id);
   const [selectedColor, setSelectedColor] = useState(product.colors ? product.colors[0] : null);
 
-  const getImageUrl = (files, index = 0) => {
-    if (files && files.length > index) {
-      const file = files[index];
-      // If the file is a static image in public/products, use that path
-      if (file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.webp')) {
-        return `/products/${file}`;
-      }
-      // Otherwise, assume it's a backend upload
-      return `http://localhost:5000/uploads/${file}`;
+  // Handle both new Cloudinary images and legacy files
+  const getImageUrl = () => {
+    // First try to use the new Cloudinary images array
+    if (product.images && product.images.length > 0) {
+      return getThumbnailUrl(product.images);
     }
+    
+    // Fallback to legacy files array
+    if (product.files && product.files.length > 0) {
+      const legacyImages = convertLegacyFilesToImages(product.files);
+      return getThumbnailUrl(legacyImages);
+    }
+    
+    // Final fallback
     return '/products/product.png';
   };
 
@@ -33,12 +38,10 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     if (product.available === 'true') {
-      dispatch(addItem({
-        id: product._id,
-        name: product.name,
-        price: product.price,
+      dispatch(addCartItem({
+        product: product,
         quantity: 1,
-        color: selectedColor
+        variantSize: selectedColor || product.currVariantSize || 'M'
       }));
     }
   };
@@ -59,7 +62,7 @@ const ProductCard = ({ product }) => {
       <Link href={`/products/${product._id}`}>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
-            src={getImageUrl(product.files)}
+            src={getImageUrl()}
             alt={product.name}
             width={400}
             height={400}

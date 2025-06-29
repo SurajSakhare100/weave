@@ -1,6 +1,19 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+const AddressEntrySchema = new mongoose.Schema({
+    id: { type: String, required: true, default: () => new mongoose.Types.ObjectId().toHexString() },
+    name: { type: String, required: true },
+    number: { type: String, required: true },
+    pin: { type: String, required: true },
+    locality: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    addressType: { type: String, default: 'Home', enum: ['Home', 'Work', 'Other'] },
+    isDefault: { type: Boolean, default: false }
+}, { _id: false });
+
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -25,6 +38,7 @@ const UserSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    addresses: [AddressEntrySchema],
     isActive: {
         type: Boolean,
         default: true,

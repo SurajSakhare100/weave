@@ -1,314 +1,131 @@
-"use client"
-
-import { useState } from "react"
-import { SidebarNavigation } from "@/components/sidebar-navigation"
-import { ProductCard } from "@/components/product-card"
-import { AddressCard } from "@/components/address-card"
-import { EmptyState } from "@/components/empty-state"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
-import { DeleteAccountModal } from "@/components/delete-account-modal"
-import { EditProfileField } from "@/components/edit-profile-field"
-import { PaymentOption } from "@/components/payment-option"
-import { BankOption } from "@/components/bank-option"
 import Layout from "@/components/Layout"
+import { getUserProfile, updateUserProfile } from "@/services/userService"
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState("refund-status")
-  const [selectedAddress, setSelectedAddress] = useState("snehal")
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [profileData, setProfileData] = useState({
-    firstName: "Snehal",
-    lastName: "Dinde",
-    email: "abc@gmail.com",
-    phone: "+91 9455638924",
-  })
-  const [selectedPayment, setSelectedPayment] = useState("online")
-  const [selectedBank, setSelectedBank] = useState("")
+  const router = useRouter()
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const getBreadcrumbItems = () => {
-    switch (activeSection) {
-      case "refund-status":
-        return ["Payments & Refunds", "Refund Status"]
-      case "payment-modes":
-        return ["Payments & Refunds", "Payment modes"]
-      case "past-orders":
-        return ["Past Orders"]
-      case "edit-address":
-        return ["Addresses", "Edit & add new address"]
-      case "settings":
-        return ["Profile", "Settings"]
-      case "profile":
-        return ["My Account", "Profile"]
-      case "edit-profile":
-        return ["Edit Profile"]
-      default:
-        return [activeSection.replace("-", " ")]
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true)
+      const data = await getUserProfile()
+      if (data.success && data.data) {
+        setProfile(data.data)
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+      setError('Failed to load profile')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getPageTitle = () => {
-    switch (activeSection) {
-      case "refund-status":
-        return "Payments & Refunds > Refund Status"
-      case "payment-modes":
-        return "Payments & Refunds > Payment modes"
-      case "past-orders":
-        return "Past Orders"
-      case "edit-address":
-        return "Addresses > Edit & add new address"
-      case "settings":
-        return "Profile > Settings"
-      case "profile":
-        return "My Account > Profile"
-      case "edit-profile":
-        return "Edit Profile"
-      default:
-        return activeSection.replace("-", " ")
-    }
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        </div>
+      </Layout>
+    )
   }
 
-  const pastOrders = [
-    {
-      name: "Bag name",
-      price: "₹ 1999",
-      size: "Large",
-      color: "Pink",
-      quantity: 1,
-      image: "/tote-bag-product.png",
-    },
-    {
-      name: "Bag name",
-      price: "₹ 1999",
-      size: "Large",
-      color: "Pink",
-      quantity: 2,
-      image: "/tote-bag-product.png",
-    },
-  ]
-
-  const addresses = [
-    {
-      id: "snehal",
-      name: "Snehal Dinde",
-      address: ["17B, Orchid Residency", "Link Road, Malad West", "Mumbai, Maharashtra – 400064"],
-    },
-    {
-      id: "rohit",
-      name: "Rohit Sharma",
-      address: ["Flat No. 402, Aster Heights", "Palm Grove Road, Indiranagar", "Bangalore, Karnataka – 560038"],
-    },
-    {
-      id: "amit",
-      name: "Amit Desai",
-      address: ["Plot No. 11, Sunrise Enclave", "Sector 45, Near Metro Station", "Gurgaon, Haryana – 122003"],
-    },
-  ]
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case "refund-status":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">{getPageTitle()}</h1>
-            <EmptyState message="You don't have any past refund" />
+  if (error) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={loadProfile}>Try Again</Button>
           </div>
-        )
-
-      case "past-orders":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">Past Orders</h1>
-            <div>
-              {pastOrders.map((order, index) => (
-                <ProductCard key={index} {...order} />
-              ))}
-            </div>
-          </div>
-        )
-
-      case "edit-address":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">{getPageTitle()}</h1>
-            <div className="bg-white rounded-lg">
-              {addresses.map((address) => (
-                <AddressCard
-                  key={address.id}
-                  name={address.name}
-                  address={address.address}
-                  isSelected={selectedAddress === address.id}
-                  onSelect={() => setSelectedAddress(address.id)}
-                />
-              ))}
-            </div>
-
-            <div className="flex justify-center mt-12">
-              <Button  className=" text-lg underline hover:no-underline">
-                Add Delivery Address
-              </Button>
-            </div>
-          </div>
-        )
-      case "settings":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">{getPageTitle()}</h1>
-            <div className="bg-[#fff9f5] p-6 rounded-lg inline-block">
-              <Button
-                onClick={() => setShowDeleteModal(true)}
-                variant="outline"
-                className="border-[#cf1a53]  hover:bg-[#cf1a53] hover:text-white px-8"
-              >
-                Delete Weave Account
-              </Button>
-            </div>
-            <DeleteAccountModal
-              isOpen={showDeleteModal}
-              onClose={() => setShowDeleteModal(false)}
-              onConfirm={() => {
-                // Handle account deletion
-                setShowDeleteModal(false)
-              }}
-            />
-          </div>
-        )
-
-      case "edit-profile":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">Edit Profile</h1>
-            <div className="max-w-4xl">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <EditProfileField
-                  label="First Name"
-                  value={profileData.firstName}
-                  onUpdate={(value) => setProfileData({ ...profileData, firstName: value })}
-                />
-                <EditProfileField
-                  label="Last Name"
-                  value={profileData.lastName}
-                  onUpdate={(value) => setProfileData({ ...profileData, lastName: value })}
-                />
-              </div>
-              <EditProfileField
-                label="Email Address"
-                value={profileData.email}
-                type="email"
-                onUpdate={(value) => setProfileData({ ...profileData, email: value })}
-              />
-              <EditProfileField
-                label="Phone number"
-                value={profileData.phone}
-                type="tel"
-                onUpdate={(value) => setProfileData({ ...profileData, phone: value })}
-              />
-            </div>
-          </div>
-        )
-
-      case "payment-modes":
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">{getPageTitle()}</h1>
-            <div className="max-w-2xl">
-              <PaymentOption
-                label="Pay Online"
-                amount="2200"
-                isSelected={selectedPayment === "online"}
-                onSelect={() => setSelectedPayment("online")}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 border border-[#e5e5e5] rounded">
-                    <div className="text-blue-600 font-bold text-sm">UPI</div>
-                    <span className="text-[#6c4323]">Pay by any UPI App</span>
-                  </div>
-                  <Button  className=" p-0 h-auto font-normal">
-                    Add UPI ID +
-                  </Button>
-
-                  <div className="border border-[#e5e5e5] rounded p-3">
-                    <span className="text-[#6c4323]">Debit/Credit Cards</span>
-                  </div>
-
-                  <div className="border border-[#e5e5e5] rounded p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[#6c4323] font-medium">Net Banking</span>
-                    </div>
-                    <div className="space-y-2">
-                      <BankOption
-                        icon={
-                          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                            S
-                          </div>
-                        }
-                        name="State Bank of India"
-                        isSelected={selectedBank === "sbi"}
-                        onSelect={() => setSelectedBank("sbi")}
-                      />
-                      <BankOption
-                        icon={
-                          <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                            H
-                          </div>
-                        }
-                        name="HDFC Bank"
-                        isSelected={selectedBank === "hdfc"}
-                        onSelect={() => setSelectedBank("hdfc")}
-                      />
-                      <BankOption
-                        icon={
-                          <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                            I
-                          </div>
-                        }
-                        name="ICICI Netbanking"
-                        isSelected={selectedBank === "icici"}
-                        onSelect={() => setSelectedBank("icici")}
-                      />
-                      <BankOption
-                        icon={
-                          <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                            A
-                          </div>
-                        }
-                        name="Axis Bank"
-                        isSelected={selectedBank === "axis"}
-                        onSelect={() => setSelectedBank("axis")}
-                      />
-                    </div>
-                    <Button  className=" p-0 h-auto font-normal mt-4">
-                      View all banks
-                    </Button>
-                  </div>
-                </div>
-              </PaymentOption>
-            </div>
-          </div>
-        )
-
-      default:
-        return (
-          <div>
-            <h1 className="text-2xl font-medium text-[#6c4323] mb-8">
-              {activeSection.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-            </h1>
-            <EmptyState message="Content coming soon..." />
-          </div>
-        )
-    }
+        </div>
+      </Layout>
+    )
   }
 
   return (
-   <Layout>
-     <div className="h-screen bg-[#fafafa]">
-      <div className=" mx-auto px-4 lg:px-6 py-8">
-        <div className="flex gap-8 h-full">
-          <SidebarNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
+    <Layout>
+      <div className="min-h-screen bg-[#fafafa]">
+        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+          <nav className="text-[#6c4323] mb-8">
+            <span>Home</span>
+            <span className="mx-2">{">"}</span>
+            <span>Settings</span>
+          </nav>
 
-          <main className="flex-1 bg-white rounded-lg p-8">{renderContent()}</main>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
+            
+            {profile && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">Profile Information</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <p className="text-gray-900">{profile.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <p className="text-gray-900">{profile.email}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <p className="text-gray-900">{profile.phone || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
+                      <p className="text-gray-900">{new Date(profile.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">Addresses</h2>
+                  {profile.addresses && profile.addresses.length > 0 ? (
+                    <div className="space-y-4">
+                      {profile.addresses.map((address: any, index: number) => (
+                        <div key={address._id} className="border rounded-lg p-4">
+                          <h3 className="font-medium mb-2">Address {index + 1}</h3>
+                          <p className="text-gray-600">{address.address}</p>
+                          <p className="text-gray-600">{address.city}, {address.state} - {address.pincode}</p>
+                          <p className="text-gray-600">Phone: {address.phone}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No addresses found.</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between">
+                  <Button 
+                    onClick={() => router.push('/user/profile')}
+                    variant="outline"
+                  >
+                    Edit Profile
+                  </Button>
+                  <Button 
+                    onClick={() => router.push('/user/orders')}
+                    variant="outline"
+                  >
+                    View Orders
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-   </Layout>
+    </Layout>
   )
 }

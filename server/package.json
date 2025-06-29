@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:server": "node test-server.js"
+    "test:server": "node test-server.js",
+    "test:cloudinary": "node test-cloudinary.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

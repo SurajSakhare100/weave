@@ -2,128 +2,137 @@ import asyncHandler from 'express-async-handler';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Review from '../models/Review.js';
+import { uploadMultipleImages, deleteMultipleImages, updateImage } from '../utils/imageUpload.js';
 
 // @desc    Get all products with pagination and filtering
 // @route   GET /api/products
 // @access  Public (with optional vendor auth)
 export const getProducts = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 12;
-  const skip = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
 
-  const {
-    search,
-    category,
-    minPrice,
-    maxPrice,
-    sort = '-createdAt',
-    vendor,
-    vendorOnly,
-    status,
-    size
-  } = req.query;
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      sort = '-createdAt',
+      vendor,
+      vendorOnly,
+      status,
+      size
+    } = req.query;
 
-  // Build filter object
-  const filter = {};
+    // Build filter object
+    const filter = {};
 
-  if (status) {
-    filter.status = status;
-  } else {
-    filter.status = 'active';
-  }
-
-  if (search) {
-    filter.name = { $regex: search, $options: 'i' };
-  }
-
-  if (category) {
-    filter.categorySlug = { $regex: category, $options: 'i' };
-  }
-
-  if (vendor) {
-    filter.vendorId = vendor;
-  }
-
-  if (size) {
-    filter['variantDetails.size'] = size;
-  }
-
-  // Filter for vendor products only
-  if (vendorOnly === 'true') {
-    filter.vendor = true;
-    if (req.vendor) {
-      filter.vendorId = req.vendor._id;
+    if (status) {
+      filter.status = status;
+    } else {
+      filter.status = 'active';
     }
-  }
 
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = parseFloat(minPrice);
-    if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
-  }
-
-  // Sorting
-  let sortOption = {};
-  if (sort === 'price') {
-    sortOption = { price: 1 };
-  } else if (sort === '-price') {
-    sortOption = { price: -1 };
-  } else if (sort === 'createdAt') {
-    sortOption = { createdAt: 1 };
-  } else if (sort === '-createdAt') {
-    sortOption = { createdAt: -1 };
-  } else if (sort === 'discount') {
-    sortOption = { discount: -1 };
-  } else {
-    sortOption = { createdAt: -1 };
-  }
-
-  // Execute query
-  // const products = await Product.find(filter)
-  //   .populate('vendorId', 'name email')
-  //   .sort(sortOption)
-  //   .skip(skip)
-  //   .limit(limit);
-
-
-  const products = await Product.find({})
-  const total = await Product.countDocuments(filter);
-
-  res.json({
-    success: true,
-    data: products,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' };
     }
-  });
+
+    if (category) {
+      filter.categorySlug = { $regex: category, $options: 'i' };
+    }
+
+    if (vendor) {
+      filter.vendorId = vendor;
+    }
+
+    if (size) {
+      filter['variantDetails.size'] = size;
+    }
+
+    // Filter for vendor products only
+    if (vendorOnly === 'true') {
+      filter.vendor = true;
+      if (req.vendor) {
+        filter.vendorId = req.vendor._id;
+      }
+    }
+
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseFloat(minPrice);
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Sorting
+    let sortOption = {};
+    if (sort === 'price') {
+      sortOption = { price: 1 };
+    } else if (sort === '-price') {
+      sortOption = { price: -1 };
+    } else if (sort === 'createdAt') {
+      sortOption = { createdAt: 1 };
+    } else if (sort === '-createdAt') {
+      sortOption = { createdAt: -1 };
+    } else if (sort === 'discount') {
+      sortOption = { discount: -1 };
+    } else {
+      sortOption = { createdAt: -1 };
+    }
+
+    // Execute query
+    // const products = await Product.find(filter)
+    //   .populate('vendorId', 'name email')
+    //   .sort(sortOption)
+    //   .skip(skip)
+    //   .limit(limit);
+
+
+    const products = await Product.find({})
+    const total = await Product.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // @desc    Get single product by ID
 // @route   GET /api/products/:id
 // @access  Public
 export const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
-    .populate('vendorId', 'name email phone')
-    .populate({
-      path: 'reviews',
-      populate: {
-        path: 'userId',
-        select: 'name'
-      }
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('vendorId', 'name email phone')
+      .populate({
+        path: 'reviews',
+        populate: {
+          path: 'userId',
+          select: 'name'
+        }
+      });
+
+    if (!product) {
+      res.status(404);
+      throw new Error('Product not found');
+    }
+
+    res.json({
+      success: true,
+      data: product
     });
-
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  res.json({
-    success: true,
-    data: product
-  });
 });
 
 // @desc    Get product by slug
@@ -155,150 +164,248 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private (Vendor)
 export const createProduct = asyncHandler(async (req, res) => {
-  const {
-    name,
-    price,
-    mrp,
-    discount,
-    category,
-    description,
-    seoDescription,
-    seoKeyword,
-    seoTitle,
-    pickup_location,
-    return: returnPolicy,
-    cancellation,
-    variant,
-    variantDetails,
-    stock,
-    colors,
-    status
-  } = req.body;
+  try {
+    const {
+      name,
+      price,
+      mrp,
+      discount,
+      category,
+      description,
+      seoDescription,
+      seoKeyword,
+      seoTitle,
+      pickup_location,
+      return: returnPolicy,
+      cancellation,
+      variant,
+      variantDetails,
+      stock,
+      colors,
+      status
+    } = req.body;
 
-  // Generate slug from name
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    // Generate slug from name
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-  // Get category slug
-  const categoryDoc = await Category.findOne({ name: category });
-  let categorySlug = 'general'; // Default slug
-  
-  if (categoryDoc) {
-    categorySlug = categoryDoc.slug;
-  } else if (category === 'General') {
-    // Use default slug for General category
-    categorySlug = 'general';
-  } else {
-    // Generate slug from category name if not found
-    categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    // Get category slug
+    const categoryDoc = await Category.findOne({ name: category });
+    let categorySlug = 'general'; // Default slug
+    
+    if (categoryDoc) {
+      categorySlug = categoryDoc.slug;
+    } else if (category === 'General') {
+      // Use default slug for General category
+      categorySlug = 'general';
+    } else {
+      // Generate slug from category name if not found
+      categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
+    // Handle image uploads to Cloudinary
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      try {
+        const imageBuffers = req.files.map(file => file.buffer);
+        const uploadResults = await uploadMultipleImages(
+          imageBuffers, 
+          'weave-products', 
+          `product_${slug}_${Date.now()}`
+        );
+
+        // Process upload results
+        images = uploadResults.map((result, index) => ({
+          url: result.url,
+          public_id: result.public_id,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          bytes: result.bytes,
+          thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+          small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+          is_primary: index === 0 // First image is primary
+        }));
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload images. Please try again.'
+        });
+      }
+    }
+
+    const product = await Product.create({
+      name,
+      slug,
+      price,
+      mrp,
+      discount,
+      vendorId: req.vendor._id,
+      vendor: true,
+      category,
+      categorySlug,
+      description,
+      seoDescription,
+      seoKeyword,
+      seoTitle,
+      pickup_location,
+      return: returnPolicy,
+      cancellation,
+      variant,
+      variantDetails: variant ? variantDetails : [],
+      stock,
+      colors,
+      status,
+      images,
+      files: [] // Keep for backward compatibility
+    });
+
+    res.status(201).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to create product'
+    });
   }
-
-  const product = await Product.create({
-    name,
-    slug,
-    price,
-    mrp,
-    discount,
-    vendorId: req.vendor._id,
-    vendor: true,
-    category,
-    categorySlug,
-    description,
-    seoDescription,
-    seoKeyword,
-    seoTitle,
-    pickup_location,
-    return: returnPolicy,
-    cancellation,
-    variant,
-    variantDetails: variant ? variantDetails : [],
-    stock,
-    colors,
-    status,
-    files: req.files ? req.files.map(file => file.filename) : []
-  });
-
-  res.status(201).json({
-    success: true,
-    data: product
-  });
 });
 
 // @desc    Update product
 // @route   PUT /api/products/:id
 // @access  Private (Vendor)
 export const updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  try {
+    const product = await Product.findById(req.params.id);
 
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
-  }
-
-  // Check if vendor owns this product
-  if (product.vendorId.toString() !== req.vendor._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to update this product');
-  }
-
-  const { colors, stock, status } = req.body;
-  if (colors) {
-    req.body.colors = Array.isArray(colors) ? colors : [colors];
-  }
-
-  // Handle file uploads
-  let files = product.files;
-  
-  // Handle existing images if provided
-  if (req.body.existingImages) {
-    try {
-      const existingImages = JSON.parse(req.body.existingImages);
-      files = existingImages;
-    } catch (error) {
-      console.error('Error parsing existingImages:', error);
-      files = [];
+    if (!product) {
+      res.status(404);
+      throw new Error('Product not found');
     }
-  }
-  
-  // Add new uploaded files
-  if (req.files && req.files.length > 0) {
-    files = [...files, ...req.files.map(file => file.filename)];
-  }
 
-  const updatedProduct = await Product.findByIdAndUpdate(
-    req.params.id,
-    { ...req.body, files },
-    { new: true, runValidators: true }
-  );
+    // Check if vendor owns this product
+    if (product.vendorId.toString() !== req.vendor._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to update this product');
+    }
 
-  res.json({
-    success: true,
-    data: updatedProduct
-  });
+    const { colors, stock, status } = req.body;
+    if (colors) {
+      req.body.colors = Array.isArray(colors) ? colors : [colors];
+    }
+
+    // Handle image updates
+    let images = product.images || [];
+    
+    // Handle existing images if provided
+    if (req.body.existingImages) {
+      try {
+        const existingImages = JSON.parse(req.body.existingImages);
+        images = existingImages;
+      } catch (error) {
+        console.error('Error parsing existingImages:', error);
+        images = [];
+      }
+    }
+    
+    // Handle new image uploads
+    if (req.files && req.files.length > 0) {
+      try {
+        const imageBuffers = req.files.map(file => file.buffer);
+        const uploadResults = await uploadMultipleImages(
+          imageBuffers, 
+          'weave-products', 
+          `product_${product.slug}_${Date.now()}`
+        );
+
+        // Process upload results
+        const newImages = uploadResults.map((result, index) => ({
+          url: result.url,
+          public_id: result.public_id,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          bytes: result.bytes,
+          thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+          small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+          is_primary: images.length === 0 && index === 0 // Primary if no existing images
+        }));
+
+        images = [...images, ...newImages];
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload new images. Please try again.'
+        });
+      }
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, images },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      data: updatedProduct
+    });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to update product'
+    });
+  }
 });
 
 // @desc    Delete product
 // @route   DELETE /api/products/:id
 // @access  Private (Vendor)
 export const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  try {
+    const product = await Product.findById(req.params.id);
 
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
+    if (!product) {
+      res.status(404);
+      throw new Error('Product not found');
+    }
+
+    // Check if vendor owns this product
+    if (product.vendorId.toString() !== req.vendor._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to delete this product');
+    }
+
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      try {
+        const publicIds = product.images.map(img => img.public_id).filter(Boolean);
+        if (publicIds.length > 0) {
+          await deleteMultipleImages(publicIds);
+        }
+      } catch (deleteError) {
+        console.error('Error deleting images from Cloudinary:', deleteError);
+        // Continue with product deletion even if image deletion fails
+      }
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to delete product'
+    });
   }
-
-  // Check if vendor owns this product
-  if (product.vendorId.toString() !== req.vendor._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to delete this product');
-  }
-
-  await Product.findByIdAndDelete(req.params.id);
-
-  res.json({
-    success: true,
-    message: 'Product deleted successfully'
-  });
 });
 
 // @desc    Get similar products

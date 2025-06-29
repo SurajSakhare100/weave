@@ -83,7 +83,7 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               <div className="space-y-3">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center">
+                  <div key={item.proId} className="flex justify-between items-center">
                     <div>
                       <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
@@ -91,6 +91,8 @@ export default function CheckoutPage() {
                     <div className="font-semibold">₹{(item.price * item.quantity).toFixed(2)}</div>
                   </div>
                 ))}
+
+
               </div>
               <div className="border-t pt-4 mt-4">
                 <div className="flex justify-between items-center text-lg font-bold">
