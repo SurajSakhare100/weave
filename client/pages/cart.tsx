@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
 import { getCart, updateCartItem, removeFromCart } from '../services/cartService';
-import { Trash2, Minus, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import Layout from "@/components/Layout"
-import Image from 'next/image';
 import CartItem from '../components/cart/CartItem';
 import OrderSummary from '../components/cart/OrderSummary';
 
@@ -26,8 +24,6 @@ const CartPage = () => {
   const router = useRouter();
   const { items, loading } = useSelector((state: RootState) => state.cart);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
-  const [updating, setUpdating] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -46,38 +42,13 @@ const CartPage = () => {
     }
   };
 
-  const handleQuantityChange = async (proId: string, newQuantity: number) => {
+  const handleQuantityChange = (proId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
-    setUpdating(proId);
-    try {
-      const response = await updateCartItem(proId, newQuantity);
-      if (response.success) {
-        await dispatch(updateCartQuantity({ proId, quantity: newQuantity }));
-      }
-    } catch (error) {
-      console.error('Failed to update quantity:', error);
-    } finally {
-      setUpdating(null);
-    }
+    dispatch(updateCartQuantity({ proId, quantity: newQuantity }));
   };
 
-  const handleRemoveItem = async (proId: string) => {
-    setRemoving(proId);
-    try {
-      const response = await removeFromCart(proId);
-      if (response.success) {
-        await dispatch(removeCartItem(proId));
-      }
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    } finally {
-      setRemoving(null);
-    }
-  };
-
-  const calculateTotal = () => {
-    return items.reduce((total: number, item: CartItem) => total + (item.price * item.quantity), 0);
+  const handleRemoveItem = (proId: string) => {
+    dispatch(removeCartItem(proId));
   };
 
   if (!isAuthenticated) {

@@ -3,8 +3,6 @@ import Image from 'next/image';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 
 const CartItem = ({ item, onQuantityChange, onRemove }) => {
-  const [quantity, setQuantity] = useState(item.quantity);
-
   return (
     <div className="flex items-center bg-[#FFF6EF] rounded-2xl p-6 gap-8 shadow-sm">
       <div className="flex-shrink-0 flex items-center justify-center bg-transparent" style={{ minWidth: 140 }}>
