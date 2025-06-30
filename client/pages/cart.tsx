@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
-import { getCart, updateCartItem, removeFromCart } from '../services/cartService';
+import { getCart } from '../services/cartService';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import Layout from "@/components/Layout"
