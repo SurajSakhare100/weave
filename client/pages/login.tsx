@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { login as loginAction } from '../features/user/userSlice';
 import { login as loginService } from '../services/authService';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -21,11 +22,13 @@ export default function LoginPage() {
     try {
       const data = await loginService({ email, password });
       dispatch(loginAction({ email: data.email, password:data.password}));
+      toast.success('Login successful!');
       const redirectUrl = router.query.redirect as string || '/';
       router.push(redirectUrl);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error?.response?.data?.message || 'Login failed. Please try again.');
+      toast.error(error?.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

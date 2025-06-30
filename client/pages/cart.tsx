@@ -8,6 +8,8 @@ import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import Layout from "@/components/Layout"
 import Image from 'next/image';
+import CartItem from '../components/cart/CartItem';
+import OrderSummary from '../components/cart/OrderSummary';
 
 interface CartItem {
   proId: string;
@@ -118,81 +120,30 @@ const CartPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-2 space-y-6">
             {items.map((item: CartItem) => (
-              <div key={item.proId} className="flex items-center border-b py-4">
-                <Image 
-                  src={item.image || "/products/product.png"} 
-                  alt={item.name} 
-                  width={80}
-                  height={80}
-                  className="object-cover rounded mr-4"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-gray-600">₹{item.price}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.proId, item.quantity - 1)}
-                    disabled={updating === item.proId}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-8 text-center">{item.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.proId, item.quantity + 1)}
-                    disabled={updating === item.proId}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.proId)}
-                    disabled={removing === item.proId}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <CartItem
+                key={item.proId}
+                item={item}
+                onQuantityChange={handleQuantityChange}
+                onRemove={handleRemoveItem}
+              />
             ))}
           </div>
-          
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>₹{calculateTotal()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping:</span>
-                  <span>Free</span>
-                </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between font-bold">
-                    <span>Total:</span>
-                    <span>₹{calculateTotal()}</span>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                className="w-full mt-4"
-                onClick={() => router.push('/checkout')}
-              >
-                Proceed to Checkout
-              </Button>
-            </div>
+          <div className="lg:col-span-2">
+            <OrderSummary
+              summary={{
+                mrpTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+                itemTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+                savedAmount: 0, // You can update this if you have discount logic
+                deliveryFee: 40, // Example static value
+                codFee: 10, // Example static value
+                orderTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0) + 40 + 10,
+              }}
+            />
           </div>
         </div>
       </div>

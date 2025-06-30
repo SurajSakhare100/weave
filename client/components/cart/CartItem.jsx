@@ -2,40 +2,39 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 
-const CartItem = ({ item }) => {
+const CartItem = ({ item, onQuantityChange, onRemove }) => {
   const [quantity, setQuantity] = useState(item.quantity);
 
   return (
-    <div className="rounded-lg p-4 flex items-center gap-6 shadow-sm border border-primary">
-      <div className=" bg-brand-background  ">
+    <div className="flex items-center bg-[#FFF6EF] rounded-2xl p-6 gap-8 shadow-sm">
+      <div className="flex-shrink-0 flex items-center justify-center bg-transparent" style={{ minWidth: 140 }}>
         <Image 
-          src={item.image} 
+          src={item.image || '/products/product.png'} 
           alt={item.name} 
-          width={100} 
-          height={100} 
+          width={120} 
+          height={120} 
           className="rounded-md object-cover"
         />
       </div>
-      <div className="flex-1">
-        <h3 className="font-semibold text-lg">{item.name}</h3>
-        <p className="text-gray-800 font-bold mt-1">₹ {item.price.toLocaleString('en-IN')}</p>
-        <p className="text-sm text-gray-500">Size: {item.size}</p>
-        <p className="text-sm text-gray-500">Color: {item.color}</p>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-bold text-xl mb-2">{item.name}</h3>
+        <p className="text-2xl font-bold mb-2">₹ {item.price.toLocaleString('en-IN')}</p>
+        <p className="text-lg mb-1" style={{ color: '#8B6E4E' }}>Size: {item.size}</p>
+        <p className="text-lg" style={{ color: '#8B6E4E' }}>Color: {item.color}</p>
       </div>
-      <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
+      <div className="flex items-center border border-[#E75480] rounded-xl px-4 py-2 gap-3">
         <button 
-          onClick={() => setQuantity(q => Math.max(1, q - 1))}
-          className="text-red-600 hover:text-brand-accent disabled:opacity-50"
-          disabled={quantity === 1}
+          onClick={() => onRemove(item.proId)}
+          className="text-[#E75480] hover:text-pink-600"
         >
-          {quantity === 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+          <Trash2 className="h-5 w-5" />
         </button>
-        <span className="font-semibold w-6 text-center text-red-600">{quantity}</span>
+        <span className="text-[#E75480] font-semibold text-lg">{item.quantity}</span>
         <button 
-          onClick={() => setQuantity(q => q + 1)}
-          className="text-red-600 hover:text-brand-accent"
+          onClick={() => onQuantityChange(item.proId, item.quantity + 1)}
+          className="text-[#E75480] hover:text-pink-600"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" />
         </button>
       </div>
     </div>

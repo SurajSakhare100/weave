@@ -18,6 +18,7 @@ import ProductImageGallery from '@/components/product/ProductImageGallery'
 import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 // Add reviews to the Product type
 interface ProductWithReviews extends Product {
@@ -132,10 +133,13 @@ export default function ProductDetailPage() {
       const err = error as { error?: string; response?: { status?: number; data?: { message?: string } } };
       if (err.error === 'NETWORK_ERROR') {
         setError('Server is currently unavailable. Please try again later.')
+        toast.error('Server is currently unavailable. Please try again later.')
       } else if (err.response?.status === 404) {
         setError('Product not found')
+        toast.error('Product not found')
       } else {
         setError(err.response?.data?.message || 'Failed to load product')
+        toast.error(err.response?.data?.message || 'Failed to load product')
       }
     } finally {
       setLoading(false)

@@ -1,6 +1,6 @@
 import Layout from '@/components/Layout';
 import Hero from '@/components/Hero';
-import Bestsellers from '@/components/Bestsellers';
+// import Bestsellers from '@/components/Bestsellers';
 import NewArrivals from '@/components/NewArrivals';
 import Exhibitions from '@/components/Exhibitions';
 import Testimonials from '@/components/Testimonials';
@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <Layout>
         <Hero />
-        <Bestsellers />
+        {/* <Bestsellers /> */}
         <NewArrivals />
         <Exhibitions />
         <Testimonials />

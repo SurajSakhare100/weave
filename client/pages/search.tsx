@@ -3,6 +3,7 @@ import ProductCard from '@/components/ProductCard';
 import Layout from '@/components/Layout';
 import { searchProducts } from '@/services/productService';
 import { Product } from '@/types';
+import { toast } from 'sonner';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
@@ -23,6 +24,7 @@ export default function SearchPage() {
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error?.response?.data?.message || 'Search failed.');
+      toast.error(error?.response?.data?.message || 'Search failed.');
       setResults([]);
       setSearched(true);
     } finally {

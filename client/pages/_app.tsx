@@ -8,6 +8,7 @@ import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { Toaster } from 'sonner';
 
 function UserHydrator() {
   const dispatch = useDispatch();
@@ -50,6 +51,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <UserHydrator />
+          <Toaster richColors position="top-right" />
           <Component {...pageProps} />
         </PersistGate>
       </Provider>

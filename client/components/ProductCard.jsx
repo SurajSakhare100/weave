@@ -13,22 +13,7 @@ const ProductCard = ({ product }) => {
   const isInWishlist = wishlist.includes(product._id);
   const [selectedColor, setSelectedColor] = useState(product.colors ? product.colors[0] : null);
 
-  // Handle both new Cloudinary images and legacy files
-  const getImageUrl = () => {
-    // First try to use the new Cloudinary images array
-    if (product.images && product.images.length > 0) {
-      return getThumbnailUrl(product.images);
-    }
-    
-    // Fallback to legacy files array
-    if (product.files && product.files.length > 0) {
-      const legacyImages = convertLegacyFilesToImages(product.files);
-      return getThumbnailUrl(legacyImages);
-    }
-    
-    // Final fallback
-    return '/products/product.png';
-  };
+  
 
   const calculateDiscount = () => {
     if (!product) return 0;
@@ -59,10 +44,12 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="bg-white rounded-2xl p-6 w-full shadow-sm hover:shadow-lg transition-shadow duration-300 group">
-      <Link href={`/products/${product._id}`}>
+      <Link href={`/products/${product._id}` }>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
-            src={getImageUrl()}
+            src={product.Images && product.Images.length > 0 && getPrimaryImageUrl(product.Images[0])
+              ? getPrimaryImageUrl(product.Images[0])
+              : '/products/product.png'}
             alt={product.name}
             width={400}
             height={400}
@@ -107,7 +94,7 @@ const ProductCard = ({ product }) => {
       
       <div className="mt-4">
         <Link href={`/products/${product._id}`}>
-          <h3 className="text-xl font-semibold text-gray-800 hover:text-pink-500 transition-colors duration-200">
+          <h3 className="text-xl font-semibold text-[#5E3A1C] hover:text-pink-500 transition-colors duration-200">
             {product.name}
           </h3>
         </Link>
@@ -145,7 +132,7 @@ const ProductCard = ({ product }) => {
 
         <button 
           onClick={handleAddToCart}
-          className="mt-4 w-full border border-bg-pink-600 font-semibold py-3 rounded-xl hover:bg-pink-600 transition-colors duration-300 flex items-center justify-center space-x-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="mt-4 w-full border border-bg-pink-600 font-semibold py-3 rounded-xl hover:bg-white flex items-center justify-center space-x-2"
           disabled={stock === 0}
         >
           <ShoppingCart className="h-5 w-5" />

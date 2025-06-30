@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { login as loginAction } from '../features/user/userSlice';
 import { register as registerService } from '../services/authService';
-
+import { toast } from 'sonner';
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,10 +22,12 @@ export default function RegisterPage() {
     try {
       const data = await registerService({ name, email, password });
       dispatch(loginAction({ email: data.email, password:data.password }));
+      toast.success('Registration successful!');
       router.push('/');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error?.response?.data?.message || 'Registration failed. Please try again.');
+      toast.error(error?.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

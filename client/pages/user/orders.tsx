@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getUserOrders } from '../../services/userService';
 import Link from 'next/link';
 import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
+import { toast } from 'sonner';
 
 interface Order {
   _id: string;
@@ -55,10 +56,13 @@ export default function UserOrdersPage() {
         const err = error as { response?: { status?: number }; error?: string };
         if (err.response?.status === 401) {
           setError('Please login to view your orders.');
+          toast.error('Please login to view your orders.');
         } else if (err.error === 'NETWORK_ERROR') {
           setError('Server is currently unavailable. Please try again later.');
+          toast.error('Server is currently unavailable. Please try again later.');
         } else {
           setError('Failed to load orders. Please try again.');
+          toast.error('Failed to load orders. Please try again.');
         }
         setOrders([]);
       } finally {

@@ -42,96 +42,69 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50" style={{ color: '#5E3A1C' }}>
+        {/* Top Bar */}
+        <div className="bg-[#6c4323] text-white text-center py-2 text-base font-medium">
+          Shipping available across the globe!
+        </div>
         {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Logo */}
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">W</span>
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-20">
+              {/* Left Nav */}
+              <nav className="hidden md:flex items-center space-x-6 flex-1">
+                <div className="relative group">
+                  <button className="flex items-center text-[#5E3A1C] font-medium text-lg focus:outline-none">
+                    Shop <span className="ml-1">▼</span>
+                  </button>
+                  {/* Dropdown placeholder */}
+                  <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all">
+                    <a href="/products" className="block px-4 py-2 text-[#5E3A1C] hover:bg-gray-100">All Products</a>
+                    {/* Add more categories here if needed */}
+                  </div>
                 </div>
-                <span className="text-xl font-bold text-gray-900">Weave</span>
-              </Link>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center space-x-8">
-                <Link href="/" className="text-gray-700 hover:text-pink-600 transition-colors">
-                  Home
+                <Link href="/wholesale" className="text-[#5E3A1C] font-medium text-lg hover:text-[#cf1a53] transition-colors">
+                  Wholesale & Bulk Inquiry
                 </Link>
-                <Link href="/products" className="text-gray-700 hover:text-pink-600 transition-colors">
+                <Link href="/about" className="text-[#5E3A1C] font-medium text-lg hover:text-[#cf1a53] transition-colors">
+                  About Us
+                </Link>
+                <Link href="/products" className="text-[#5E3A1C] font-medium text-lg hover:text-[#cf1a53] transition-colors">
                   Products
-                </Link>
-                <Link href="/about" className="text-gray-700 hover:text-pink-600 transition-colors">
-                  About
-                </Link>
-                <Link href="/wholesale" className="text-gray-700 hover:text-pink-600 transition-colors">
-                  Wholesale
                 </Link>
               </nav>
 
-              {/* Search Bar */}
-              <div className="hidden md:flex flex-1 max-w-md mx-8">
-                <form onSubmit={handleSearch} className="w-full">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                  </div>
-                </form>
+              {/* Logo Centered */}
+              <div className="flex-1 flex justify-center">
+                <Link href="/" className="flex flex-row items-center space-y-1">
+                  <img src="/landing/navLogo.png" alt="Weave Logo" className="h-12 w-auto" />
+                  <span className="text-3xl font-logo text-[#5E3A1C] font-normal" style={{ fontFamily: 'cursive' }}>Weave</span>
+                </Link>
               </div>
 
-              {/* Desktop Actions */}
-              <div className="hidden md:flex items-center space-x-4">
-                <Link href="/cart" className="relative p-2 text-gray-700 hover:text-pink-600 transition-colors">
+              {/* Right Actions */}
+              <div className="hidden md:flex items-center space-x-6 flex-1 justify-end">
+                <Link href="/search" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors">
+                  <Search className="h-6 w-6" />
+                </Link>
+                <Link href="/cart" className="relative p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors">
                   <ShoppingCart className="h-6 w-6" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-[#5E3A1C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
                 </Link>
-                
-                <Link href="/user/wishlist" className="relative p-2 text-gray-700 hover:text-pink-600 transition-colors">
+                <Link href="/user/wishlist" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors">
                   <Heart className="h-6 w-6" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
                 </Link>
-
                 {isAuthenticated && token ? (
-                  <div className="relative group">
-                    <button className="flex items-center space-x-2 p-2 text-gray-700 hover:text-pink-600 transition-colors">
-                      <User className="h-6 w-6" />
-                      <span>Account</span>
-                    </button>
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                      <Link href="/user/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Profile
-                      </Link>
-                      <Link href="/user/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Orders
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <Link href="/login" className="flex items-center space-x-2 p-2 text-gray-700 hover:text-pink-600 transition-colors">
+                  <Link href="/user/profile" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors">
                     <User className="h-6 w-6" />
-                    <span>Login</span>
+                  </Link>
+                ) : (
+                  <Link href="/login" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors">
+                    <User className="h-6 w-6" />
                   </Link>
                 )}
               </div>
@@ -139,126 +112,55 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-gray-700 hover:text-pink-600 transition-colors"
+                className="md:hidden p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors"
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile Search */}
-          <div className="md:hidden border-t border-gray-200 p-4">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </form>
-          </div>
-        </header>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200">
-            <div className="px-4 py-2 space-y-1">
-              <Link
-                href="/"
-                className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/products"
-                className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Products
-              </Link>
-              <Link
-                href="/about"
-                className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/wholesale"
-                className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Wholesale
-              </Link>
-              <div className="border-t border-gray-200 pt-2 mt-2">
-                <Link
-                  href="/cart"
-                  className="flex items-center justify-between px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span>Cart</span>
-                  {cartItemCount > 0 && (
-                    <span className="bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cartItemCount}
-                    </span>
-                  )}
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden bg-white border-t border-gray-200">
+              <div className="px-4 py-2 space-y-1">
+                <Link href="/products" className="block px-3 py-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                  Shop
                 </Link>
-                <Link
-                  href="/user/wishlist"
-                  className="flex items-center justify-between px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span>Wishlist</span>
-                  {wishlistCount > 0 && (
-                    <span className="bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
+                <Link href="/wholesale" className="block px-3 py-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                  Wholesale & Bulk Inquiry
                 </Link>
-                {isAuthenticated && token ? (
-                  <>
-                    <Link
-                      href="/user/profile"
-                      className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      href="/user/orders"
-                      className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Orders
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block px-3 py-2 text-gray-700 hover:text-pink-600 transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Login
+                <Link href="/about" className="block px-3 py-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                  About Us
+                </Link>
+                <div className="flex space-x-4 mt-4">
+                  <Link href="/search" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Search className="h-6 w-6" />
                   </Link>
-                )}
+                  <Link href="/cart" className="relative p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <ShoppingCart className="h-6 w-6" />
+                    {cartItemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-[#5E3A1C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cartItemCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link href="/user/wishlist" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Heart className="h-6 w-6" />
+                  </Link>
+                  {isAuthenticated && token ? (
+                    <Link href="/user/profile" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      <User className="h-6 w-6" />
+                    </Link>
+                  ) : (
+                    <Link href="/login" className="p-2 text-[#5E3A1C] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      <User className="h-6 w-6" />
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </header>
 
         {/* Main Content */}
         <main className="flex-1">
@@ -266,54 +168,48 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
         </main>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-white">
+        <footer className="bg-[#6c4323] text-white mt-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
                 <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">W</span>
-                  </div>
-                  <span className="text-xl font-bold">Weave</span>
+                  <img src="/landing/navLogo.png" alt="Weave Logo" className="h-10 w-auto" />
+                  <span className="text-2xl font-logo font-normal" style={{ fontFamily: 'cursive' }}>Weave</span>
                 </div>
-                <p className="text-gray-400">
+                <p className="text-[#e5d6c3]">
                   Your trusted multi-vendor e-commerce platform for quality products.
                 </p>
               </div>
-              
               <div>
                 <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                 <ul className="space-y-2">
-                  <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                  <li><Link href="/products" className="text-gray-400 hover:text-white transition-colors">Products</Link></li>
-                  <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link></li>
-                  <li><Link href="/wholesale" className="text-gray-400 hover:text-white transition-colors">Wholesale</Link></li>
+                  <li><Link href="/" className="text-[#e5d6c3] hover:text-white transition-colors">Home</Link></li>
+                  <li><Link href="/products" className="text-[#e5d6c3] hover:text-white transition-colors">Shop</Link></li>
+                  <li><Link href="/about" className="text-[#e5d6c3] hover:text-white transition-colors">About Us</Link></li>
+                  <li><Link href="/wholesale" className="text-[#e5d6c3] hover:text-white transition-colors">Wholesale & Bulk Inquiry</Link></li>
                 </ul>
               </div>
-              
               <div>
                 <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
                 <ul className="space-y-2">
-                  <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
-                  <li><Link href="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Info</Link></li>
-                  <li><Link href="/returns" className="text-gray-400 hover:text-white transition-colors">Returns</Link></li>
-                  <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
+                  <li><Link href="/contact" className="text-[#e5d6c3] hover:text-white transition-colors">Contact Us</Link></li>
+                  <li><Link href="/shipping" className="text-[#e5d6c3] hover:text-white transition-colors">Shipping Info</Link></li>
+                  <li><Link href="/returns" className="text-[#e5d6c3] hover:text-white transition-colors">Returns</Link></li>
+                  <li><Link href="/faq" className="text-[#e5d6c3] hover:text-white transition-colors">FAQ</Link></li>
                 </ul>
               </div>
-              
               <div>
                 <h3 className="text-lg font-semibold mb-4">Account</h3>
                 <ul className="space-y-2">
-                  <li><Link href="/login" className="text-gray-400 hover:text-white transition-colors">Login</Link></li>
-                  <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Register</Link></li>
-                  <li><Link href="/vendor/login" className="text-gray-400 hover:text-white transition-colors">Vendor Login</Link></li>
-                  <li><Link href="/vendor/register" className="text-gray-400 hover:text-white transition-colors">Become a Vendor</Link></li>
+                  <li><Link href="/login" className="text-[#e5d6c3] hover:text-white transition-colors">Login</Link></li>
+                  <li><Link href="/register" className="text-[#e5d6c3] hover:text-white transition-colors">Register</Link></li>
+                  <li><Link href="/vendor/login" className="text-[#e5d6c3] hover:text-white transition-colors">Vendor Login</Link></li>
+                  <li><Link href="/vendor/register" className="text-[#e5d6c3] hover:text-white transition-colors">Become a Vendor</Link></li>
                 </ul>
               </div>
             </div>
-            
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-              <p className="text-gray-400">
+            <div className="border-t border-[#e5d6c3] mt-8 pt-8 text-center">
+              <p className="text-[#e5d6c3]">
                 © {new Date().getFullYear()} Weave. All rights reserved.
               </p>
             </div>
