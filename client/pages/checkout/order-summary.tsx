@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 import Image from 'next/image'
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, ChevronUp, ChevronDown } from "lucide-react"
+import CartItem from '@/components/cart/CartItem'
+import { useState } from 'react'
 
 function CheckoutOrderSummaryPageContent() {
   const router = useRouter()
@@ -17,6 +19,8 @@ function CheckoutOrderSummaryPageContent() {
     cartLoading,
     cartError
   } = useCheckout()
+
+  const [summaryOpen, setSummaryOpen] = useState(true)
 
   const handleContinue = () => {
     if (!selectedAddress) {
@@ -65,76 +69,101 @@ function CheckoutOrderSummaryPageContent() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#fafafa]">
-        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-          <nav className="flex items-center space-x-2 text-sm mb-12">
-            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/')}>Home</span>
-            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>
-            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355]">Order Summary</span>
+      <div className="min-h-screen  py-12">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8">
+          <nav className="flex items-center space-x-2 text-lg mb-8">
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer font-medium" onClick={() => router.push('/')}>Home</span>
+            <ChevronRight className="h-5 w-5 text-[#8b7355]" />
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer font-medium" onClick={() => router.push('/cart')}>Cart</span>
+            <ChevronRight className="h-5 w-5 text-[#8b7355]" />
+            <span className="text-[#8b7355] font-medium">Select Address</span>
+            <ChevronRight className="h-5 w-5 text-[#8b7355]" />
+            <span className="text-[#8b7355] font-medium">Place Your Order</span>
           </nav>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-2xl font-bold mb-6">Order Summary</h1>
-            
-            <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Cart Items */}
+            <div className="flex flex-col gap-4">
               {cartItems.map((item, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <Image 
-                    src={item.image || "/products/product.png"}
-                    alt={item.name}
-                    width={64}
-                    height={64}
-                    className="object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{item.name}</h3>
-                    <p className="text-gray-600">Qty: {item.quantity}</p>
-                    {item.variantSize && <p className="text-gray-600">Size: {item.variantSize}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">₹{item.price * item.quantity}</p>
-                  </div>
-                </div>
+                <CartItem
+                  key={item.proId || index}
+                  item={{
+                    ...item,
+                    size: item.variantSize || '-',
+                    color: item.color || '-',
+                  }}
+                  onQuantityChange={() => {}}
+                  onRemove={() => {}}
+                />
               ))}
             </div>
 
-            <OrderSummary
-              itemTotal={itemTotal}
-              deliveryFee={deliveryFee}
-              cashOnDeliveryFee={0}
-              discount={discount}
-            />
-
-            {selectedAddress && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-2">Delivery Address</h3>
-                <div className="space-y-1">
-                  <p className="font-medium">{selectedAddress.name}</p>
-                  {selectedAddress.address.map((line, index) => (
-                    <p key={index} className="text-gray-600">{line}</p>
-                  ))}
-                  <p className="text-gray-600">{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}</p>
-                  <p className="text-gray-600">Phone: {selectedAddress.phone}</p>
+            {/* Order Summary & Address */}
+            <div className="flex flex-col gap-6">
+              {/* Summary Card */}
+              <div className="bg-[#fff9f5] rounded-xl p-6 mb-2 relative">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 bg-[#6c4323] text-white rounded flex items-center justify-center font-bold text-xl">🧾</div>
+                  <span className="text-[#6c4323] font-bold text-lg">To Pay</span>
+                  <span className="text-[#6c4323] line-through text-lg">₹ {(itemTotal + discount).toLocaleString()}</span>
+                  <span className="text-[#6c4323] font-bold text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                  <button
+                    className="absolute top-6 right-6 p-1 bg-transparent border-none outline-none cursor-pointer"
+                    onClick={() => setSummaryOpen((open) => !open)}
+                    aria-label="Toggle summary details"
+                  >
+                    {summaryOpen ? (
+                      <ChevronUp className="h-7 w-7 text-[#8b7355] transition-transform duration-200" />
+                    ) : (
+                      <ChevronDown className="h-7 w-7 text-[#8b7355] transition-transform duration-200" />
+                    )}
+                  </button>
                 </div>
+                <div className="text-[#3ca06b] font-semibold mb-4 text-base">₹ {discount} saved on the total!</div>
+                {summaryOpen && (
+                  <div className="divide-y divide-[#f5e7df]">
+                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                      <span>Item Total</span>
+                      <span className="flex items-center gap-2 font-medium">
+                        <span className="line-through text-[#bcae9e]">₹ {(itemTotal + discount).toLocaleString()}</span>
+                        <span className="text-[#6c4323] font-bold">₹ {itemTotal.toLocaleString()}</span>
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                      <span>Delivery fee</span>
+                      <span className="text-[#6c4323] font-bold">₹ {deliveryFee}</span>
+                    </div>
+                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                      <span>Cash/Pay on Delivery fee</span>
+                      <span className="text-[#6c4323] font-bold">₹ 10</span>
+                    </div>
+                    <div className="flex justify-between py-4 font-bold text-[#6c4323] text-lg items-center">
+                      <span>Order Total</span>
+                      <span>₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            <div className="mt-8 flex justify-between">
-              <Button 
-                onClick={() => router.back()}
-                variant="outline"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleContinue}
-                className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
-              >
-                Continue to Payment
-              </Button>
+              {/* Address Card */}
+              {selectedAddress && (
+                <div className="bg-[#fff9f5] rounded-xl p-6">
+                  <div className="font-bold text-[#6c4323] text-lg mb-1">Delivering to {selectedAddress.name}</div>
+                  <div className="text-[#8b7355] text-base">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s</div>
+                  <hr className="mt-4 border-[#f5e7df]" />
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Continue Button */}
+          <div className="flex justify-center mt-10">
+            <Button
+              onClick={handleContinue}
+              className="bg-[#EE346C] hover:bg-[#c2185b] text-white text-xl font-semibold rounded-sm px-12 py-6 shadow-none border-none"
+              style={{ minWidth: 340 }}
+            >
+              Continue to checkout
+            </Button>
           </div>
         </div>
       </div>

@@ -42,7 +42,7 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 " style={{ color: '#5E3A1C' }}>
+      <div className="min-h-screen bg-white" style={{ color: '#5E3A1C' }}>
         {/* Top Bar */}
         <div className="bg-[#6c4323] text-white text-center py-2 text-base font-medium">
           Shipping available across the globe!

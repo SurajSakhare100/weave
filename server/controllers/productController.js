@@ -22,7 +22,8 @@ export const getProducts = asyncHandler(async (req, res) => {
       vendor,
       vendorOnly,
       status,
-      size
+      size,
+      colors
     } = req.query;
 
     // Build filter object
@@ -46,8 +47,32 @@ export const getProducts = asyncHandler(async (req, res) => {
       filter.vendorId = vendor;
     }
 
+    // Collect $or conditions for size and color
+    let orConditions = [];
+    // Size filter (multi-select support, top-level and variant)
     if (size) {
-      filter['variantDetails.size'] = size;
+      const sizeArray = size.split(',').map(s => s.trim()).filter(Boolean);
+      if (sizeArray.length > 1) {
+        orConditions.push({ 'variantDetails.size': { $in: sizeArray } });
+        orConditions.push({ size: { $in: sizeArray } });
+      } else {
+        orConditions.push({ 'variantDetails.size': sizeArray[0] });
+        orConditions.push({ size: sizeArray[0] });
+      }
+    }
+    // Color filter
+    if (colors) {
+      const colorArray = colors.split(',').map(c => c.trim()).filter(Boolean);
+      if (colorArray.length > 1) {
+        orConditions.push({ colors: { $in: colorArray } });
+        orConditions.push({ 'variantDetails.color': { $in: colorArray } });
+      } else {
+        orConditions.push({ colors: colorArray[0] });
+        orConditions.push({ 'variantDetails.color': colorArray[0] });
+      }
+    }
+    if (orConditions.length > 0) {
+      filter.$or = orConditions;
     }
 
     // Filter for vendor products only
@@ -62,6 +87,21 @@ export const getProducts = asyncHandler(async (req, res) => {
       filter.price = {};
       if (minPrice) filter.price.$gte = parseFloat(minPrice);
       if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Availability filter
+    if (req.query.availability === 'true') {
+      filter.available = 'true';
+      filter.$or = [
+        { stock: { $gt: 0 } },
+        { variantDetails: { $elemMatch: { stock: { $gt: 0 } } } }
+      ];
+    } else if (req.query.availability === 'false') {
+      filter.available = 'false';
+      filter.$or = [
+        { stock: { $lte: 0 } },
+        { variantDetails: { $elemMatch: { stock: { $lte: 0 } } } }
+      ];
     }
 
     // Sorting
@@ -81,14 +121,11 @@ export const getProducts = asyncHandler(async (req, res) => {
     }
 
     // Execute query
-    // const products = await Product.find(filter)
-    //   .populate('vendorId', 'name email')
-    //   .sort(sortOption)
-    //   .skip(skip)
-    //   .limit(limit);
-
-
-    const products = await Product.find({})
+    const products = await Product.find(filter)
+      .populate('vendorId', 'name email')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
     const total = await Product.countDocuments(filter);
 
     res.json({

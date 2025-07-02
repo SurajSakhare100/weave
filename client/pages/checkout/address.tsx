@@ -178,7 +178,7 @@ function CheckoutAddressPageContent() {
       <div className=" bg-white md:px-10">
         <div className=" p-6">
           {/* Breadcrumb */}
-          <nav className="flex items-center  text-md  space-x-2">
+          <nav className="flex items-center mb-4  text-md  space-x-2">
             <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/')}>Home</span>
             <ChevronRight className="h-4 w-4 text-[#8b7355]" />
             <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>

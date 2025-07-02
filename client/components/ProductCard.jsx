@@ -43,7 +43,7 @@ const ProductCard = ({ product }) => {
   const stock = product.variant ? product.variantDetails.reduce((acc, v) => acc + v.stock, 0) : product.stock;
 
   return (
-    <div className="bg-white rounded-2xl p-6 w-full shadow-sm hover:shadow-lg transition-shadow duration-300 group">
+    <div className="bg-white rounded-2xl  w-full ">
       <Link href={`/products/${product._id}` }>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
@@ -66,11 +66,14 @@ const ProductCard = ({ product }) => {
           </button>
           
           {/* Discount Badge */}
-          {product.mrp > product.price && (
+          {/* {product.mrp > product.price && (
             <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
               {calculateDiscount()}% OFF
             </div>
-          )}
+          )} */}
+
+
+          
           
           {/* Stock Badge */}
           {stock > 0 && stock <= 5 && (
@@ -80,7 +83,7 @@ const ProductCard = ({ product }) => {
           )}
           
           {/* Status Badge */}
-          <div className="absolute bottom-3 left-3">
+          {/* <div className="absolute bottom-3 left-3">
             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
               product.available === 'true' 
                 ? 'bg-green-100 text-green-800' 
@@ -88,7 +91,7 @@ const ProductCard = ({ product }) => {
             }`}>
               {product.available === 'true' ? 'In Stock' : 'Out of Stock'}
             </span>
-          </div>
+          </div> */}
         </div>
       </Link>
       
@@ -106,7 +109,7 @@ const ProductCard = ({ product }) => {
               <button
                 key={color}
                 onClick={() => setSelectedColor(color)}
-                className={`w-6 h-6 rounded-full border-2 ${selectedColor === color ? 'border-pink-500' : 'border-transparent'}`}
+                className={`w-4 h-4 rounded-full p-0.5 border-2 ${selectedColor === color ? 'border-[#EE346C]' : 'border-transparent'}`}
                 style={{ backgroundColor: color, outline: 'none' }}
                 title={color}
               />
@@ -116,17 +119,17 @@ const ProductCard = ({ product }) => {
 
         <div className="w-full  flex justify-between items-center mt-3">
           <div className="flex items-baseline space-x-2 w-full">
-            <p className="text-2xl font-bold ">₹{product.price}</p>
+            <p className="text-lg font-bold ">₹{product.price}</p>
             {/* {product.mrp > product.price && (
               <p className="text-md text-gray-500 line-through">₹{product.mrp}</p>
             )} */}
           </div>
           
-          <div className="flex items-center w-full">
+          <div className="flex text-sm  items-center w-full">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`h-5 w-5 ${i < product.averageRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+              <Star key={i} className={`h-4 w-4 ${i < product.averageRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
             ))}
-            <span className="text-sm  ml-2">({product.totalReviews})</span>
+            <span className=" ml-2">({product.totalReviews})</span>
           </div>
         </div>
 

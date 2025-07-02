@@ -1,6 +1,6 @@
 "use client"
 
-import { Edit, Trash2, Star } from "lucide-react"
+// import { Edit, Trash2, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface AddressCardProps {
@@ -30,10 +30,10 @@ export function AddressCard({
   address,
   isSelected = false,
   onSelect,
-  onEdit,
-  onDelete,
-  onSetDefault,
-  showActions = true, 
+  // onEdit,
+  // onDelete,
+  // onSetDefault,
+  // showActions = true, 
   submitting = false,
   handleContinue = () => {},
 }: AddressCardProps) {

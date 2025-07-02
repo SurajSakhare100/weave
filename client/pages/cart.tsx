@@ -91,30 +91,38 @@ const CartPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {items.map((item: CartItem) => (
-              <CartItem
-                key={item.proId}
-                item={item}
-                onQuantityChange={handleQuantityChange}
-                onRemove={handleRemoveItem}
+      <div className="min-h-screen bg-white py-12">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8">
+          <nav className="flex items-center space-x-2 text-lg mb-8">
+            <span className="text-[#6c4323] font-bold">Home</span>
+            <span className="text-[#b59c8a] text-2xl">&gt;</span>
+            <span className="text-[#6c4323] font-medium">Cart</span>
+          </nav>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Cart Items */}
+            <div className="flex flex-col gap-6">
+              {items.map((item: CartItem) => (
+                <CartItem
+                  key={item.proId}
+                  item={item}
+                  onQuantityChange={handleQuantityChange}
+                  onRemove={handleRemoveItem}
+                />
+              ))}
+            </div>
+            {/* Order Summary */}
+            <div>
+              <OrderSummary
+                summary={{
+                  mrpTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+                  itemTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+                  savedAmount: 243, // Example value, replace with real calculation if needed
+                  deliveryFee: 40, 
+                  codFee: 10,
+                  orderTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0) + 40 + 10,
+                }}
               />
-            ))}
-          </div>
-          <div className="lg:col-span-2">
-            <OrderSummary
-              summary={{
-                mrpTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
-                itemTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
-                savedAmount: 0,
-                deliveryFee: 40, 
-                codFee: 10,
-                orderTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0) + 40 + 10,
-              }}
-            />
+            </div>
           </div>
         </div>
       </div>

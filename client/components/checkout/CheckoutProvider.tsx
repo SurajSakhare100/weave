@@ -10,6 +10,7 @@ interface CheckoutItem {
   quantity: number;
   variantSize?: string;
   image?: string;
+  color?: string;
 }
 
 interface ShippingAddress {
