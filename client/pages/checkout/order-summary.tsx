@@ -148,7 +148,7 @@ function CheckoutOrderSummaryPageContent() {
               {selectedAddress && (
                 <div className="bg-[#fff9f5] rounded-xl p-6">
                   <div className="font-bold text-[#6c4323] text-lg mb-1">Delivering to {selectedAddress.name}</div>
-                  <div className="text-[#8b7355] text-base">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s</div>
+                  <div className="text-[#8b7355] text-base">Lorem Ipsum has been the industry standard dummy text ever since the 1500s</div>
                   <hr className="mt-4 border-[#f5e7df]" />
                 </div>
               )}

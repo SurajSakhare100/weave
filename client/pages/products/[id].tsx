@@ -139,7 +139,8 @@ export default function ProductDetailPage() {
       console.error('Product loading error:', error)
       
       // Handle specific error cases
-      const err = error as { error?: string; response?: { status?: number; data?: { message?: string } } };
+      type ProductLoadError = { error?: string; response?: { status?: number; data?: { message?: string } } };
+      const err: ProductLoadError = error as ProductLoadError;
       if (err.error === 'NETWORK_ERROR') {
         setError('Server is currently unavailable. Please try again later.')
         toast.error('Server is currently unavailable. Please try again later.')

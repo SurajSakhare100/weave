@@ -67,7 +67,8 @@ export default function VendorProductsPage() {
       
       dispatch(setProducts(transformedData));
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
+      type VendorProductsError = { response?: { data?: { message?: string } } };
+      const err: VendorProductsError = error as VendorProductsError;
       const errorMessage = err.response?.data?.message || 'Failed to load products';
       dispatch(setError(errorMessage));
     } finally {

@@ -38,4 +38,18 @@ export interface Product {
     currVariantSize?: string
     createdAt: string
     updatedAt: string
+    images: ProductImage[]
   }
+
+// Add this above Product interface
+declare interface ProductImage {
+  url: string;
+  public_id: string;
+  is_primary?: boolean;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+  thumbnail_url?: string;
+  small_thumbnail_url?: string;
+}
