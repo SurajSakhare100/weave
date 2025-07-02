@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ChevronUp, Receipt } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 const OrderSummary = ({ summary }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const router = useRouter();
 
   return (
     <div className="bg-[#FFF6EF] rounded-2xl p-8">
@@ -56,7 +58,9 @@ const OrderSummary = ({ summary }) => {
         </div>
       )}
 
-      <button className="w-full bg-[#E75480] text-white py-4 mt-8 rounded-xl font-semibold text-lg hover:bg-pink-600 transition-colors">
+      <button className="w-full bg-[#EE346C] text-white py-4 mt-8 rounded-xl font-semibold text-lg hover:bg-pink-600 transition-colors"
+        onClick={() => router.push('/checkout/address')}
+      >
         Continue to checkout
       </button>
     </div>

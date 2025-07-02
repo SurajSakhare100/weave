@@ -1,309 +1,285 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { X, ChevronDown } from "lucide-react"
 
-interface Address {
-  name: string;
-  number: string;
-  pin: string;
-  locality: string;
-  address: string;
-  city: string;
-  state: string;
-  addressType?: string;
+interface AddressData {
+  name: string
+  address: string
+  locality: string
+  city: string
+  state: string
+  pin: string
+  number: string
+}
+
+interface Address extends AddressData {
+  id: string
+  isDefault: boolean
+  addressType?: string
 }
 
 interface AddressFormModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (address: Address) => void
-  address?: Address // For editing existing address
+  onSubmit: (data: AddressData) => Promise<void>
+  address?: Address
   isEditing?: boolean
 }
 
 export function AddressFormModal({ isOpen, onClose, onSubmit, address, isEditing = false }: AddressFormModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AddressData>({
     name: "",
-    number: "",
-    pin: "",
-    locality: "",
     address: "",
+    locality: "",
     city: "",
-    state: "",
-    addressType: "Home",
+    state: "Maharashtra",
+    pin: "",
+    number: "",
   })
-  const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [country, setCountry] = useState("India")
+  const [addressType, setAddressType] = useState("Home")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Reset form when modal opens/closes or address changes
   useEffect(() => {
-    if (isOpen) {
-      if (address) {
-        setFormData({
-          name: address.name || "",
-          number: address.number || "",
-          pin: address.pin || "",
-          locality: address.locality || "",
-          address: address.address || "",
-          city: address.city || "",
-          state: address.state || "",
-          addressType: address.addressType || "Home",
-        })
-      } else {
-        setFormData({
-          name: "",
-          number: "",
-          pin: "",
-          locality: "",
-          address: "",
-          city: "",
-          state: "",
-          addressType: "Home",
-        })
-      }
-      setErrors({})
+    if (address && isEditing) {
+      const nameParts = address.name.split(" ")
+      setFirstName(nameParts[0] || "")
+      setLastName(nameParts.slice(1).join(" ") || "")
+      setFormData({
+        name: address.name,
+        address: address.address,
+        locality: address.locality,
+        city: address.city,
+        state: address.state,
+        pin: address.pin,
+        number: address.number,
+      })
+      setAddressType(address.addressType || "Home")
+    } else {
+      setFirstName("")
+      setLastName("")
+      setFormData({
+        name: "",
+        address: "",
+        locality: "",
+        city: "",
+        state: "Maharashtra",
+        pin: "",
+        number: "",
+      })
+      setAddressType("Home")
     }
-  }, [isOpen, address])
+  }, [address, isEditing, isOpen])
 
-  const validateForm = () => {
-    const newErrors: {[key: string]: string} = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters"
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      const fullName = `${firstName} ${lastName}`.trim()
+      await onSubmit({
+        ...formData,
+        name: fullName,
+      })
+    } finally {
+      setIsSubmitting(false)
     }
+  }
 
-    if (!formData.number.trim()) {
-      newErrors.number = "Mobile number is required"
-    } else if (!/^\d{10}$/.test(formData.number)) {
-      newErrors.number = "Mobile number must be 10 digits"
-    }
-
-    if (!formData.pin.trim()) {
-      newErrors.pin = "Pincode is required"
-    } else if (!/^\d{6}$/.test(formData.pin)) {
-      newErrors.pin = "Pincode must be 6 digits"
-    }
-
-    if (!formData.locality.trim()) {
-      newErrors.locality = "Locality is required"
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = "Address is required"
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = "City is required"
-    }
-
-    if (!formData.state.trim()) {
-      newErrors.state = "State is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+  const handleChange = (field: keyof AddressData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (validateForm()) {
-      onSubmit(formData)
-      onClose()
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
-    }
-  }
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="bg-[#6c4323] p-4 flex justify-between items-center rounded-t-lg">
-          <h2 className="text-white font-medium">
-            {isEditing ? 'Edit Delivery Address' : 'Add Delivery Address'}
-          </h2>
-          <button onClick={onClose} className="text-white hover:text-gray-200">
-            <X className="h-6 w-6" />
-          </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {/* Fixed Modal Container */}
+      <div className="bg-gradient-to-b from-[#8b7355] via-[#a08970] to-[#c4b5a0] rounded-2xl max-w-md w-full h-[calc(100vh-4rem)] relative flex flex-col">
+        {/* Fixed Close Button */}
+        <button onClick={onClose} className="absolute top-6 right-6 text-white hover:text-gray-200 z-10">
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Fixed Header Space */}
+        <div className="h-16 flex-shrink-0"></div>
+
+        {/* Scrollable White Content Area */}
+        <div className="bg-white rounded-2xl mx-4 mb-4 flex-1 flex flex-col overflow-hidden">
+          {/* Fixed Title */}
+          <div className="p-6 pb-4 flex-shrink-0">
+            <h2 className="text-[#8b7355] text-xl font-medium">Add Delivery address</h2>
+          </div>
+
+          {/* Scrollable Form Content */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Country Dropdown */}
+              <div className="relative">
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-between cursor-pointer">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Country</div>
+                    <div className="text-[#8b7355] font-medium">{country}</div>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+
+              {/* First Name */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <input
+                  type="tel"
+                  placeholder="Mobile number"
+                  value={formData.number}
+                  onChange={(e) => handleChange("number", e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* Flat, House no., Building */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Flat, House no., Building"
+                  value={formData.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* Area, street, sector */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Area, street, sector"
+                  value={formData.locality}
+                  onChange={(e) => handleChange("locality", e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* State Dropdown */}
+              <div className="relative">
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-between cursor-pointer">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">State</div>
+                    <div className="text-[#8b7355] font-medium">{formData.state}</div>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+
+              {/* Pincode and Town/City */}
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Pincode"
+                  value={formData.pin}
+                  onChange={(e) => handleChange("pin", e.target.value)}
+                  required
+                  className="px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Town/City"
+                  value={formData.city}
+                  onChange={(e) => handleChange("city", e.target.value)}
+                  required
+                  className="px-4 py-3 border border-gray-200 rounded-lg text-[#8b7355] placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
+                />
+              </div>
+
+              {/* Address Type */}
+              <div className="pt-2">
+                <div className="text-[#8b7355] font-medium mb-3">Address Type</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="addressType"
+                        value="Home"
+                        checked={addressType === "Home"}
+                        onChange={(e) => setAddressType(e.target.value)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          addressType === "Home" ? "border-[#8b7355]" : "border-gray-300"
+                        }`}
+                      >
+                        {addressType === "Home" && <div className="w-3 h-3 rounded-full bg-[#8b7355]"></div>}
+                      </div>
+                    </div>
+                    <span className="text-[#8b7355] font-medium">Home</span>
+                  </label>
+                  <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="addressType"
+                        value="Work"
+                        checked={addressType === "Work"}
+                        onChange={(e) => setAddressType(e.target.value)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          addressType === "Work" ? "border-[#8b7355]" : "border-gray-300"
+                        }`}
+                      >
+                        {addressType === "Work" && <div className="w-3 h-3 rounded-full bg-[#8b7355]"></div>}
+                      </div>
+                    </div>
+                    <span className="text-[#8b7355] font-medium">Work</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Continue Button */}
+              <div className="pt-4 pb-4">
+                <Button
+                  type="submit"
+                  className="w-full bg-[#e91e63] hover:bg-[#c2185b] text-white py-3 rounded-lg font-medium text-lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Processing..." : "Continue"}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Full Name</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter your full name"
-              className={errors.name ? "border-red-500" : ""}
-            />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Mobile Number</label>
-            <Input
-              type="tel"
-              value={formData.number}
-              onChange={(e) => handleInputChange('number', e.target.value)}
-              placeholder="Enter mobile number"
-              className={errors.number ? "border-red-500" : ""}
-            />
-            {errors.number && <p className="text-red-500 text-xs mt-1">{errors.number}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Pincode</label>
-            <Input
-              value={formData.pin}
-              onChange={(e) => handleInputChange('pin', e.target.value)}
-              placeholder="Enter pincode"
-              className={errors.pin ? "border-red-500" : ""}
-            />
-            {errors.pin && <p className="text-red-500 text-xs mt-1">{errors.pin}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Locality/Area</label>
-            <Input
-              value={formData.locality}
-              onChange={(e) => handleInputChange('locality', e.target.value)}
-              placeholder="Enter locality or area"
-              className={errors.locality ? "border-red-500" : ""}
-            />
-            {errors.locality && <p className="text-red-500 text-xs mt-1">{errors.locality}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Address</label>
-            <Input
-              value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Flat, House no, Building, Street"
-              className={errors.address ? "border-red-500" : ""}
-            />
-            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">City</label>
-            <Input
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-              placeholder="Enter city"
-              className={errors.city ? "border-red-500" : ""}
-            />
-            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">State</label>
-            <Select 
-              value={formData.state} 
-              onValueChange={(value) => handleInputChange('state', value)}
-            >
-              <SelectTrigger className={errors.state ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
-                <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
-                <SelectItem value="Assam">Assam</SelectItem>
-                <SelectItem value="Bihar">Bihar</SelectItem>
-                <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
-                <SelectItem value="Goa">Goa</SelectItem>
-                <SelectItem value="Gujarat">Gujarat</SelectItem>
-                <SelectItem value="Haryana">Haryana</SelectItem>
-                <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
-                <SelectItem value="Jharkhand">Jharkhand</SelectItem>
-                <SelectItem value="Karnataka">Karnataka</SelectItem>
-                <SelectItem value="Kerala">Kerala</SelectItem>
-                <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
-                <SelectItem value="Maharashtra">Maharashtra</SelectItem>
-                <SelectItem value="Manipur">Manipur</SelectItem>
-                <SelectItem value="Meghalaya">Meghalaya</SelectItem>
-                <SelectItem value="Mizoram">Mizoram</SelectItem>
-                <SelectItem value="Nagaland">Nagaland</SelectItem>
-                <SelectItem value="Odisha">Odisha</SelectItem>
-                <SelectItem value="Punjab">Punjab</SelectItem>
-                <SelectItem value="Rajasthan">Rajasthan</SelectItem>
-                <SelectItem value="Sikkim">Sikkim</SelectItem>
-                <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
-                <SelectItem value="Telangana">Telangana</SelectItem>
-                <SelectItem value="Tripura">Tripura</SelectItem>
-                <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
-                <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
-                <SelectItem value="West Bengal">West Bengal</SelectItem>
-                <SelectItem value="Delhi">Delhi</SelectItem>
-                <SelectItem value="Jammu and Kashmir">Jammu and Kashmir</SelectItem>
-                <SelectItem value="Ladakh">Ladakh</SelectItem>
-                <SelectItem value="Chandigarh">Chandigarh</SelectItem>
-                <SelectItem value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</SelectItem>
-                <SelectItem value="Lakshadweep">Lakshadweep</SelectItem>
-                <SelectItem value="Puducherry">Puducherry</SelectItem>
-                <SelectItem value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[#6c4323] text-sm font-medium mb-2">Address Type</label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="Home"
-                  checked={formData.addressType === "Home"}
-                  onChange={(e) => handleInputChange('addressType', e.target.value)}
-                  className="mr-2"
-                />
-                Home
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="Work"
-                  checked={formData.addressType === "Work"}
-                  onChange={(e) => handleInputChange('addressType', e.target.value)}
-                  className="mr-2"
-                />
-                Work
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="Other"
-                  checked={formData.addressType === "Other"}
-                  onChange={(e) => handleInputChange('addressType', e.target.value)}
-                  className="mr-2"
-                />
-                Other
-              </label>
-            </div>
-          </div>
-
-          <Button type="submit" className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white">
-            {isEditing ? 'Update Address' : 'Add Address'}
-          </Button>
-        </form>
       </div>
     </div>
   )

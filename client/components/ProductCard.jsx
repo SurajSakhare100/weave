@@ -60,9 +60,9 @@ const ProductCard = ({ product }) => {
           />
           <button 
             onClick={handleWishlistToggle}
-            className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-white"
+            className="absolute top-3 right-3 bg-[#FFF4EC] backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-[#FFF2EC]"
           >
-            <Heart className={`h-5 w-5 ${isInWishlist ? 'text-red-500 fill-red-500' : 'text-gray-500'}`} />
+            <Heart className={`h-5 w-5 ${isInWishlist ? 'text-[#EE346C] ' : 'text-gray-500'}`} />
           </button>
           
           {/* Discount Badge */}
@@ -114,25 +114,25 @@ const ProductCard = ({ product }) => {
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-3">
-          <div className="flex items-baseline space-x-2">
-            <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
-            {product.mrp > product.price && (
+        <div className="w-full  flex justify-between items-center mt-3">
+          <div className="flex items-baseline space-x-2 w-full">
+            <p className="text-2xl font-bold ">₹{product.price}</p>
+            {/* {product.mrp > product.price && (
               <p className="text-md text-gray-500 line-through">₹{product.mrp}</p>
-            )}
+            )} */}
           </div>
           
           <div className="flex items-center w-full">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className={`h-5 w-5 ${i < product.averageRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
             ))}
-            <span className="text-sm text-gray-600 ml-2">({product.totalReviews})</span>
+            <span className="text-sm  ml-2">({product.totalReviews})</span>
           </div>
         </div>
 
         <button 
           onClick={handleAddToCart}
-          className="mt-4 w-full border border-bg-pink-600 font-semibold py-3 rounded-xl hover:bg-white flex items-center justify-center space-x-2"
+          className="mt-4 w-full border border-[#EE346C]  text-[#EE346C] font-semibold py-3 rounded-md hover:bg-white flex items-center justify-center space-x-2"
           disabled={stock === 0}
         >
           <ShoppingCart className="h-5 w-5" />

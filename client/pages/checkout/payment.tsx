@@ -4,6 +4,7 @@ import { PaymentOption } from "@/components/payment-option"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
+import { ChevronRight } from "lucide-react"
 
 function CheckoutPaymentPageContent() {
   const router = useRouter()
@@ -101,14 +102,12 @@ function CheckoutPaymentPageContent() {
     <Layout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-          <nav className="text-[#6c4323] mb-8">
-            <span>Home</span>
-            <span className="mx-2">{">"}</span>
-            <span>Cart</span>
-            <span className="mx-2">{">"}</span>
-            <span>Address</span>
-            <span className="mx-2">{">"}</span>
-            <span>Payment</span>
+          <nav className="flex items-center space-x-2 text-sm mb-12">
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/')}>Home</span>
+            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>
+            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
+            <span className="text-[#8b7355]">Payment</span>
           </nav>
 
           <div className="bg-white rounded-lg shadow-sm p-6">

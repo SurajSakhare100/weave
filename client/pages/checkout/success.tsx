@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useRouter } from "next/router"
-import { CheckCircle, Package, Truck, Home, ShoppingBag } from "lucide-react"
+import { CheckCircle, Package, Truck, Home, ShoppingBag, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useDispatch } from "react-redux"
@@ -35,6 +35,13 @@ function CheckoutSuccessPageContent() {
     <Layout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+          <nav className="flex items-center space-x-2 text-sm mb-12">
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/')}>Home</span>
+            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>
+            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
+            <span className="text-[#8b7355]">Success</span>
+          </nav>
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             {/* Success Icon */}
             <div className="flex justify-center mb-6">

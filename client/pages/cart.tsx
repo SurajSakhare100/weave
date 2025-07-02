@@ -109,9 +109,9 @@ const CartPage = () => {
               summary={{
                 mrpTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
                 itemTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
-                savedAmount: 0, // You can update this if you have discount logic
-                deliveryFee: 40, // Example static value
-                codFee: 10, // Example static value
+                savedAmount: 0,
+                deliveryFee: 40, 
+                codFee: 10,
                 orderTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0) + 40 + 10,
               }}
             />
