@@ -111,9 +111,10 @@ export default function VendorProductsPage() {
 
   const filteredProducts = productsList;
 
-  const getImageUrl = (files: string[], index: number = 0) => {
-    if (files && files.length > index) {
-      return `http://localhost:5000/uploads/${files[index]}`;
+  const getImageUrl = (images: any[], index: number = 0) => {
+    if (images && images.length > 0) {
+      const primary = images.find(img => img.is_primary);
+      return primary ? primary.url : images[0].url;
     }
     return '/products/product.png';
   };
@@ -231,7 +232,7 @@ export default function VendorProductsPage() {
                     <div key={product._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative">
                         <Image
-                          src={getImageUrl(product.files)}
+                          src={getImageUrl(product.images)}
                           alt={product.name}
                           width={400}
                           height={192}
@@ -323,10 +324,10 @@ export default function VendorProductsPage() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <Image
-                                  src={getImageUrl(product.files)}
+                                  src={getImageUrl(product.images)}
                                   alt={product.name}
-                                  width={400}
-                                  height={192}
+                                  width={80}
+                                  height={80}
                                   className="h-10 w-10 rounded-lg object-cover mr-3"
                                 />
                                 <div>

@@ -65,6 +65,36 @@ type CategoryApiResponse = {
   data: Category[];
 };
 
+// Add this above the AddProductModal
+const COLOR_PALETTE = [
+  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+  '#795548', '#9C27B0', '#3F51B5', '#2196F3', '#4CAF50', '#FF9800', '#FFC107', '#E91E63',
+];
+
+function ColorPalette({ selectedColors, setSelectedColors }: { selectedColors: string[], setSelectedColors: (colors: string[]) => void }) {
+  const toggleColor = (color: string) => {
+    if (selectedColors.includes(color)) {
+      setSelectedColors(selectedColors.filter(c => c !== color));
+    } else {
+      setSelectedColors([...selectedColors, color]);
+    }
+  };
+  return (
+    <div className="flex flex-wrap gap-2 mt-1">
+      {COLOR_PALETTE.map(color => (
+        <button
+          key={color}
+          type="button"
+          className={`w-6 h-6 rounded-full border-2 ${selectedColors.includes(color) ? 'border-[#EE346C] scale-110' : 'border-gray-300'} transition-transform`}
+          style={{ backgroundColor: color }}
+          onClick={() => toggleColor(color)}
+          aria-label={color}
+        />
+      ))}
+    </div>
+  );
+}
+
 // Add Product Modal
 export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   isOpen: boolean;
@@ -83,7 +113,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   const [allowReturn, setAllowReturn] = useState(true);
   const [allowCancellation, setAllowCancellation] = useState(true);
   const [available, setAvailable] = useState('true');
-  const [colors, setColors] = useState('');
+  const [colors, setColors] = useState<string[]>([]);
   const [stock, setStock] = useState('');
   const [status, setStatus] = useState('active');
   const [images, setImages] = useState<File[]>([]);
@@ -139,7 +169,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
       formDataToSend.append('available', available);
       formDataToSend.append('status', status);
       formDataToSend.append('stock', stock);
-      if (colors) colors.split(',').map(c => c.trim()).forEach(color => formDataToSend.append('colors', color));
+      colors.forEach(color => formDataToSend.append('colors', color));
       images.forEach(image => formDataToSend.append('images', image));
       await createProduct(formDataToSend);
       onSuccess();
@@ -172,7 +202,7 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
     setAllowReturn(true);
     setAllowCancellation(true);
     setAvailable('true');
-    setColors('');
+    setColors([]);
     setStock('');
     setStatus('active');
     setImages([]);
@@ -224,8 +254,8 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
                   <input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
-                  <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                  <label className="block text-sm font-medium text-gray-700">Colors</label>
+                  <ColorPalette selectedColors={colors} setSelectedColors={setColors} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>
@@ -321,7 +351,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const [allowReturn, setAllowReturn] = useState(true);
   const [allowCancellation, setAllowCancellation] = useState(true);
   const [available, setAvailable] = useState('true');
-  const [colors, setColors] = useState('');
+  const [colors, setColors] = useState<string[]>([]);
   const [stock, setStock] = useState('');
   const [status, setStatus] = useState('active');
   const [images, setImages] = useState<File[]>([]);
@@ -342,10 +372,10 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       setAllowReturn(product.return || true);
       setAllowCancellation(product.cancellation || true);
       setAvailable(product.available || 'true');
-      setColors(product.colors ? product.colors.join(', ') : '');
+      setColors(product.colors || []);
       setStock(product.stock?.toString() || '');
       setStatus(product.status || 'active');
-      setExistingImages(product.files || []);
+      setExistingImages(product.images ? product.images : []);
       setImages([]);
       setImagePreviews([]);
     }
@@ -400,7 +430,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       formDataToSend.append('available', available);
       formDataToSend.append('status', status);
       formDataToSend.append('stock', stock);
-      if (colors) colors.split(',').map(c => c.trim()).forEach(color => formDataToSend.append('colors', color));
+      colors.forEach(color => formDataToSend.append('colors', color));
       formDataToSend.append('existingImages', JSON.stringify(existingImages));
       images.forEach(image => formDataToSend.append('images', image));
       if (product) {
@@ -469,8 +499,8 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   <input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Colors <span className="text-gray-400">(comma separated)</span></label>
-                  <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" placeholder="e.g. red, blue, green" />
+                  <label className="block text-sm font-medium text-gray-700">Colors</label>
+                  <ColorPalette selectedColors={colors} setSelectedColors={setColors} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>
@@ -510,7 +540,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     {existingImages.map((image, index) => (
                       <div key={index} className="relative">
                         <Image 
-                          src={`/uploads/${image}`} 
+                          src={image.url ? image.url : '/products/product.png'} 
                           alt={`Product ${index + 1}`} 
                           width={96} 
                           height={96} 

@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Vendor from '../models/Vendor.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
+import { createVendorProduct } from '../helpers/vendorHelpers.js';
 
 // @desc    Get vendor profile
 // @route   GET /api/vendors/profile
@@ -419,4 +420,20 @@ export const getVendorStats = asyncHandler(async (req, res) => {
       dailyStats
     }
   });
+});
+
+// @desc    Create a new product (Vendor)
+// @route   POST /api/vendors/products
+// @access  Private (Vendor)
+export const createVendorProductController = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const productData = req.body;
+    // Images are available as req.files (from multer)
+    const imageFiles = req.files || [];
+    const product = await createVendorProduct(productData, imageFiles, vendorId);
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }); 

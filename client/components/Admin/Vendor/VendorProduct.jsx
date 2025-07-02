@@ -97,7 +97,11 @@ function VendorProduct({ vendorId, loaded, setLoaded }) {
                         <tr key={key}>
                           <td>
                             <img
-                              src={`${ServerId}/product/${obj.uni_id_1}${obj.uni_id_2}/${obj.files[0].filename}`}
+                              src={
+                                obj.images && obj.images.length > 0
+                                  ? (obj.images.find(img => img.is_primary)?.url || obj.images[0].url)
+                                  : '/products/product.png'
+                              }
                               alt={obj.name}
                             />
                           </td>

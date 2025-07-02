@@ -42,14 +42,21 @@ const ProductCard = ({ product }) => {
 
   const stock = product.variant ? product.variantDetails.reduce((acc, v) => acc + v.stock, 0) : product.stock;
 
+  // Get the primary image (is_primary: true) or fallback to first image
+  const getPrimaryImage = () => {
+    if (product.images && product.images.length > 0) {
+      const primary = product.images.find(img => img.is_primary);
+      return primary ? primary.url : product.images[0].url;
+    }
+    return '/products/product.png';
+  };
+
   return (
     <div className="bg-white rounded-2xl  w-full ">
       <Link href={`/products/${product._id}` }>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
-            src={product.Images && product.Images.length > 0 && getPrimaryImageUrl(product.Images[0])
-              ? getPrimaryImageUrl(product.Images[0])
-              : '/products/product.png'}
+            src={getPrimaryImage()}
             alt={product.name}
             width={400}
             height={400}

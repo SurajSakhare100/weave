@@ -9,7 +9,8 @@ import {
   deleteVendor,
   getVendorProducts,
   getVendorOrders,
-  getVendorStats
+  getVendorStats,
+  createVendorProductController
 } from '../controllers/vendorController.js';
 import {
   validateId,
@@ -17,6 +18,7 @@ import {
   validateSearch
 } from '../middleware/validation.js';
 import { protect, admin, vendorAuth } from '../middleware/auth.js';
+import { handleMultipleUpload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -24,6 +26,7 @@ const router = express.Router();
 router.get('/profile', vendorAuth, getVendorProfile);
 router.put('/profile', vendorAuth, updateVendorProfile);
 router.get('/dashboard', vendorAuth, getVendorDashboard);
+router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
 
 // Admin routes
 router.get('/', protect, admin, validatePagination, validateSearch, getVendors);

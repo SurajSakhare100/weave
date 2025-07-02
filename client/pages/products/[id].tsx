@@ -20,14 +20,23 @@ import Layout from '@/components/Layout'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
-// Add reviews to the Product type
-interface ProductWithReviews extends Product {
+// Add this type above ProductWithReviews
+interface ProductImage {
+  url: string;
+  public_id: string;
+  is_primary?: boolean;
+  [key: string]: any;
+}
+
+// Fix ProductWithReviews type
+declare interface ProductWithReviews extends Product {
+  images: ProductImage[];
   reviews: Array<{
     name: string;
     rating: number;
     text: string;
     date: string;
-  }>
+  }>;
 }
 
 // Dummy data for sections not yet implemented in backend
@@ -187,6 +196,14 @@ export default function ProductDetailPage() {
     return Math.round(((product.mrp - product.price) / product.mrp) * 100)
   }
 
+  const getPrimaryImage = () => {
+    if (product && product.images && product.images.length > 0) {
+      const primary = product.images.find(img => img.is_primary);
+      return primary ? primary.url : product.images[0].url;
+    }
+    return '/products/product.png';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -224,11 +241,14 @@ export default function ProductDetailPage() {
         <div className=" rounded-2xl flex flex-col lg:flex-row gap-12">
           {/* Product Images */}
           <div className="lg:w-1/2">
-            <ProductImageGallery 
-              images={product.files || []} 
-              legacyFiles={product.files || []}
-              productName={product.name}
-            />
+            <Image src={getPrimaryImage()} alt={product?.name || ''} width={400} height={400} />
+            {product && product.images && product.images.length > 0 && (
+              <div className="flex gap-2">
+                {product.images.map((img, idx) => (
+                  <Image key={img.public_id || idx} src={img.url} alt={product.name} width={100} height={100} />
+                ))}
+              </div>
+            )}
           </div>
           {/* Product Info */}
           <div className="flex-1 flex flex-col gap-4">
