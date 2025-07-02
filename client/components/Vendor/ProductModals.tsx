@@ -12,6 +12,7 @@ import {
   Upload,
 } from 'lucide-react';
 import api from '@/services/api';
+import type { Product } from '../../types';
 
 // Product interface
 interface Product {
