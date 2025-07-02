@@ -1,6 +1,6 @@
 "use client"
 
-// import { Edit, Trash2, Star } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface AddressCardProps {
@@ -38,7 +38,31 @@ export function AddressCard({
   handleContinue = () => {},
 }: AddressCardProps) {
   return (
-    <div className={`bg-[#FFFBF8] rounded-md p-6 border-none mb-4 ${isSelected ? '' : 'bg-white'}`}> 
+    <div className={`bg-[#FFFBF8] rounded-md p-2 border-none mb-4 relative ${isSelected ? '' : 'bg-white'}`}> 
+      {showActions && (onEdit || onDelete) && (
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-2 rounded-full hover:bg-gray-100 text-[#6c4323]"
+              title="Edit Address"
+              type="button"
+            >
+              <Edit className="w-5 h-5" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 rounded-full hover:bg-gray-100 text-[#cf1a53]"
+              title="Delete Address"
+              type="button"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex items-start gap-3">
         {onSelect && (
           <button onClick={onSelect} className="mt-1 flex-shrink-0 cursor-pointer">

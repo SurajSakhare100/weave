@@ -52,7 +52,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl  w-full ">
+    <div className=" rounded-2xl  w-full ">
       <Link href={`/products/${product._id}` }>
         <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
           <Image
