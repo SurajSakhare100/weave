@@ -12,46 +12,7 @@ import {
   Upload,
 } from 'lucide-react';
 import api from '@/services/api';
-import type { Product } from '../../types';
-
-// Product interface
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  price: number;
-  mrp: number;
-  discount: number;
-  vendorId: string; // ObjectId reference to Vendor
-  vendor: boolean;
-  available: string;
-  category: string;
-  categorySlug?: string;
-  srtDescription?: string;
-  description?: string;
-  seoDescription?: string;
-  seoKeyword?: string;
-  seoTitle?: string;
-  pickup_location?: string;
-  return: boolean;
-  cancellation: boolean;
-  uni_id_1?: string;
-  uni_id_2?: string;
-  files: string[];
-  variant: boolean;
-  variantDetails: Array<{
-    size: string;
-    price: number;
-    mrp: number;
-    stock: number;
-  }>;
-  currVariantSize?: string;
-  createdAt: string;
-  updatedAt: string;
-  colors?: string[];
-  stock?: number;
-  status?: string;
-}
+import type { Product, ProductImage } from '@/types';
 
 // Category interface
 interface Category {
@@ -357,7 +318,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const [status, setStatus] = useState('active');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLocalLoading] = useState(false);
 
