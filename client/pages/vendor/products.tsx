@@ -112,10 +112,11 @@ export default function VendorProductsPage() {
 
   const filteredProducts = productsList;
 
-  const getImageUrl = (images: any[], index: number = 0) => {
-    if (images && images.length > 0) {
-      const primary = images.find(img => img.is_primary);
-      return primary ? primary.url : images[0].url;
+  const getImageUrl = (images: { url: string; is_primary?: boolean }[] = []) => {
+    if (Array.isArray(images) && images.length > 0) {
+      const primary = images.find(img => img.is_primary && img.url);
+      if (primary && primary.url) return primary.url;
+      if (images[0].url) return images[0].url;
     }
     return '/products/product.png';
   };
