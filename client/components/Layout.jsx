@@ -54,57 +54,57 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
               {/* Left Nav */}
               <nav className="hidden md:flex text-sm items-center space-x-6 flex-1">
                 <div className="relative group">
-                  <button className="flex items-center text-[var(--primary)] font-medium  focus:outline-none">
+                  <button className="flex items-center  font-medium  focus:outline-none">
                     Shop <span className="ml-1">▼</span>
                   </button>
                   {/* Dropdown placeholder */}
                   <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all">
-                    <a href="/products" className="block px-4 py-2 text-[var(--primary)] hover:bg-gray-100">All Products</a>
+                    <a href="/products" className="block px-4 py-2  hover:bg-gray-100">All Products</a>
                     {/* Add more categories here if needed */}
                   </div>
                 </div>
-                <Link href="/wholesale" className="text-[var(--primary)] font-medium  hover:text-[#cf1a53] transition-colors">
+                <Link href="/wholesale" className=" font-medium  hover:text-[#cf1a53] transition-colors">
                   Wholesale & Bulk Inquiry
                 </Link>
-                <Link href="/about" className="text-[var(--primary)] font-medium  hover:text-[#cf1a53] transition-colors">
+                <Link href="/about" className=" font-medium  hover:text-[#cf1a53] transition-colors">
                   About Us
                 </Link>
-                <Link href="/products" className="text-[var(--primary)] font-medium  hover:text-[#cf1a53] transition-colors">
+                <Link href="/products" className=" font-medium  hover:text-[#cf1a53] transition-colors">
                   Products
                 </Link>
               </nav>
 
               {/* Logo Centered */}
-              <div className="flex-1 flex justify-center">
-                <Link href="/" className="flex flex-row items-center space-y-1">
-                  <img src="/landing/navLogo.png" alt="Weave Logo" className="h-12 w-auto" />
-                  <span className="text-3xl font-logo text-primary font-normal">Weave</span>
+              <div className="">
+                <Link href="/" className="flex flex-row items-center  space-y-1 gap-1">
+                  <img src="/landing/navLogo.png" alt="Weave Logo" className="h-9 w-auto" />
+                  <img src="/landing/navImage.png" alt="Weave Logo" className="h-8 w-auto" />
                 </Link>
               </div>
 
               {/* Right Actions */}
-              <div className="hidden md:flex items-center space-x-6 flex-1 justify-end">
-                <Link href="/search" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors">
-                  <Search className="h-6 w-6" />
+              <div className="hidden md:flex items-center space-x-6 flex-1 text-sm justify-end">
+                <Link href="/search" className="p-2  hover:text-[#cf1a53] transition-colors">
+                  <Search className="w-4 h-4" />
                 </Link>
-                <Link href="/cart" className="relative p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors">
-                  <ShoppingCart className="h-6 w-6" />
+                <Link href="/cart" className="relative p-2  hover:text-[#cf1a53] transition-colors">
+                  <ShoppingCart className="w-4 h-4" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
                 </Link>
-                <Link href="/user/wishlist" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors">
-                  <Heart className="h-6 w-6" />
+                <Link href="/user/wishlist" className="p-2  hover:text-[#cf1a53] transition-colors">
+                  <Heart className="w-4 h-4" />
                 </Link>
                 {isAuthenticated && token ? (
-                  <Link href="/user/profile" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors">
-                    <User className="h-6 w-6" />
+                  <Link href="/user/profile" className="p-2  hover:text-[#cf1a53] transition-colors">
+                    <User className="w-4 h-4" />
                   </Link>
                 ) : (
-                  <Link href="/login" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors">
-                    <User className="h-6 w-6" />
+                  <Link href="/login" className="p-2  hover:text-[#cf1a53] transition-colors">
+                    <User className="w-4 h-4" />
                   </Link>
                 )}
               </div>
@@ -112,9 +112,9 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors"
+                className="md:hidden p-2  hover:text-[#cf1a53] transition-colors"
               >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -123,37 +123,37 @@ const Layout = ({ children, title = 'Weave - Multi-Vendor E-commerce' }) => {
           {isMobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-gray-200">
               <div className="px-4 py-2 space-y-1">
-                <Link href="/products" className="block px-3 py-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link href="/products" className="block px-3 py-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   Shop
                 </Link>
-                <Link href="/wholesale" className="block px-3 py-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link href="/wholesale" className="block px-3 py-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   Wholesale & Bulk Inquiry
                 </Link>
-                <Link href="/about" className="block px-3 py-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link href="/about" className="block px-3 py-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   About Us
                 </Link>
                 <div className="flex space-x-4 mt-4">
-                  <Link href="/search" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Search className="h-6 w-6" />
+                  <Link href="/search" className="p-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Search className="w-4 h-4" />
                   </Link>
-                  <Link href="/cart" className="relative p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <ShoppingCart className="h-6 w-6" />
+                  <Link href="/cart" className="relative p-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <ShoppingCart className="w-4 h-4" />
                     {cartItemCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {cartItemCount}
                       </span>
                     )}
                   </Link>
-                  <Link href="/user/wishlist" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Heart className="h-6 w-6" />
+                  <Link href="/user/wishlist" className="p-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Heart className="w-4 h-4" />
                   </Link>
                   {isAuthenticated && token ? (
-                    <Link href="/user/profile" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      <User className="h-6 w-6" />
+                    <Link href="/user/profile" className="p-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      <User className="w-4 h-4" />
                     </Link>
                   ) : (
-                    <Link href="/login" className="p-2 text-[var(--primary)] hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      <User className="h-6 w-6" />
+                    <Link href="/login" className="p-2  hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      <User className="w-4 h-4" />
                     </Link>
                   )}
                 </div>

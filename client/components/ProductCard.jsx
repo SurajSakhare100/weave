@@ -56,11 +56,11 @@ const ProductCard = ({ product }) => {
       <Link href={`/products/${product._id}`}>
         <div className="self-stretch h-48 relative bg-stone-50 rounded-[10px] overflow-hidden">
           <Image
-            src={getPrimaryImage()}
+           src={getPrimaryImage()}
             alt={product.name}
-            width={139}
-            height={129}
-            className="w-36 h-32 left-[63px] top-[30px] absolute object-cover"
+            width={"auto"}
+            height={"auto"}
+            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
