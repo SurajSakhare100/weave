@@ -252,33 +252,24 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-                  <label htmlFor="image-upload" className="cursor-pointer">
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-600">Click to upload images or drag and drop</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="w-full"
+                  required={false}
+                />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {imagePreviews.map((src, idx) => (
+                    <div key={src} className="relative w-20 h-20">
+                      <Image src={src} alt="Preview" width={80} height={80} className="object-cover w-full h-full rounded" />
+                      <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow">
+                        <X className="h-4 w-4 text-gray-600" />
+                      </button>
                     </div>
-                  </label>
+                  ))}
                 </div>
-                {imagePreviews.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
-                        <Image 
-                          src={preview} 
-                          alt={`Preview ${index + 1}`} 
-                          width={96} 
-                          height={96} 
-                          className="w-full h-24 object-cover rounded-lg" 
-                        />
-                        <button type="button" onClick={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
               <div className="flex justify-end space-x-3 pt-6 border-t">
                 <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>

@@ -35,9 +35,9 @@ function Header() {
                         {/* Logo */}
                         <Link 
                             href="/admin/dashboard" 
-                            className="flex items-center space-x-2 text-xl font-bold text-gradient"
+                            className="flex items-center space-x-2 text-xl font-bold text-[var(--primary)]"
                         >
-                            <BarChart3 size={24} className="text-primary-600" />
+                            <BarChart3 size={24} className="text-[var(--primary)]" />
                             <span>Admin Panel</span>
                         </Link>
 
@@ -49,7 +49,7 @@ function Header() {
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
+                                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:text-[var(--primary)] hover:bg-primary-50 transition-colors duration-200"
                                     >
                                         <Icon size={18} />
                                         <span className="text-sm font-medium">{item.label}</span>
@@ -71,7 +71,7 @@ function Header() {
                         <div className="md:hidden">
                             <button
                                 type="button"
-                                className="p-2 rounded-lg text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
+                                className="p-2 rounded-lg text-gray-700 hover:text-[var(--primary)] hover:bg-primary-50 transition-colors duration-200"
                                 aria-controls="mobile-menu"
                                 aria-expanded="false"
                             >
@@ -89,7 +89,7 @@ function Header() {
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
+                                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:text-[var(--primary)] hover:bg-primary-50 transition-colors duration-200"
                                     >
                                         <Icon size={20} />
                                         <span className="text-sm font-medium">{item.label}</span>

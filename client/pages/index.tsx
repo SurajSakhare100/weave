@@ -5,11 +5,12 @@ import NewArrivals from '@/components/NewArrivals';
 import Exhibitions from '@/components/Exhibitions';
 import Testimonials from '@/components/Testimonials';
 import About from '@/components/About';
+import Bestsellers from '@/components/Bestsellers';
 export default function Home() {
   return (
     <Layout>
         <Hero />
-        {/* <Bestsellers /> */}
+        <Bestsellers />
         <NewArrivals />
         <Exhibitions />
         <Testimonials />

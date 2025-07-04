@@ -28,6 +28,7 @@ const ProductImageGallery = ({ images, legacyFiles, productName }) => {
     );
   }
 
+
   const handlePrev = () => {
     setCurrentIndex((prevIndex) => (prevIndex === 0 ? galleryImages.length - 1 : prevIndex - 1));
   };
@@ -80,11 +81,11 @@ const ProductImageGallery = ({ images, legacyFiles, productName }) => {
       </div>
       
       {/* Thumbnail navigation */}
-      <div className="flex justify-center space-x-2 mt-4">
+      <div className={`mt-4 ${galleryImages.length > 4 ? 'grid grid-cols-4 gap-3' : 'flex justify-center gap-3'}`}>
         {galleryImages.map((image, index) => (
           <div
             key={index}
-            className={`w-20 h-20 border-2 rounded-md cursor-pointer transition-all ${
+            className={`w-20 h-20 aspect-square border-2 rounded-md cursor-pointer transition-all ${
               currentIndex === index 
                 ? 'border-pink-500 shadow-md' 
                 : 'border-gray-200 hover:border-gray-300'
@@ -96,17 +97,16 @@ const ProductImageGallery = ({ images, legacyFiles, productName }) => {
               alt={image.alt}
               width={80}
               height={80}
-              className="object-cover w-full h-full rounded"
+              className="object-cover w-full h-full rounded aspect-square"
               onError={(e) => {
                 e.currentTarget.src = '/products/product.png';
               }}
             />
           </div>
         ))}
-        
         {/* Add empty placeholders to maintain consistent layout */}
         {[...Array(Math.max(0, 4 - galleryImages.length))].map((_, i) => (
-          <div key={`placeholder-${i}`} className="w-20 h-20 border-2 border-gray-200 rounded-md bg-gray-50" />
+          <div key={`placeholder-${i}`} className="w-20 h-20 aspect-square border-2 border-gray-200 rounded-md bg-gray-50" />
         ))}
       </div>
       

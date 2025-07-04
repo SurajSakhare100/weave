@@ -52,102 +52,80 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className=" rounded-2xl  w-full ">
-      <Link href={`/products/${product._id}` }>
-        <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
+    <div className="p-4 bg-white rounded-xl inline-flex flex-col justify-start items-center gap-5 w-full max-w-xs mx-auto">
+      <Link href={`/products/${product._id}`}>
+        <div className="self-stretch h-48 relative bg-stone-50 rounded-[10px] overflow-hidden">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
-            width={400}
-            height={400}
-            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+            width={139}
+            height={129}
+            className="w-36 h-32 left-[63px] top-[30px] absolute object-cover"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
           />
           <button 
             onClick={handleWishlistToggle}
-            className="absolute top-3 right-3 bg-[#FFF4EC] backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-[#FFF2EC]"
+            className="w-7 h-7 p-1 left-[219px] top-[10px] absolute bg-white rounded-2xl inline-flex justify-center items-center gap-4 shadow"
+            style={{ zIndex: 2 }}
           >
-            <Heart className={`h-5 w-5 ${isInWishlist ? 'text-[#EE346C] ' : 'text-gray-500'}`} />
+            <Heart className={`w-4 h-4 ${isInWishlist ? 'text-rose-500' : 'text-gray-400'}`} />
           </button>
-          
-          {/* Discount Badge */}
-          {/* {product.mrp > product.price && (
-            <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              {calculateDiscount()}% OFF
-            </div>
-          )} */}
-
-
-          
-          
           {/* Stock Badge */}
           {stock > 0 && stock <= 5 && (
-            <div className="absolute top-3 left-3 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-xs font-semibold">
-              Only {stock} left
+            <div className="px-2.5 py-1 left-0 top-0 absolute bg-gray-700 bg-opacity-80 inline-flex justify-center items-center gap-4 rounded-br-lg">
+              <div className="text-center text-white text-xs font-medium font-['Montserrat'] leading-tight">Only {stock} left</div>
             </div>
           )}
-          
-          {/* Status Badge */}
-          {/* <div className="absolute bottom-3 left-3">
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              product.available === 'true' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {product.available === 'true' ? 'In Stock' : 'Out of Stock'}
-            </span>
-          </div> */}
         </div>
       </Link>
-      
-      <div className="mt-4">
-        <Link href={`/products/${product._id}`}>
-          <h3 className="text-xl font-semibold text-[#5E3A1C] hover:text-pink-500 transition-colors duration-200">
-            {product.name}
-          </h3>
-        </Link>
-        
-        {/* Color Swatches */}
-        {product.colors && product.colors.length > 0 && (
-          <div className="flex items-center space-x-2 mt-2">
-            {product.colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`w-4 h-4 rounded-full p-0.5 border-2 ${selectedColor === color ? 'border-[#EE346C]' : 'border-transparent'}`}
-                style={{ backgroundColor: color, outline: 'none' }}
-                title={color}
-              />
-            ))}
+      <div className="self-stretch flex flex-col justify-start items-start gap-5">
+        <div className="self-stretch flex flex-col justify-start items-start gap-4">
+          <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
+            <Link href={`/products/${product._id}`}>
+              <div className="self-stretch text-[var(--primary)] text-xl font-medium font-['Montserrat'] leading-relaxed">{product.name}</div>
+            </Link>
+            {/* Color Swatches */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="inline-flex justify-start items-center gap-1.5">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-5 h-5 p-1 bg-white rounded-[10px] outline outline-1 outline-offset-[-1px] ${selectedColor === color ? 'outline-rose-500' : 'outline-gray-300'} flex justify-start items-center gap-4`}
+                    style={{ backgroundColor: color, outline: selectedColor === color ? '2px solid #EE346C' : '1px solid #e5e7eb' }}
+                    title={color}
+                  >
+                    <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: color }} />
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="self-stretch inline-flex justify-between items-center">
+              <div className="flex justify-start items-center gap-1">
+                <div className="text-center text-[var(--primary)] text-xl font-semibold font-['Montserrat'] leading-relaxed">₹{product.price}</div>
+              </div>
+              <div className="inline-flex flex-col justify-start items-start gap-1.5">
+                <div className="inline-flex justify-start items-center gap-2.5">
+                  <div className="flex justify-start items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`w-5 h-5 ${i < product.averageRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <div className="text-center text-gray-500 text-base font-normal font-['Montserrat'] leading-tight">({product.totalReviews})</div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-
-        <div className="w-full  flex justify-between items-center mt-3">
-          <div className="flex items-baseline space-x-2 w-full">
-            <p className="text-lg font-bold ">₹{product.price}</p>
-            {/* {product.mrp > product.price && (
-              <p className="text-md text-gray-500 line-through">₹{product.mrp}</p>
-            )} */}
-          </div>
-          
-          <div className="flex text-sm  items-center w-full">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`h-4 w-4 ${i < product.averageRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-            ))}
-            <span className=" ml-2">({product.totalReviews})</span>
-          </div>
+          <button 
+            onClick={handleAddToCart}
+            className="w-64 px-2.5 py-3.5 rounded-md outline outline-1 outline-offset-[-1px] outline-rose-500 inline-flex justify-center items-center gap-4 bg-white text-rose-500 text-base font-semibold font-['Montserrat'] leading-tight hover:bg-rose-50 transition-colors"
+            disabled={stock === 0}
+          >
+            Add to cart
+          </button>
         </div>
-
-        <button 
-          onClick={handleAddToCart}
-          className="mt-4 w-full border border-[#EE346C]  text-[#EE346C] font-semibold py-3 rounded-md hover:bg-white flex items-center justify-center space-x-2"
-          disabled={stock === 0}
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span>{stock > 0 ? 'Add to cart' : 'Out of Stock'}</span>
-        </button>
       </div>
     </div>
   );
