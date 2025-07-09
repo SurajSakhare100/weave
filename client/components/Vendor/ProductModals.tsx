@@ -300,7 +300,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   onSuccess: () => void;
   product: Product | null;
 }) => {
-  if (!isOpen || !product) return null;
+  // Move hooks to the top
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -327,6 +327,9 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       setCategories(res.data.data || []);
     });
   }, []);
+
+  // Early return after hooks
+  if (!isOpen || !product) return null;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -554,8 +557,12 @@ export const DeleteProductModal = ({ isOpen, onClose, onSuccess, product }: {
   onSuccess: () => void;
   product: Product | null;
 }) => {
+  // Move hooks to the top
   const dispatch = useDispatch();
   const [loading, setLocalLoading] = useState(false);
+
+  // Early return after hooks
+  if (!isOpen || !product) return null;
 
   const handleDelete = async () => {
     if (!product) return;
@@ -580,8 +587,6 @@ export const DeleteProductModal = ({ isOpen, onClose, onSuccess, product }: {
       setLocalLoading(false);
     }
   };
-
-  if (!isOpen || !product) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
