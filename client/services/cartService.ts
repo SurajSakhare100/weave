@@ -36,9 +36,7 @@ export async function addToCart(product: any, quantity: number = 1, variantSize?
 
 export async function updateCartItem(itemId: string, quantity: number) {
   try {
-    console.log('Cart service - Updating item:', itemId, 'Quantity:', quantity);
     const res = await api.put(`/users/cart/${itemId}`, { quantity });
-    console.log('Cart service - Update response:', res.data);
     return res.data;
   } catch (error: any) {
     console.error('Error updating cart item:', error);

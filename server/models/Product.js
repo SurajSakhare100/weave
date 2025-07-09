@@ -145,6 +145,14 @@ const ProductSchema = new mongoose.Schema({
         default: 'active',
     },
     currVariantSize: String,
+    keyFeatures: [String],
+    productDetails: {
+        weight: { type: String },
+        dimensions: { type: String },
+        capacity: { type: String },
+        materials: { type: String },
+    },
+    tags: [String],
 }, { timestamps: true });
 
 // Indexes for better query performance

@@ -219,7 +219,10 @@ export const createProduct = asyncHandler(async (req, res) => {
       variantDetails,
       stock,
       colors,
-      status
+      status,
+      keyFeatures,
+      productDetails,
+      tags
     } = req.body;
 
     // Generate slug from name
@@ -294,7 +297,10 @@ export const createProduct = asyncHandler(async (req, res) => {
       colors,
       status,
       images,
-      files: [] // Keep for backward compatibility
+      files: [], // Keep for backward compatibility
+      keyFeatures,
+      productDetails,
+      tags
     });
 
     res.status(201).json({

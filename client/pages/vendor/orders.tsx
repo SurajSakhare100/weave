@@ -164,7 +164,7 @@ export default function VendorOrdersPage() {
 
   return (
     <VendorLayout>
-      <section className="py-16 bg-[#faf5f2] text-black min-h-screen">
+      <section className="py-16 bg-gray-50 text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -197,7 +197,7 @@ export default function VendorOrdersPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search orders..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                   />
                 </div>
               </form>
@@ -208,7 +208,7 @@ export default function VendorOrdersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled')}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -224,7 +224,7 @@ export default function VendorOrdersPage() {
           {/* Orders */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5A9BD8]"></div>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-20">
@@ -315,7 +315,7 @@ export default function VendorOrdersPage() {
                           <select
                             value={order.status || 'pending'}
                             onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                           >
                             <option value="pending">Mark as Pending</option>
                             <option value="processing">Mark as Processing</option>

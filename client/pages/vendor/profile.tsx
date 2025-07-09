@@ -128,8 +128,8 @@ export default function VendorProfilePage() {
   if (!profile) {
     return (
       <VendorLayout>
-        <div className="min-h-screen bg-[#faf5f2] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5A9BD8]"></div>
         </div>
       </VendorLayout>
     );
@@ -137,7 +137,7 @@ export default function VendorProfilePage() {
 
   return (
     <VendorLayout>
-      <section className="py-16 bg-[#faf5f2] min-h-screen">
+      <section className="py-16 bg-gray-50 min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -161,7 +161,7 @@ export default function VendorProfilePage() {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Profile Header */}
-            <div className="bg-gradient-to-r from-pink-500 to-pink-600 px-6 py-8 text-white">
+            <div className="bg-gradient-to-r from-[#5A9BD8] to-blue-600 px-6 py-8 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold">{profile.name}</h2>
@@ -185,7 +185,7 @@ export default function VendorProfilePage() {
                 {/* Basic Information */}
                 <div className="md:col-span-2">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <User className="h-5 w-5 mr-2 text-pink-500" />
+                    <User className="h-5 w-5 mr-2 text-[#5A9BD8]" />
                     Basic Information
                   </h3>
                 </div>
@@ -202,7 +202,7 @@ export default function VendorProfilePage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                       required
                     />
                   </div>
@@ -220,7 +220,7 @@ export default function VendorProfilePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                       required
                     />
                   </div>
@@ -238,7 +238,7 @@ export default function VendorProfilePage() {
                       value={formData.number}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export default function VendorProfilePage() {
                 {/* Bank Information */}
                 <div className="md:col-span-2 mt-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2 text-pink-500" />
+                    <CreditCard className="h-5 w-5 mr-2 text-[#5A9BD8]" />
                     Bank Account Details
                   </h3>
                 </div>
@@ -263,7 +263,7 @@ export default function VendorProfilePage() {
                       value={formData.bankAccOwner}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
@@ -280,7 +280,7 @@ export default function VendorProfilePage() {
                       value={formData.bankName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function VendorProfilePage() {
                       value={formData.bankAccNumber}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
@@ -312,7 +312,7 @@ export default function VendorProfilePage() {
                     value={formData.bankIFSC}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
 
@@ -326,7 +326,7 @@ export default function VendorProfilePage() {
                     value={formData.bankBranchName}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
 
@@ -340,7 +340,7 @@ export default function VendorProfilePage() {
                     value={formData.bankBranchNumber}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function VendorProfilePage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center px-6 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center px-6 py-2 bg-[#5A9BD8] text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>

@@ -30,12 +30,6 @@ export default function VendorProductsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'draft'>('all');
   
-  // Modal states
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
   useEffect(() => {
     // Check authentication
     if (!isVendorAuthenticated()) {
@@ -86,13 +80,11 @@ export default function VendorProductsPage() {
   };
 
   const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setShowEditModal(true);
+    // No need to set selectedProduct here, as it's handled in the modal
   };
 
   const handleDeleteProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setShowDeleteModal(true);
+    // No need to set selectedProduct here, as it's handled in the modal
   };
 
   const handleModalSuccess = () => {
@@ -123,7 +115,7 @@ export default function VendorProductsPage() {
 
   return (
     <VendorLayout>
-      <section className="py-16 bg-[#faf5f2] min-h-screen text-black">
+      <section className="py-16 bg-gray-50 min-h-screen text-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
@@ -132,8 +124,8 @@ export default function VendorProductsPage() {
               <p className="text-gray-600">Manage your product catalog ({totalProducts} products)</p>
             </div>
             <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 md:mt-0 flex items-center bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors font-semibold"
+              onClick={() => router.push('/vendor/products/add')}
+              className="mt-4 md:mt-0 flex items-center bg-[#5A9BD8] text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
             >
               <Plus className="h-5 w-5 mr-2" />
               Add New Product
@@ -159,7 +151,7 @@ export default function VendorProductsPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search products..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                   />
                 </div>
               </form>
@@ -172,7 +164,7 @@ export default function VendorProductsPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'active' | 'inactive' | 'draft')}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -203,7 +195,7 @@ export default function VendorProductsPage() {
           {/* Products */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5A9BD8]"></div>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20">
@@ -217,8 +209,8 @@ export default function VendorProductsPage() {
               </p>
               {!searchTerm && filterStatus === 'all' && (
                 <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center mx-auto bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors"
+                  onClick={() => router.push('/vendor/products/add')}
+                  className="flex items-center mx-auto bg-[#5A9BD8] text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   Add Your First Product
@@ -409,7 +401,7 @@ export default function VendorProductsPage() {
                     onClick={() => loadProducts(page)}
                     className={`px-3 py-2 text-sm font-medium rounded-lg ${
                       page === currentPage
-                        ? 'bg-pink-500 text-white'
+                        ? 'bg-[#5A9BD8] text-white'
                         : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -431,29 +423,23 @@ export default function VendorProductsPage() {
 
         {/* Modals */}
         <AddProductModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
+          isOpen={false}
+          onClose={() => {}}
           onSuccess={handleModalSuccess}
         />
         
         <EditProductModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedProduct(null);
-          }}
+          isOpen={false}
+          onClose={() => {}}
           onSuccess={handleModalSuccess}
-          product={selectedProduct}
+          product={null}
         />
         
         <DeleteProductModal
-          isOpen={showDeleteModal}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setSelectedProduct(null);
-          }}
+          isOpen={false}
+          onClose={() => {}}
           onSuccess={handleModalSuccess}
-          product={selectedProduct}
+          product={null}
         />
       </section>
     </VendorLayout>

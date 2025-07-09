@@ -39,6 +39,17 @@ export interface Product {
     createdAt: string
     updatedAt: string
     images: ProductImage[]
+    productDetails?: {
+      weight?: string;
+      dimensions?: string;
+      capacity?: string;
+      materials?: string;
+    };
+    keyFeatures?: string[];
+    offers?: boolean;
+    salePrice?: number;
+    sizes?: string[];
+    tags?: string[];
   }
 
 // Add this above Product interface

@@ -64,12 +64,11 @@ export const updateCartQuantity = createAsyncThunk('cart/updateCartQuantity', as
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not update cart')
     }
-    
+    // Always refetch cart after update
     const data = await getCart()
     if (data.success === false) {
       return rejectWithValue(data.message || 'Could not load cart')
     }
-    
     return data.result || []
   } catch (err: any) {
     return rejectWithValue('Could not update cart')
@@ -100,8 +99,12 @@ export const clearCartAsync = createAsyncThunk('cart/clearCartAsync', async (_, 
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not clear cart')
     }
-    
-    return []
+    // Always refetch cart after clearing
+    const data = await getCart()
+    if (data.success === false) {
+      return rejectWithValue(data.message || 'Could not load cart')
+    }
+    return data.result || []
   } catch (err: any) {
     return rejectWithValue('Could not clear cart')
   }

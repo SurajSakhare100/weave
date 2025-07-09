@@ -140,6 +140,10 @@ const ProductCard = ({ product }) => {
           </div>
         </div>
 
+
+
+
+
         <button 
           onClick={handleAddToCart}
           className="mt-4 w-full border border-[#EE346C]  text-[#EE346C] font-semibold py-3 rounded-md hover:bg-white flex items-center justify-center space-x-2"

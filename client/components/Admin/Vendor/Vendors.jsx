@@ -104,7 +104,7 @@ function Vendors({ loaded, setLoaded }) {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <Users className="h-8 w-8 text-primary-600" />
+            <Users className="h-8 w-8 text-[#5A9BD8]" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Vendors</h1>
               <p className="text-gray-600">Manage vendor accounts and their status</p>
@@ -113,9 +113,9 @@ function Vendors({ loaded, setLoaded }) {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="card p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-success-600 mr-3" />
+                <CheckCircle className="h-5 w-5 text-[#5A9BD8] mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Accepted Vendors</p>
                   <p className="text-2xl font-bold text-gray-900">
@@ -124,9 +124,9 @@ function Vendors({ loaded, setLoaded }) {
                 </div>
               </div>
             </div>
-            <div className="card p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center">
-                <Clock className="h-5 w-5 text-warning-600 mr-3" />
+                <Clock className="h-5 w-5 text-[#5A9BD8] mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Pending Vendors</p>
                   <p className="text-2xl font-bold text-gray-900">
@@ -140,7 +140,7 @@ function Vendors({ loaded, setLoaded }) {
 
         {/* Filter Tabs */}
         <div className="mb-6">
-          <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-soft">
+          <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
             <button
               onClick={() => {
                 refetch()
@@ -148,7 +148,7 @@ function Vendors({ loaded, setLoaded }) {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 accepted
-                  ? 'bg-success-600 text-white'
+                  ? 'bg-[#5A9BD8] text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
@@ -162,7 +162,7 @@ function Vendors({ loaded, setLoaded }) {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 !accepted
-                  ? 'bg-warning-600 text-white'
+                  ? 'bg-[#5A9BD8] text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
@@ -173,7 +173,7 @@ function Vendors({ loaded, setLoaded }) {
         </div>
 
         {/* Vendors Table */}
-        <div className="card overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -221,8 +221,8 @@ function Vendors({ loaded, setLoaded }) {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           vendor.accept 
-                            ? 'text-success-600 bg-success-50' 
-                            : 'text-warning-600 bg-warning-50'
+                            ? 'text-[#5A9BD8] bg-blue-50' 
+                            : 'text-orange-600 bg-orange-50'
                         }`}>
                           {vendor.accept ? 'Accepted' : 'Pending'}
                         </span>
@@ -230,7 +230,7 @@ function Vendors({ loaded, setLoaded }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button
                           onClick={() => navigate.push(`/admin/vendor/details/${vendor._id}`)}
-                          className="btn-outline text-xs"
+                          className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
                         >
                           <Eye size={14} className="mr-1" />
                           Details
@@ -239,7 +239,7 @@ function Vendors({ loaded, setLoaded }) {
                         {vendor.accept ? (
                           <button
                             onClick={() => navigate.push(`/admin/vendor/products/${vendor._id}`)}
-                            className="btn-secondary text-xs"
+                            className="inline-flex items-center px-3 py-1 border border-[#5A9BD8] rounded-md text-xs font-medium text-[#5A9BD8] bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
                           >
                             <Package size={14} className="mr-1" />
                             Products
@@ -247,7 +247,7 @@ function Vendors({ loaded, setLoaded }) {
                         ) : (
                           <button
                             onClick={() => handleAcceptVendor(vendor)}
-                            className="bg-success-600 hover:bg-success-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
+                            className="inline-flex items-center px-3 py-1 bg-[#5A9BD8] hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
                           >
                             <UserCheck size={14} className="mr-1" />
                             Accept
@@ -256,7 +256,7 @@ function Vendors({ loaded, setLoaded }) {
 
                         <button
                           onClick={() => handleDeleteVendor(vendor)}
-                          className="bg-error-600 hover:bg-error-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
+                          className="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors"
                         >
                           <Trash2 size={14} className="mr-1" />
                           Delete
@@ -289,11 +289,11 @@ function Vendors({ loaded, setLoaded }) {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoading}
-                className="btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? (
                   <>
-                    <div className="spinner mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#5A9BD8] mr-2"></div>
                     Loading...
                   </>
                 ) : (

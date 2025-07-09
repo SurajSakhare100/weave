@@ -57,13 +57,13 @@ function DashboardComp() {
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'delivered':
-                return 'text-success-600 bg-success-50'
+                return 'text-green-600 bg-green-50'
             case 'pending':
-                return 'text-warning-600 bg-warning-50'
+                return 'text-orange-600 bg-orange-50'
             case 'cancelled':
-                return 'text-error-600 bg-error-50'
+                return 'text-red-600 bg-red-50'
             case 'return':
-                return 'text-secondary-600 bg-secondary-50'
+                return 'text-purple-600 bg-purple-50'
             default:
                 return 'text-gray-600 bg-gray-50'
         }
@@ -73,7 +73,7 @@ function DashboardComp() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex items-center space-x-3">
-                    <div className="spinner"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#5A9BD8]"></div>
                     <span className="text-gray-600">Loading dashboard...</span>
                 </div>
             </div>
@@ -91,10 +91,10 @@ function DashboardComp() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="card p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex items-center">
-                            <div className="p-3 bg-success-100 rounded-lg">
-                                <Package className="h-6 w-6 text-success-600" />
+                            <div className="p-3 bg-green-100 rounded-lg">
+                                <Package className="h-6 w-6 text-green-600" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Delivered</p>
@@ -103,10 +103,10 @@ function DashboardComp() {
                         </div>
                     </div>
 
-                    <div className="card p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex items-center">
-                            <div className="p-3 bg-error-100 rounded-lg">
-                                <XCircle className="h-6 w-6 text-error-600" />
+                            <div className="p-3 bg-red-100 rounded-lg">
+                                <XCircle className="h-6 w-6 text-red-600" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Cancelled</p>
@@ -115,10 +115,10 @@ function DashboardComp() {
                         </div>
                     </div>
 
-                    <div className="card p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex items-center">
-                            <div className="p-3 bg-secondary-100 rounded-lg">
-                                <RotateCcw className="h-6 w-6 text-secondary-600" />
+                            <div className="p-3 bg-purple-100 rounded-lg">
+                                <RotateCcw className="h-6 w-6 text-purple-600" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Returns</p>
@@ -127,10 +127,10 @@ function DashboardComp() {
                         </div>
                     </div>
 
-                    <div className="card p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex items-center">
-                            <div className="p-3 bg-primary-100 rounded-lg">
-                                <DollarSign className="h-6 w-6 text-primary-600" />
+                            <div className="p-3 bg-blue-100 rounded-lg">
+                                <DollarSign className="h-6 w-6 text-[#5A9BD8]" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -141,13 +141,13 @@ function DashboardComp() {
                 </div>
 
                 {/* Recent Orders */}
-                <div className="card">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
                             <Link 
                                 href="/admin/orders"
-                                className="btn-outline text-sm"
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
                             >
                                 View All Orders
                             </Link>
@@ -208,7 +208,7 @@ function DashboardComp() {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
                                                     onClick={() => navigate.push(`/admin/orders/${obj.secretOrderId}/${obj.userId}`)}
-                                                    className="btn-outline text-xs"
+                                                    className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
                                                 >
                                                     <Eye size={14} className="mr-1" />
                                                     View
@@ -219,7 +219,15 @@ function DashboardComp() {
                                 ) : (
                                     <tr>
                                         <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                                            No orders found
+                                            <div className="flex flex-col items-center">
+                                                <Truck className="h-12 w-12 text-gray-400 mb-4" />
+                                                <p className="text-lg font-medium text-gray-900 mb-2">
+                                                    No orders found
+                                                </p>
+                                                <p className="text-gray-600">
+                                                    Recent orders will appear here
+                                                </p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}

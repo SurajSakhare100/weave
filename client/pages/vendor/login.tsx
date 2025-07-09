@@ -91,7 +91,7 @@ export default function VendorLoginPage() {
 
   return (
     <Layout>
-      <section className="py-16 bg-[#faf5f2] text-black min-h-screen flex items-center justify-center">
+      <section className="py-16 bg-gray-50 text-black min-h-screen flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Vendor Login</h1>
@@ -117,7 +117,7 @@ export default function VendorLoginPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                     formErrors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter your email"
@@ -140,7 +140,7 @@ export default function VendorLoginPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                     formErrors.password ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter your password"
@@ -162,7 +162,7 @@ export default function VendorLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-pink-500 text-white py-3 px-6 rounded-lg hover:bg-pink-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -180,7 +180,7 @@ export default function VendorLoginPage() {
               Don&apos;t have an account?{' '}
               <button
                 onClick={() => router.push('/vendor/register')}
-                className="text-pink-500 hover:text-pink-600 font-medium"
+                className="text-[#5A9BD8] hover:text-blue-700 font-medium"
               >
                 Register here
               </button>

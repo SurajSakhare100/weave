@@ -14,6 +14,14 @@ import {
 import api from '@/services/api';
 import type { Product, ProductImage } from '@/types';
 
+// Place these at the top of the file
+const SIZE_OPTIONS = [
+  'Extra small', 'Small', 'Medium', 'Large', 'Extra Large'
+];
+const COLOR_OPTIONS = [
+  'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'
+];
+
 // Category interface
 interface Category {
   _id: string;
@@ -292,259 +300,243 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   onSuccess: () => void;
   product: Product | null;
 }) => {
+  if (!isOpen || !product) return null;
   const dispatch = useDispatch();
-  // Individual state for each input
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [mrp, setMrp] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [pickupLocation, setPickupLocation] = useState('');
-  const [allowReturn, setAllowReturn] = useState(true);
-  const [allowCancellation, setAllowCancellation] = useState(true);
-  const [available, setAvailable] = useState('true');
-  const [colors, setColors] = useState<string[]>([]);
-  const [stock, setStock] = useState('');
-  const [status, setStatus] = useState('active');
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  // Form fields
+  const [name, setName] = useState(product?.name || '');
+  const [description, setDescription] = useState(product?.description || '');
+  const [additionalDetails, setAdditionalDetails] = useState(product?.srtDescription || '');
+  const [productDetails, setProductDetails] = useState(product?.productDetails || { weight: '', dimensions: '', capacity: '', materials: '' });
+  const [keyFeatures, setKeyFeatures] = useState(product?.keyFeatures || ['', '', '', '']);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLocalLoading] = useState(false);
+  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const [price, setPrice] = useState(product?.price?.toString() || '');
+  const [offers, setOffers] = useState(!!product?.offers);
+  const [salePrice, setSalePrice] = useState(product?.salePrice?.toString() || '');
+  const [category, setCategory] = useState(product?.categorySlug || '');
+  const [sizes, setSizes] = useState<string[]>(product?.sizes || []);
+  const [colors, setColors] = useState<string[]>(product?.colors || []);
+  const [tags, setTags] = useState<string[]>(product?.tags || []);
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
-    if (product && isOpen) {
-      setName(product.name || '');
-      setPrice(product.price?.toString() || '');
-      setMrp(product.mrp?.toString() || '');
-      setDiscount(product.discount || 0);
-      setCategory(product.category || '');
-      setDescription(product.description || '');
-      setPickupLocation(product.pickup_location || '');
-      setAllowReturn(product.return || true);
-      setAllowCancellation(product.cancellation || true);
-      setAvailable(product.available || 'true');
-      setColors(product.colors || []);
-      setStock(product.stock?.toString() || '');
-      setStatus(product.status || 'active');
-      setExistingImages(product.images ? product.images : []);
-      setImages([]);
-      setImagePreviews([]);
-    }
-    loadCategories();
-  }, [product, isOpen]);
-
-  const loadCategories = async () => {
-    try {
-      const { data } = await api.get<CategoryApiResponse>('/categories');
-      setCategories(data.data || []);
-      if (data.data && data.data.length === 0) {
-        setCategories([
-          { _id: 'default', name: 'General', slug: 'general' }
-        ]);
-      }
-    } catch {
-      setCategories([
-        { _id: 'default', name: 'General', slug: 'general' }
-      ]);
-    }
-  };
+    api.get('/categories').then(res => {
+      setCategories(res.data.data || []);
+    });
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setImages(files);
     setImagePreviews(files.map(file => URL.createObjectURL(file)));
   };
-
-  const removeExistingImage = (index: number) => {
-    setExistingImages(existingImages.filter((_, i) => i !== index));
+  const removeImage = (idx: number) => {
+    setImages(images.filter((_, i) => i !== idx));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== idx));
   };
-
-  const removeNewImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  const removeExistingImage = (idx: number) => {
+    setExistingImages(existingImages.filter((_, i) => i !== idx));
   };
+  const handleFeatureChange = (idx: number, value: string) => {
+    setKeyFeatures((prev: string[]) => prev.map((f: string, i: number) => (i === idx ? value : f)));
+  };
+  const handleSizeToggle = (size: string) => {
+    setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
+  };
+  const handleColorToggle = (color: string) => {
+    setColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
+  };
+  const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+      e.preventDefault();
+      if (!tags.includes(tagInput.trim())) setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+  const removeTag = (tag: string) => setTags(tags.filter(t => t !== tag));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalLoading(true);
+    setLoading(true);
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', name);
-      formDataToSend.append('price', price);
-      formDataToSend.append('mrp', mrp);
-      formDataToSend.append('discount', discount.toString());
-      formDataToSend.append('category', category);
-      formDataToSend.append('description', description);
-      formDataToSend.append('pickup_location', pickupLocation);
-      formDataToSend.append('return', allowReturn.toString());
-      formDataToSend.append('cancellation', allowCancellation.toString());
-      formDataToSend.append('available', available);
-      formDataToSend.append('status', status);
-      formDataToSend.append('stock', stock);
-      colors.forEach(color => formDataToSend.append('colors', color));
-      formDataToSend.append('existingImages', JSON.stringify(existingImages));
-      images.forEach(image => formDataToSend.append('images', image));
-      if (product) {
-        await updateProduct(product._id, formDataToSend);
-        onSuccess();
-        onClose();
-      }
-    } catch (error: unknown) {
-      let errorMessage = 'Failed to update product';
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
-      ) {
-        errorMessage = (error as { response: { data: { message: string } } }).response.data.message;
-      }
-      dispatch(setError(errorMessage));
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('srtDescription', additionalDetails);
+      formData.append('price', price);
+      formData.append('category', category);
+      formData.append('offers', String(offers));
+      formData.append('salePrice', salePrice);
+      formData.append('productDetails', JSON.stringify(productDetails));
+      keyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f));
+      sizes.forEach(size => formData.append('sizes', size));
+      colors.forEach(color => formData.append('colors', color));
+      tags.forEach(tag => formData.append('tags', tag));
+      formData.append('existingImages', JSON.stringify(existingImages));
+      images.forEach(img => formData.append('images', img));
+      await updateProduct(product._id, formData);
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      dispatch(setError(error?.response?.data?.message || 'Failed to update product'));
     } finally {
-      setLocalLoading(false);
+      setLoading(false);
     }
   };
-
-  if (!isOpen || !product) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative z-[10000]">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative z-[10000]">
+          <div className="bg-white px-8 pt-8 pb-4 sm:p-8 sm:pb-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Package className="h-5 w-5 mr-2" />
-                Edit Product
-              </h3>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                <X className="h-6 w-6" />
-              </button>
+              <h3 className="text-2xl font-bold text-[#357ab8] flex items-center">Edit Product</h3>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-6 w-6" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                  <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product name" />
+            <form onSubmit={handleSubmit} className="space-y-10">
+              {/* Name & Description */}
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Name & description</h2>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-2">Product title</label>
+                  <input maxLength={100} required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]" placeholder="Input your text" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                  <select required value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
-                    <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Description</label>
+                  <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] bg-[#f4f8fb]" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
-                  <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Additional details</label>
+                  <textarea value={additionalDetails} onChange={e => setAdditionalDetails(e.target.value)} rows={2} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] bg-[#f4f8fb]" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">MRP (₹) *</label>
-                  <input type="number" required value={mrp} onChange={e => setMrp(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
-                  <input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Colors</label>
-                  <ColorPalette selectedColors={colors} setSelectedColors={setColors} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Stock</label>
-                  <input type="number" value={stock} onChange={e => setStock(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" min="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select value={status} onChange={e => setStatus(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter product description" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
-                <input type="text" value={pickupLocation} onChange={e => setPickupLocation(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter pickup location" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center">
-                  <input type="checkbox" id="return-edit" checked={allowReturn} onChange={e => setAllowReturn(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
-                  <label htmlFor="return-edit" className="ml-2 text-sm text-gray-700">Allow Returns</label>
-                </div>
-                <div className="flex items-center">
-                  <input type="checkbox" id="cancellation-edit" checked={allowCancellation} onChange={e => setAllowCancellation(e.target.checked)} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
-                  <label htmlFor="cancellation-edit" className="ml-2 text-sm text-gray-700">Allow Cancellation</label>
-                </div>
-              </div>
-              {existingImages.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Images</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {existingImages.map((image, index) => (
-                      <div key={index} className="relative">
-                        <Image 
-                          src={image.url ? image.url : '/products/product.png'} 
-                          alt={`Product ${index + 1}`} 
-                          width={96} 
-                          height={96} 
-                          className="w-full h-24 object-cover rounded-lg" 
-                          onError={(e) => { 
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = '/products/product.png'; 
-                          }} 
-                        />
-                        <button type="button" onClick={() => removeExistingImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Add New Images</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload-edit" />
-                  <label htmlFor="image-upload-edit" className="cursor-pointer">
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-600">Click to upload additional images</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block font-medium mb-1 flex items-center gap-1">Product details</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input value={productDetails.weight} onChange={e => setProductDetails({ ...productDetails, weight: e.target.value })} placeholder="Weight" className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5A9BD8]" />
+                      <input value={productDetails.dimensions} onChange={e => setProductDetails({ ...productDetails, dimensions: e.target.value })} placeholder="Dimensions" className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5A9BD8]" />
+                      <input value={productDetails.capacity} onChange={e => setProductDetails({ ...productDetails, capacity: e.target.value })} placeholder="Capacity" className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5A9BD8]" />
+                      <input value={productDetails.materials} onChange={e => setProductDetails({ ...productDetails, materials: e.target.value })} placeholder="Materials" className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5A9BD8]" />
                     </div>
-                  </label>
+                  </div>
+                  <div>
+                    <label className="block font-medium mb-1 flex items-center gap-1">Key features</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {keyFeatures.map((f, i) => (
+                        <input key={i} value={f} onChange={e => handleFeatureChange(i, e.target.value)} placeholder={`Feature ${i+1}`} className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5A9BD8]" />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                {imagePreviews.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
-                        <Image 
-                          src={preview} 
-                          alt={`New Preview ${index + 1}`} 
-                          width={96} 
-                          height={96} 
-                          className="w-full h-24 object-cover rounded-lg" 
-                        />
-                        <button type="button" onClick={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+              </section>
+              {/* Images & Category */}
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Images & Category</h2>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Cover images</label>
+                  <div className="bg-[#f4f8fb] border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center">
+                    <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" id="product-images-edit" />
+                    <label htmlFor="product-images-edit" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="h-8 w-8 text-[#5A9BD8] mb-2" />
+                      <span className="text-[#5A9BD8] font-medium">Click or drop image</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {existingImages.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={img.url} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                          <button type="button" onClick={() => removeExistingImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
+                        </div>
+                      ))}
+                      {imagePreviews.map((src, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={src} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                          <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Category</label>
+                  <select required value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]">
+                    <option value="" disabled>Select category</option>
+                    {categories.map(cat => (
+                      <option key={cat._id} value={cat.slug}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </section>
+              {/* Price */}
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Price</h2>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Price</label>
+                  <span className="inline-block px-3 py-2 bg-[#f4f8fb] border border-gray-200 rounded-lg">₹</span>
+                  <input required type="number" min={0} value={price} onChange={e => setPrice(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]" />
+                </div>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Offers</label>
+                  <input type="checkbox" checked={offers} onChange={e => setOffers(e.target.checked)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
+                </div>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Sale Price</label>
+                  <span className="inline-block px-3 py-2 bg-[#f4f8fb] border border-gray-200 rounded-lg">₹</span>
+                  <input type="number" min={0} value={salePrice} onChange={e => setSalePrice(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]" />
+                </div>
+              </section>
+              {/* Category & Attributes */}
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Category & attributes</h2>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Size</label>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {SIZE_OPTIONS.map((size: string) => (
+                      <label key={size} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={sizes.includes(size)} onChange={() => handleSizeToggle(size)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
+                        {size}
+                      </label>
                     ))}
                   </div>
-                )}
-              </div>
-              <div className="flex justify-end space-x-3 pt-6 border-t">
-                <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={loading} className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 flex items-center">
-                  {loading ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Updating...</>) : (<><Save className="h-4 w-4 mr-2" />Update Product</>)}
+                </div>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Color</label>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {COLOR_OPTIONS.map((color: string) => (
+                      <label key={color} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={colors.includes(color)} onChange={() => handleColorToggle(color)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
+                        {color}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block font-medium mb-1 flex items-center gap-1">Tags</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map(tag => (
+                      <span key={tag} className="bg-[#5A9BD8] text-white px-3 py-1 rounded-full flex items-center gap-1 text-sm">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="ml-1 text-white hover:text-red-200"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={handleTagAdd}
+                    placeholder="Enter tags to describe your item"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
+                  />
+                </div>
+              </section>
+              <div className="flex justify-end">
+                <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 mr-2">Cancel</button>
+                <button type="submit" disabled={loading} className="bg-[#5A9BD8] text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
+                  {loading ? 'Updating...' : 'Update Product'}
                 </button>
               </div>
             </form>

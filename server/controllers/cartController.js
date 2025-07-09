@@ -13,7 +13,6 @@ export const getCart = asyncHandler(async (req, res) => {
       throw new Error('User not authenticated');
     }
     const cart = await userHelpers.getCartItems(userId);
-    console.log('Cart controller - Cart data:', JSON.stringify(cart, null, 2));
     res.json(cart);
   } catch (error) {
     console.error('Cart controller - Get cart error:', error);
@@ -24,8 +23,6 @@ export const getCart = asyncHandler(async (req, res) => {
 // POST /users/cart
 export const addToCart = asyncHandler(async (req, res) => {
   try {
-    console.log('Cart controller - Request body:', req.body);
-    console.log('Cart controller - User:', req.user);
     
     const userId = req.user._id;
     if (!userId) {
@@ -57,7 +54,6 @@ export const addToCart = asyncHandler(async (req, res) => {
       variantSize: item.variantSize || item.size
     };
     
-    console.log('Cart controller - Cart item:', cartItem);
     
     const user = await User.findById(userId);
     if (!user) {
@@ -66,7 +62,6 @@ export const addToCart = asyncHandler(async (req, res) => {
     }
     
     const result = await userHelpers.addToCart({ userId, item: cartItem });
-    console.log('Cart controller - Helper result:', result);
     res.json({ success: true, result });
   } catch (error) {
     console.error('Cart controller - Error:', error);
@@ -77,38 +72,40 @@ export const addToCart = asyncHandler(async (req, res) => {
 // PUT /users/cart/:itemId
 export const updateCartItem = asyncHandler(async (req, res) => {
   try {
-    console.log('Cart controller - Update request params:', req.params);
-    console.log('Cart controller - Update request body:', req.body);
-    
     const userId = req.user._id;
     if (!userId) {
       res.status(401);
       throw new Error('User not authenticated');
     }
-    
-    // Convert itemId to ObjectId using utility function
+
     const proId = toObjectId(req.params.itemId);
     if (!proId) {
       res.status(400);
       throw new Error('Invalid product ID format');
     }
-    
-    console.log('Cart controller - Converted proId:', proId);
-    
+
     const { quantity } = req.body;
+
+    if (typeof quantity !== 'number') {
+      res.status(400);
+      throw new Error('Quantity must be a number');
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       res.status(404);
       throw new Error('User not found');
     }
-    
+
     if (quantity <= 0) {
       await userHelpers.removeItemCart({ userId, proId });
-      return res.json({ success: true, removed: true });
+      const cart = await userHelpers.getCartItems(userId);
+      return res.json({ success: true, removed: true, cart });
     }
-    
-    await userHelpers.changeQuantityCart({ userId, proId, action: 0, quantity });
-    res.json({ success: true, updated: true });
+
+    await userHelpers.changeQuantityCart({ userId, proId, quantity });
+    const cart = await userHelpers.getCartItems(userId);
+    res.json({ success: true, updated: true, cart });
   } catch (error) {
     console.error('Cart controller - Update error:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -118,7 +115,6 @@ export const updateCartItem = asyncHandler(async (req, res) => {
 // DELETE /users/cart/:itemId
 export const removeFromCart = asyncHandler(async (req, res) => {
   try {
-    console.log('Cart controller - Remove request params:', req.params);
     
     const userId = req.user._id;
     if (!userId) {
@@ -133,7 +129,6 @@ export const removeFromCart = asyncHandler(async (req, res) => {
       throw new Error('Invalid product ID format');
     }
     
-    console.log('Cart controller - Converted proId for remove:', proId);
     
     const user = await User.findById(userId);
     if (!user) {
@@ -152,26 +147,22 @@ export const removeFromCart = asyncHandler(async (req, res) => {
 // DELETE /users/cart - Clear entire cart
 export const clearCart = asyncHandler(async (req, res) => {
   try {
-    console.log('Cart controller - Clear cart request');
-    
     const userId = req.user._id;
     if (!userId) {
       res.status(401);
       throw new Error('User not authenticated');
     }
-    
     const user = await User.findById(userId);
     if (!user) {
       res.status(404);
       throw new Error('User not found');
     }
-    
-    // Clear the entire cart
     user.cart = [];
     await user.save();
-    
+    // Return updated (empty) cart
+    const cart = await userHelpers.getCartItems(userId);
     console.log('Cart controller - Cart cleared successfully');
-    res.json({ success: true, message: 'Cart cleared successfully' });
+    res.json({ success: true, message: 'Cart cleared successfully', cart });
   } catch (error) {
     console.error('Cart controller - Clear cart error:', error);
     res.status(500).json({ success: false, message: error.message });

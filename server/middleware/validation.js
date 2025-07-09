@@ -70,6 +70,40 @@ const validateProduct = [
     .trim()
     .isLength({ max: 1000 })
     .withMessage('Description must be less than 1000 characters'),
+  body('keyFeatures')
+    .optional()
+    .isArray({ max: 4 })
+    .withMessage('Key features must be an array with up to 4 items'),
+  body('keyFeatures.*')
+    .optional()
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('Each key feature must be a string up to 100 characters'),
+  body('productDetails')
+    .optional()
+    .isObject()
+    .withMessage('Product details must be an object'),
+  body('productDetails.weight')
+    .optional()
+    .isString(),
+  body('productDetails.dimensions')
+    .optional()
+    .isString(),
+  body('productDetails.capacity')
+    .optional()
+    .isString(),
+  body('productDetails.materials')
+    .optional()
+    .isString(),
+  body('tags')
+    .optional()
+    .isArray({ max: 10 })
+    .withMessage('Tags must be an array with up to 10 items'),
+  body('tags.*')
+    .optional()
+    .isString()
+    .isLength({ max: 30 })
+    .withMessage('Each tag must be a string up to 30 characters'),
   handleValidationErrors
 ];
 

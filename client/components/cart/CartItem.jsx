@@ -22,12 +22,21 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
         <p className="text-sm">Color: {item.color || 'Pink'}</p>
       </div>
       <div className="flex items-center border border-[#E75480] rounded-md px-4 py-1 gap-3">
-        <button 
-          onClick={() => onRemove(item.proId)}
-          className="text-[#E75480] hover:text-pink-600"
-        >
-          <Trash2 className="h-5 w-5" />
-        </button>
+        {item.quantity > 1 ? (
+          <button 
+            onClick={() => onQuantityChange(item.proId, item.quantity - 1)}
+            className="text-[#E75480] hover:text-pink-600"
+          >
+            <Minus className="h-5 w-5" />
+          </button>
+        ) : (
+          <button 
+            onClick={() => onRemove(item.proId)}
+            className="text-[#E75480] hover:text-pink-600"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+        )}
         <span className="text-[#E75480] font-semibold text-lg">{item.quantity}</span>
         <button 
           onClick={() => onQuantityChange(item.proId, item.quantity + 1)}

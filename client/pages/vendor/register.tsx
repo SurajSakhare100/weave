@@ -142,7 +142,7 @@ export default function VendorRegisterPage() {
 
   return (
     <Layout>
-      <section className="py-16 bg-[#faf5f2] text-black min-h-screen flex items-center justify-center">
+      <section className="py-16 bg-gray-50 text-black min-h-screen flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-2xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Vendor Registration</h1>
@@ -152,18 +152,18 @@ export default function VendorRegisterPage() {
           {/* Progress Steps */}
           <div className="w-full mb-8">
             <div className="flex items-center justify-center space-x-4">
-              <div className={`flex items-center ${step >= 1 ? 'text-pink-500' : 'text-gray-400'}`}>
+              <div className={`flex items-center ${step >= 1 ? 'text-[#5A9BD8]' : 'text-gray-400'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                  step >= 1 ? 'border-pink-500 bg-pink-500 text-white' : 'border-gray-300'
+                  step >= 1 ? 'border-[#5A9BD8] bg-[#5A9BD8] text-white' : 'border-gray-300'
                 }`}>
                   {step > 1 ? <CheckCircle className="w-5 h-5" /> : '1'}
                 </div>
                 <span className="ml-2 text-sm font-medium">Basic Info</span>
               </div>
-              <div className={`w-16 h-0.5 ${step >= 2 ? 'bg-pink-500' : 'bg-gray-300'}`}></div>
-              <div className={`flex items-center ${step >= 2 ? 'text-pink-500' : 'text-gray-400'}`}>
+              <div className={`w-16 h-0.5 ${step >= 2 ? 'bg-[#5A9BD8]' : 'bg-gray-300'}`}></div>
+              <div className={`flex items-center ${step >= 2 ? 'text-[#5A9BD8]' : 'text-gray-400'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                  step >= 2 ? 'border-pink-500 bg-pink-500 text-white' : 'border-gray-300'
+                  step >= 2 ? 'border-[#5A9BD8] bg-[#5A9BD8] text-white' : 'border-gray-300'
                 }`}>
                   2
                 </div>
@@ -193,7 +193,7 @@ export default function VendorRegisterPage() {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.name ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Enter your business name"
@@ -216,7 +216,7 @@ export default function VendorRegisterPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Enter your email"
@@ -239,7 +239,7 @@ export default function VendorRegisterPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                      className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.password ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Create a password"
@@ -269,7 +269,7 @@ export default function VendorRegisterPage() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                      className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Confirm your password"
@@ -299,7 +299,7 @@ export default function VendorRegisterPage() {
                       name="number"
                       value={formData.number}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.number ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Enter your phone number"
@@ -313,7 +313,7 @@ export default function VendorRegisterPage() {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full bg-pink-500 text-white py-3 px-6 rounded-lg hover:bg-pink-600 transition-colors font-semibold"
+                                      className="w-full bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
                   Next Step
                 </button>
@@ -332,7 +332,7 @@ export default function VendorRegisterPage() {
                         name="bankAccOwner"
                         value={formData.bankAccOwner}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                         placeholder="Account holder name"
                       />
                     </div>
@@ -349,7 +349,7 @@ export default function VendorRegisterPage() {
                         name="bankName"
                         value={formData.bankName}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                         placeholder="Bank name"
                       />
                     </div>
@@ -366,7 +366,7 @@ export default function VendorRegisterPage() {
                         name="bankAccNumber"
                         value={formData.bankAccNumber}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                         placeholder="Account number"
                       />
                     </div>
@@ -381,7 +381,7 @@ export default function VendorRegisterPage() {
                       name="bankIFSC"
                       value={formData.bankIFSC}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                       placeholder="IFSC code"
                     />
                   </div>
@@ -395,7 +395,7 @@ export default function VendorRegisterPage() {
                       name="bankBranchName"
                       value={formData.bankBranchName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                       placeholder="Branch name"
                     />
                   </div>
@@ -409,7 +409,7 @@ export default function VendorRegisterPage() {
                       name="bankBranchNumber"
                       value={formData.bankBranchNumber}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
                       placeholder="Branch number"
                     />
                   </div>
@@ -426,7 +426,7 @@ export default function VendorRegisterPage() {
           <button
             type="submit"
                     disabled={loading}
-                    className="flex-1 bg-pink-500 text-white py-3 px-6 rounded-lg hover:bg-pink-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="flex-1 bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {loading ? (
                       <>
@@ -447,7 +447,7 @@ export default function VendorRegisterPage() {
               Already have an account?{' '}
               <button
                 onClick={() => router.push('/vendor/login')}
-                className="text-pink-500 hover:text-pink-600 font-medium"
+                className="text-[#5A9BD8] hover:text-blue-700 font-medium"
               >
                 Sign in here
               </button>
