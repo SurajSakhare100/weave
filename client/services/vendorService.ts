@@ -156,14 +156,14 @@ export async function getVendorOrdersAdmin(id: string, params?: any) {
 } 
 
 // Add Product
-export const addVendorProduct = async (formData) => {
+export const addVendorProduct = async (formData: FormData) => {
   return api.post('/products', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
 
 // Edit Product
-export const editVendorProduct = async (id:string, formData) => {
+export const editVendorProduct = async (id: string, formData: FormData) => {
   return api.put(`/products/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
