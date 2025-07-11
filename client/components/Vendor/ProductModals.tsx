@@ -314,6 +314,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState(product?.images || []);
   const [price, setPrice] = useState(product?.price?.toString() || '');
+  const [mrp, setMrp] = useState(product?.mrp?.toString() || '');
   const [offers, setOffers] = useState(!!product?.offers);
   const [salePrice, setSalePrice] = useState(product?.salePrice?.toString() || '');
   const [category, setCategory] = useState(product?.categorySlug || '');
@@ -321,6 +322,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const [colors, setColors] = useState<string[]>(product?.colors || []);
   const [tags, setTags] = useState<string[]>(product?.tags || []);
   const [tagInput, setTagInput] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     api.get('/categories').then(res => {
@@ -363,6 +365,18 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+    // Client-side validation
+    const newErrors: {[key: string]: string} = {};
+    if (!name.trim()) newErrors.name = 'Product name is required.';
+    if (!price || isNaN(Number(price)) || Number(price) < 0) newErrors.price = 'Valid price is required.';
+    if (!mrp || isNaN(Number(mrp)) || Number(mrp) < 0) newErrors.mrp = 'Valid MRP is required.';
+    if (!category) newErrors.category = 'Category is required.';
+    if (images.length === 0 && (!existingImages || existingImages.length === 0)) newErrors.images = 'At least one image is required.';
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      return;
+    }
     setLoading(true);
     try {
       const formData = new FormData();
@@ -370,6 +384,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       formData.append('description', description);
       formData.append('srtDescription', additionalDetails);
       formData.append('price', price);
+      formData.append('mrp', mrp);
       formData.append('category', category);
       formData.append('offers', String(offers));
       formData.append('salePrice', salePrice);
@@ -462,6 +477,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                       ))}
                     </div>
                   </div>
+                  {fieldErrors.images && <div className="text-red-600 text-sm mt-1">{fieldErrors.images}</div>}
                 </div>
                 <div className="mb-4">
                   <label className="block font-medium mb-1 flex items-center gap-1">Category</label>
@@ -471,6 +487,7 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                       <option key={cat._id} value={cat.slug}>{cat.name}</option>
                     ))}
                   </select>
+                  {fieldErrors.category && <div className="text-red-600 text-sm mt-1">{fieldErrors.category}</div>}
                 </div>
               </section>
               {/* Price */}
@@ -480,6 +497,13 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                   <label className="block font-medium mb-1 flex items-center gap-1">Price</label>
                   <span className="inline-block px-3 py-2 bg-[#f4f8fb] border border-gray-200 rounded-lg">₹</span>
                   <input required type="number" min={0} value={price} onChange={e => setPrice(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]" />
+                  {fieldErrors.price && <div className="text-red-600 text-sm mt-1">{fieldErrors.price}</div>}
+                </div>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="block font-medium mb-1 flex items-center gap-1">MRP</label>
+                  <span className="inline-block px-3 py-2 bg-[#f4f8fb] border border-gray-200 rounded-lg">₹</span>
+                  <input required type="number" min={0} value={mrp} onChange={e => setMrp(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]" />
+                  {fieldErrors.mrp && <div className="text-red-600 text-sm mt-1">{fieldErrors.mrp}</div>}
                 </div>
                 <div className="mb-4 flex items-center gap-2">
                   <label className="block font-medium mb-1 flex items-center gap-1">Offers</label>

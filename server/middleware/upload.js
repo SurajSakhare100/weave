@@ -84,10 +84,10 @@ export const handleUploadError = (error, req, res, next) => {
 export const processUploadedFiles = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No images uploaded. Please select at least one image.'
-      });
+      // return res.status(400).json({
+      //   success: false,
+      //   message: 'No images uploaded. Please select at least one image.'
+      // });
     }
 
     // Validate all files
@@ -145,10 +145,10 @@ export const handleMultipleUpload = (req, res, next) => {
     }
     
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No images uploaded. Please select at least one image.'
-      });
+      // return res.status(400).json({
+      //   success: false,
+      //   message: 'No images uploaded. Please select at least one image.'
+      // });
     }
 
     // Validate all files

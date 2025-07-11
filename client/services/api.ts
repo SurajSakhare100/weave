@@ -50,17 +50,17 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       switch (error.response.status) {
-        case 401:
-          // Clear tokens on unauthorized
-          if (typeof window !== 'undefined') {
-            Cookies.remove('userToken');
-            Cookies.remove('vendorToken');
-            // Redirect to login if not already there
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login';
-            }
-          }
-          break;
+        // case 401:
+        //   // Clear tokens on unauthorized
+        //   if (typeof window !== 'undefined') {
+        //     Cookies.remove('userToken');
+        //     Cookies.remove('vendorToken');
+        //     // Redirect to login if not already there
+        //     if (window.location.pathname !== '/login') {
+        //       window.location.href = '/login';
+        //     }
+        //   }
+        //   break;
         case 403:
           console.error('Access forbidden:', error.response.data);
           break;

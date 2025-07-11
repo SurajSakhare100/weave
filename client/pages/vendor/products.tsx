@@ -1,5 +1,7 @@
 import VendorLayout from '@/components/VendorLayout';
 import { useEffect, useState, useCallback } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -37,6 +39,10 @@ export default function VendorProductsPage() {
       return;
     }
   }, [router]);
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
   const loadProducts = useCallback(async (page = 1) => {
     try {
@@ -90,6 +96,7 @@ export default function VendorProductsPage() {
   const handleModalSuccess = () => {
     // Reload products after successful operation
     loadProducts(products?.page || 1);
+    toast.success('Operation successful!');
   };
 
   const handleStatusFilter = (status: 'all' | 'active' | 'inactive' | 'draft') => {
@@ -115,6 +122,7 @@ export default function VendorProductsPage() {
 
   return (
     <VendorLayout>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
       <section className="py-16 bg-gray-50 min-h-screen text-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -260,7 +268,7 @@ export default function VendorProductsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleEditProduct(product)}
+                              onClick={() => router.push(`/vendor/products/${product._id}`)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Edit product"
                             >
@@ -351,7 +359,7 @@ export default function VendorProductsPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => handleEditProduct(product)}
+                                  onClick={() => router.push(`/vendor/products/${product._id}`)}
                                   className="text-blue-600 hover:text-blue-900"
                                   title="Edit product"
                                 >

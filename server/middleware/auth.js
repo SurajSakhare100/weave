@@ -76,27 +76,23 @@ const vendorAuth = asyncHandler(async (req, res, next) => {
       req.vendor = await Vendor.findById(decoded.id).select('-password');
 
       if (!req.vendor) {
-        res.status(401);
-        throw new Error('Not authorized, vendor not found');
+        return res.status(401).json({ message: 'Not authorized, vendor not found' });
       }
 
       // Check if vendor is accepted
       if (!req.vendor.accept) {
-        res.status(403);
-        throw new Error('Vendor account not yet approved');
+        return res.status(403).json({ message: 'Vendor account not yet approved' });
       }
 
       next();
     } catch (error) {
       console.error(error);
-      res.status(401);
-      throw new Error('Not authorized, token failed');
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
   if (!token) {
-    res.status(401);
-    throw new Error('Not authorized, no token');
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 });
 

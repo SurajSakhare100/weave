@@ -4,9 +4,6 @@ import Category from '../models/Category.js';
 import Review from '../models/Review.js';
 import { uploadMultipleImages, deleteMultipleImages, updateImage } from '../utils/imageUpload.js';
 
-// @desc    Get all products with pagination and filtering
-// @route   GET /api/products
-// @access  Public (with optional vendor auth)
 export const getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -77,10 +74,11 @@ export const getProducts = asyncHandler(async (req, res) => {
 
     // Filter for vendor products only
     if (vendorOnly === 'true') {
-      filter.vendor = true;
-      if (req.vendor) {
-        filter.vendorId = req.vendor._id;
+      if (!req.vendor) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: Vendor authentication required.' });
       }
+      filter.vendor = true;
+      filter.vendorId = req.vendor._id;
     }
 
     if (minPrice || maxPrice) {
@@ -143,9 +141,7 @@ export const getProducts = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get single product by ID
-// @route   GET /api/products/:id
-// @access  Public
+
 export const getProductById = asyncHandler(async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
@@ -172,9 +168,7 @@ export const getProductById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get product by slug
-// @route   GET /api/products/slug/:slug
-// @access  Public
+
 export const getProductBySlug = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug })
     .populate('vendorId', 'name email phone')
@@ -197,10 +191,10 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Create new product
-// @route   POST /api/products
-// @access  Private (Vendor)
 export const createProduct = asyncHandler(async (req, res) => {
+  if (!req.vendor) {
+    return res.status(401).json({ success: false, message: 'Unauthorized: Vendor authentication required.' });
+  }
   try {
     const {
       name,
@@ -224,6 +218,17 @@ export const createProduct = asyncHandler(async (req, res) => {
       productDetails,
       tags
     } = req.body;
+
+    // Strong server-side validation
+    const errors = [];
+    if (!name || typeof name !== 'string' || !name.trim()) errors.push('Product name is required.');
+    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) errors.push('Valid price is required.');
+    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) errors.push('Valid MRP is required.');
+    if (!category || typeof category !== 'string' || !category.trim()) errors.push('Category is required.');
+    if (!req.files || req.files.length === 0) errors.push('At least one image is required.');
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, message: errors.join(' ') });
+    }
 
     // Generate slug from name
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -316,9 +321,7 @@ export const createProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update product
-// @route   PUT /api/products/:id
-// @access  Private (Vendor)
+
 export const updateProduct = asyncHandler(async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -334,14 +337,38 @@ export const updateProduct = asyncHandler(async (req, res) => {
       throw new Error('Not authorized to update this product');
     }
 
-    const { colors, stock, status } = req.body;
+    // Strong server-side validation for update
+    const errors = [];
+    const { colors, mrp, price } = req.body;
+    console.log(req)
+    let images = product.images || [];
+    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) errors.push('Valid MRP is required.');
+    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) errors.push('Valid price is required.');
+    // Check for at least one image (existing or new)
+    if (req.body.existingImages) {
+      try {
+        const existingImages = JSON.parse(req.body.existingImages);
+        images = existingImages;
+      } catch (error) {
+        console.error('Error parsing existingImages:', error);
+        images = [];
+      }
+    }
+    if (req.files && req.files.length > 0) {
+      // Will add new images below
+    }
+    if ((!images || images.length === 0) && (!req.files || req.files.length === 0)) {
+      errors.push('At least one image is required.');
+    }
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, message: errors.join(' ') });
+    }
+
     if (colors) {
       req.body.colors = Array.isArray(colors) ? colors : [colors];
     }
 
     // Handle image updates
-    let images = product.images || [];
-    
     // Handle existing images if provided
     if (req.body.existingImages) {
       try {

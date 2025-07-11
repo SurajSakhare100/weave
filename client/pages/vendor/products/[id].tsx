@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import VendorLayout from '@/components/VendorLayout';
-import { addVendorProduct } from '@/services/vendorService';
+import { editVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
-import { Plus, Upload, Info, X } from 'lucide-react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Upload, Info, X } from 'lucide-react';
 
 interface Category {
   _id: string;
@@ -13,21 +11,14 @@ interface Category {
   slug: string;
 }
 
-const SIZE_OPTIONS = [
-  'Extra small', 'Small', 'Medium', 'Large', 'Extra Large'
-];
-const COLOR_OPTIONS = [
-  'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'
-];
-
-export default function VendorAddProductPage() {
+export default function VendorEditProductPage() {
   const router = useRouter();
+  const { id } = router.query;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [success, setSuccess] = useState(false);
-
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   // Form fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -36,6 +27,7 @@ export default function VendorAddProductPage() {
   const [keyFeatures, setKeyFeatures] = useState(['', '', '', '']);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
   const [price, setPrice] = useState('');
   const [mrp, setMrp] = useState('');
   const [offers, setOffers] = useState(false);
@@ -47,27 +39,48 @@ export default function VendorAddProductPage() {
   const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
-    // Load categories
     api.get('/categories').then(res => {
       setCategories(res.data.data || []);
     });
   }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    api.get(`/products/${id}`).then(res => {
+      const p = res.data.data;
+      setName(p.name || '');
+      setDescription(p.description || '');
+      setAdditionalDetails(p.srtDescription || '');
+      setProductDetails(p.productDetails || { weight: '', dimensions: '', capacity: '', materials: '' });
+      setKeyFeatures(p.keyFeatures || ['', '', '', '']);
+      setExistingImages(p.images || []);
+      setPrice(p.price?.toString() || '');
+      setMrp(p.mrp?.toString() || '');
+      setOffers(!!p.offers);
+      setSalePrice(p.salePrice?.toString() || '');
+      setCategory(p.categorySlug || '');
+      setSizes(p.sizes || []);
+      setColors(p.colors || []);
+      setTags(p.tags || []);
+    }).catch(() => setError('Failed to load product')).finally(() => setLoading(false));
+  }, [id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setImages(files);
     setImagePreviews(files.map(file => URL.createObjectURL(file)));
   };
-
   const removeImage = (idx: number) => {
     setImages(images.filter((_, i) => i !== idx));
     setImagePreviews(imagePreviews.filter((_, i) => i !== idx));
   };
-
+  const removeExistingImage = (idx: number) => {
+    setExistingImages(existingImages.filter((_, i) => i !== idx));
+  };
   const handleFeatureChange = (idx: number, value: string) => {
     setKeyFeatures(prev => prev.map((f, i) => (i === idx ? value : f)));
   };
-
   const handleSizeToggle = (size: string) => {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
@@ -85,7 +98,6 @@ export default function VendorAddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setFieldErrors({});
     // Client-side validation
     const newErrors: {[key: string]: string} = {};
@@ -93,10 +105,9 @@ export default function VendorAddProductPage() {
     if (!price || isNaN(Number(price)) || Number(price) < 0) newErrors.price = 'Valid price is required.';
     if (!mrp || isNaN(Number(mrp)) || Number(mrp) < 0) newErrors.mrp = 'Valid MRP is required.';
     if (!category) newErrors.category = 'Category is required.';
-    if (images.length === 0) newErrors.images = 'At least one image is required.';
+    if (images.length === 0 && (!existingImages || existingImages.length === 0)) newErrors.images = 'At least one image is required.';
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
-      toast.error('Please fix the errors in the form.');
       return;
     }
     setLoading(true);
@@ -115,27 +126,23 @@ export default function VendorAddProductPage() {
       sizes.forEach(size => formData.append('sizes', size));
       colors.forEach(color => formData.append('colors', color));
       tags.forEach(tag => formData.append('tags', tag));
+      formData.append('existingImages', JSON.stringify(existingImages));
       images.forEach(img => formData.append('images', img));
-      await addVendorProduct(formData);
+      await editVendorProduct(id as string, formData);
       setSuccess(true);
-      toast.success('Product added successfully!');
-      setTimeout(() => router.push('/vendor/products'), 1200);
+      // setTimeout(() => router.push('/vendor/products'), 1200);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to add product');
-      toast.error(err?.response?.data?.message || 'Failed to add product');
+      setError(err?.response?.data?.message || 'Failed to update product');
     } finally {
       setLoading(false);
     }
   };
 
-
-  
   return (
     <VendorLayout>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
       <div className="min-h-screen bg-[#f4f8fb] text-black py-8 px-2 md:px-8">
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#357ab8] mb-8">Product</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#357ab8] mb-8">Edit Product</h1>
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Name & Description */}
             <section>
@@ -187,12 +194,18 @@ export default function VendorAddProductPage() {
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">Cover images <Info className="h-4 w-4 text-gray-400" /></label>
                 <div className="bg-[#f4f8fb] border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center">
-                  <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" id="product-images" />
-                  <label htmlFor="product-images" className="cursor-pointer flex flex-col items-center">
+                  <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" id="product-images-edit" />
+                  <label htmlFor="product-images-edit" className="cursor-pointer flex flex-col items-center">
                     <Upload className="h-8 w-8 text-[#5A9BD8] mb-2" />
                     <span className="text-[#5A9BD8] font-medium">Click or drop image</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mt-4">
+                    {existingImages.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={img.url} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                        <button type="button" onClick={() => removeExistingImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
+                      </div>
+                    ))}
                     {imagePreviews.map((src, idx) => (
                       <div key={idx} className="relative group">
                         <img src={src} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
@@ -247,7 +260,7 @@ export default function VendorAddProductPage() {
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">Size <Info className="h-4 w-4 text-gray-400" /></label>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {SIZE_OPTIONS.map(size => (
+                  {['Extra small', 'Small', 'Medium', 'Large', 'Extra Large'].map(size => (
                     <label key={size} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={sizes.includes(size)} onChange={() => handleSizeToggle(size)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
                       {size}
@@ -258,7 +271,7 @@ export default function VendorAddProductPage() {
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">Color <Info className="h-4 w-4 text-gray-400" /></label>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {COLOR_OPTIONS.map(color => (
+                  {['Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'].map(color => (
                     <label key={color} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={colors.includes(color)} onChange={() => handleColorToggle(color)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
                       {color}
@@ -288,14 +301,14 @@ export default function VendorAddProductPage() {
             </section>
 
             {error && <div className="text-red-600 font-medium">{error}</div>}
-            {success && <div className="text-green-600 font-medium">Product added successfully!</div>}
+            {success && <div className="text-green-600 font-medium">Product updated successfully!</div>}
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={loading}
                 className="bg-[#5A9BD8] text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                {loading ? 'Adding...' : 'Add Product'}
+                {loading ? 'Updating...' : 'Update Product'}
               </button>
             </div>
           </form>

@@ -24,7 +24,7 @@ import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload
 const router = express.Router();
 
 // Public routes
-router.get('/', validatePagination, validateSearch, validatePriceRange, getProducts);
+router.get('/',vendorAuth, validatePagination, validateSearch, validatePriceRange, getProducts);
 router.get('/search', validateSearch, validatePriceRange, validatePagination, searchProducts);
 router.get('/category/:categorySlug', validatePriceRange, validatePagination, getProductsByCategory);
 router.get('/slug/:slug', getProductBySlug);
@@ -39,7 +39,7 @@ router.post('/',
   vendorAuth, 
   handleMultipleUpload,
   processUploadedFiles,
-  validateProduct, 
+  // validateProduct, 
   createProduct
 );
 
@@ -48,7 +48,7 @@ router.put('/:id',
   validateId,
   handleMultipleUpload,
   processUploadedFiles,
-  validateProduct, 
+  // validateProduct, 
   updateProduct
 );
 

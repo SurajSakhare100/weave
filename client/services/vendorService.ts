@@ -154,3 +154,22 @@ export async function getVendorOrdersAdmin(id: string, params?: any) {
   const res = await api.get(`/vendors/${id}/orders`, { params });
   return res.data;
 } 
+
+// Add Product
+export const addVendorProduct = async (formData) => {
+  return api.post('/products', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+// Edit Product
+export const editVendorProduct = async (id:string, formData) => {
+  return api.put(`/products/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+// Delete Product
+export const deleteVendorProduct = async (id:string) => {
+  return api.delete(`/products/${id}`);
+}; 
