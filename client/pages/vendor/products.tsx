@@ -23,6 +23,7 @@ import {
   List
 } from 'lucide-react';
 import Image from 'next/image';
+import { deleteProduct } from '@/services/productService';
 
 export default function VendorProductsPage() {
   const router = useRouter();
@@ -90,7 +91,7 @@ export default function VendorProductsPage() {
   };
 
   const handleDeleteProduct = (product: Product) => {
-    // No need to set selectedProduct here, as it's handled in the modal
+    deleteProduct(product._id)
   };
 
   const handleModalSuccess = () => {
