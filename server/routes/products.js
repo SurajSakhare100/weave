@@ -9,7 +9,16 @@ import {
   getSimilarProducts,
   getProductsByCategory,
   searchProducts,
-  createProductReview
+  createProductReview,
+  getProductReviews,
+  updateProductReview,
+  deleteProductReview,
+  addReviewResponse,
+  updateReviewResponse,
+  deleteReviewResponse,
+  addVendorReviewResponse,
+  updateVendorReviewResponse,
+  deleteVendorReviewResponse
 } from '../controllers/productController.js';
 import {
   validateProduct,
@@ -24,15 +33,25 @@ import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload
 const router = express.Router();
 
 // Public routes
-router.get('/',vendorAuth, validatePagination, validateSearch, validatePriceRange, getProducts);
+router.get('/', validatePagination, validateSearch, validatePriceRange, getProducts);
 router.get('/search', validateSearch, validatePriceRange, validatePagination, searchProducts);
 router.get('/category/:categorySlug', validatePriceRange, validatePagination, getProductsByCategory);
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', validateId, getProductById);
 router.get('/:id/similar', validateId, getSimilarProducts);
 
-// Route for creating a review
+// Review routes
+router.get('/:id/reviews', validateId, getProductReviews);
 router.post('/:id/reviews', protect, validateId, createProductReview);
+router.put('/:id/reviews/:reviewId', protect, validateId, updateProductReview);
+router.delete('/:id/reviews/:reviewId', protect, validateId, deleteProductReview);
+
+// Review response routes
+router.post('/:id/reviews/:reviewId/responses', protect, validateId, addReviewResponse);
+router.put('/:id/reviews/:reviewId/responses/:responseId', protect, validateId, updateReviewResponse);
+router.delete('/:id/reviews/:reviewId/responses/:responseId', protect, validateId, deleteReviewResponse);
+
+
 
 // Protected routes (Vendor only)
 router.post('/', 

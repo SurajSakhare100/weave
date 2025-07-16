@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Vendor from '../models/Vendor.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
+import Review from '../models/Review.js';
 import { createVendorProduct } from '../helpers/vendorHelpers.js';
 
 // @desc    Get vendor profile
@@ -434,6 +435,174 @@ export const createVendorProductController = asyncHandler(async (req, res) => {
     const product = await createVendorProduct(productData, imageFiles, vendorId);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Get vendor product reviews
+// @route   GET /api/vendors/reviews
+// @access  Private (Vendor)
+export const getVendorReviews = asyncHandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const { productId, rating, sort = '-createdAt' } = req.query;
+
+    // Get vendor's product IDs
+    const vendorProducts = await Product.find({ vendorId: req.vendor._id }).distinct('_id');
+
+    // Build filter
+    const filter = {
+      proId: { $in: vendorProducts },
+      isActive: true
+    };
+
+    if (productId) {
+      filter.proId = productId;
+    }
+
+    if (rating) {
+      filter.stars = rating;
+    }
+
+    // Get reviews
+    const reviews = await Review.find(filter)
+      .populate('userId', 'name email')
+      .populate('proId', 'name images')
+      .populate('responses.userId', 'name email')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Review.countDocuments(filter);
+
+    // Get review statistics
+    const reviewStats = await Review.aggregate([
+      { $match: { proId: { $in: vendorProducts }, isActive: true } },
+      {
+        $addFields: {
+          ratingNumber: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$stars', 'one'] }, then: 1 },
+                { case: { $eq: ['$stars', 'two'] }, then: 2 },
+                { case: { $eq: ['$stars', 'three'] }, then: 3 },
+                { case: { $eq: ['$stars', 'four'] }, then: 4 },
+                { case: { $eq: ['$stars', 'five'] }, then: 5 }
+              ],
+              default: 0
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalReviews: { $sum: 1 },
+          averageRating: { $avg: '$ratingNumber' },
+          ratingDistribution: {
+            $push: '$stars'
+          }
+        }
+      }
+    ]);
+
+    // Calculate rating distribution
+    const ratingCounts = { one: 0, two: 0, three: 0, four: 0, five: 0 };
+    if (reviewStats.length > 0) {
+      reviewStats[0].ratingDistribution.forEach(rating => {
+        ratingCounts[rating]++;
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        reviews,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        },
+        stats: {
+          totalReviews: reviewStats[0]?.totalReviews || 0,
+          averageRating: reviewStats[0]?.averageRating || 0,
+          ratingDistribution: ratingCounts
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get vendor reviews error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Get vendor review analytics
+// @route   GET /api/vendors/reviews/analytics
+// @access  Private (Vendor)
+export const getVendorReviewAnalytics = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const days = parseInt(req.query.days) || 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get all products by this vendor
+    const vendorProducts = await Product.find({ vendorId }).select('_id');
+    const productIds = vendorProducts.map(product => product._id);
+
+    // Get reviews for vendor's products
+    const reviews = await Review.find({ 
+      proId: { $in: productIds },
+      isActive: true 
+    });
+
+    // Calculate analytics
+    const totalReviews = reviews.length;
+    const averageRating = totalReviews > 0 
+      ? reviews.reduce((sum, review) => {
+          const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
+          return sum + starToNumber[review.stars];
+        }, 0) / totalReviews
+      : 0;
+
+    // Get rating distribution
+    const ratingDistribution = await Review.aggregate([
+      { $match: { proId: { $in: productIds }, isActive: true } },
+      { $group: { _id: '$stars', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Get recent reviews (last 30 days)
+    const recentReviews = await Review.countDocuments({
+      proId: { $in: productIds },
+      isActive: true,
+      createdAt: { $gte: startDate }
+    });
+
+    // Calculate response rate
+    const reviewsWithResponses = reviews.filter(review => review.responses.length > 0).length;
+    const responseRate = totalReviews > 0 ? Math.round((reviewsWithResponses / totalReviews) * 100) : 0;
+
+    // Get verified reviews
+    const verifiedReviews = reviews.filter(review => review.isVerified).length;
+
+    res.json({
+      success: true,
+      data: {
+        totalReviews,
+        averageRating,
+        ratingDistribution,
+        recentReviews,
+        responseRate,
+        verifiedReviews
+      }
+    });
+  } catch (error) {
+    console.error('Error getting vendor review analytics:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 }); 

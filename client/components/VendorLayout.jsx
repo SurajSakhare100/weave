@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  Star
 } from 'lucide-react';
 
 const sidebarSections = [
@@ -40,6 +41,11 @@ const sidebarSections = [
       { label: 'Comments', icon: MessageCircle, href: '/vendor/products/comments' },
       { label: 'Scheduled', icon: Calendar, href: '/vendor/products/scheduled' },
     ],
+  },
+  {
+    label: 'Reviews',
+    icon: Star,
+    href: '/vendor/reviews',
   },
   {
     label: 'Customers',

@@ -10,8 +10,15 @@ import {
   getVendorProducts,
   getVendorOrders,
   getVendorStats,
-  createVendorProductController
+  createVendorProductController,
+  getVendorReviews,
+  getVendorReviewAnalytics
 } from '../controllers/vendorController.js';
+import {
+  addVendorReviewResponse,
+  updateVendorReviewResponse,
+  deleteVendorReviewResponse
+} from '../controllers/productController.js';
 import {
   validateId,
   validatePagination,
@@ -27,6 +34,15 @@ router.get('/profile', vendorAuth, getVendorProfile);
 router.put('/profile', vendorAuth, updateVendorProfile);
 router.get('/dashboard', vendorAuth, getVendorDashboard);
 router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
+
+// Vendor review routes
+router.get('/reviews', vendorAuth, validatePagination, getVendorReviews);
+router.get('/reviews/analytics', vendorAuth, getVendorReviewAnalytics);
+
+// Vendor review response routes
+router.post('/reviews/:reviewId/responses', vendorAuth, addVendorReviewResponse);
+router.put('/reviews/:reviewId/responses/:responseId', vendorAuth, updateVendorReviewResponse);
+router.delete('/reviews/:reviewId/responses/:responseId', vendorAuth, deleteVendorReviewResponse);
 
 // Admin routes
 router.get('/', protect, admin, validatePagination, validateSearch, getVendors);

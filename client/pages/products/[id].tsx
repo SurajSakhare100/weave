@@ -19,6 +19,11 @@ import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import ReviewForm from '@/components/product/ReviewForm';
+import ReviewList from '@/components/product/ReviewList';
+import ReviewSummary from '@/components/product/ReviewSummary';
+import ResponseForm from '@/components/product/ResponseForm';
+import ResponseList from '@/components/product/ResponseList';
 
 // Add this type above ProductWithReviews
 interface ProductImage {
@@ -100,6 +105,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [quantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [showReviewForm, setShowReviewForm] = useState(false)
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
@@ -370,49 +376,103 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Review Summary */}
+        {/* Review Section */}
         <div className="mt-16">
-          <h2 className="text-xl font-bold mb-4">Review Summary</h2>
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Left: Bar summary */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-4xl font-bold">4.5</span>
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-6 w-6 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                  ))}
-                </div>
-                <span className="ml-2 text-gray-600">(745)</span>
+          {/* Review Call-to-Action */}
+          <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-6 mb-8 border border-pink-100">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="text-center md:text-left mb-4 md:mb-0">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Share Your Experience
+                </h3>
+                <p className="text-gray-600">
+                  Help other customers by sharing your thoughts about this product
+                </p>
               </div>
-              <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map((star) => (
-                  <div key={star} className="flex items-center gap-2">
-                    <span className="w-6 text-sm">{star}</span>
-                    <div className="flex-1 bg-gray-200 rounded h-2">
-                      <div className="bg-yellow-400 h-2 rounded" style={{ width: `${star * 20}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Right: Reviews */}
-            <div className="flex-1 space-y-4">
-              {dummyReviews.map((review, i) => (
-                <div key={i} className="bg-white rounded-lg p-4 shadow flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className={`h-4 w-4 ${j < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                    ))}
-                    <span className="font-semibold">{review.name}</span>
-                    <span className="text-gray-500 text-sm">{review.date}</span>
-                  </div>
-                  <p className="text-gray-700">{review.text}</p>
-                </div>
-              ))}
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+                >
+                  <Star className="h-5 w-5" />
+                  <span>Write a Review</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push(`/login?redirect=/products/${id}`)}
+                  className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+                >
+                  <Star className="h-5 w-5" />
+                  <span>Login to Review</span>
+                </button>
+              )}
             </div>
           </div>
+
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">Customer Reviews</h2>
+            {isAuthenticated ? (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+              >
+                <Star className="h-5 w-5" />
+                <span>Write a Review</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push(`/login?redirect=/products/${id}`)}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 font-medium"
+              >
+                <Star className="h-5 w-5" />
+                <span>Login to Review</span>
+              </button>
+            )}
+          </div>
+
+          {/* Review Summary */}
+          <ReviewSummary
+            totalReviews={product.totalReviews}
+            averageRating={product.averageRating}
+            ratingDistribution={[]} // Will be populated from API
+          />
+
+          {/* Review List */}
+          <div className="mt-8">
+            <ReviewList
+              productId={product._id}
+              onReviewUpdate={() => {
+                // Refresh product data after review update
+                window.location.reload();
+              }}
+            />
+          </div>
         </div>
+
+        {/* Review Form Modal */}
+        {showReviewForm && (
+          <ReviewForm
+            productId={product._id}
+            onReviewSubmitted={() => {
+              setShowReviewForm(false);
+              window.location.reload();
+            }}
+            onCancel={() => setShowReviewForm(false)}
+          />
+        )}
+
+        {/* Floating Add Review Button */}
+        {isAuthenticated && (
+          <div className="fixed bottom-6 right-6 z-40">
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="bg-pink-500 text-white p-4 rounded-full shadow-lg hover:bg-pink-600 transition-all duration-300 hover:scale-110 flex items-center justify-center"
+              title="Write a Review"
+            >
+              <Star className="h-6 w-6" />
+            </button>
+          </div>
+        )}
       </div>
       </div>
     </Layout>

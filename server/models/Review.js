@@ -1,5 +1,23 @@
 import mongoose from 'mongoose';
 
+const ResponseSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'User ID is required'],
+    },
+    content: {
+        type: String,
+        required: [true, 'Response content is required'],
+        trim: true,
+        maxlength: [500, 'Response cannot exceed 500 characters'],
+    },
+    isVendorResponse: {
+        type: Boolean,
+        default: false,
+    },
+}, { timestamps: true });
+
 const ReviewSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -28,6 +46,7 @@ const ReviewSchema = new mongoose.Schema({
         trim: true,
         maxlength: [1000, 'Review cannot exceed 1000 characters'],
     },
+    responses: [ResponseSchema],
     isVerified: {
         type: Boolean,
         default: false,
