@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Edit, Trash2, Calendar, Shield } from 'lucide-react';
+import { MessageSquare, Edit, Trash2, Shield } from 'lucide-react';
 import { ReviewResponse } from '@/services/reviewService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -38,7 +38,7 @@ const ResponseList: React.FC<ResponseListProps> = ({
       
       {responses.map((response) => {
         // Handle cases where userId might be null or undefined
-        const userName = response.userId?.name || response.userId?.email || 'Anonymous User';
+        const userName = response.userId?.name || 'Anonymous User';
         const userInitial = userName.charAt(0).toUpperCase();
         
         return (
