@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { getVendorEarnings } from '@/services/vendorService';
 import { useRequireVendorAuth } from '@/hooks/useRequireVendorAuth';
+import Image from 'next/image';
 
 interface EarningsData {
   totalEarnings: number;
@@ -69,7 +70,7 @@ const CountryItem: React.FC<{ country: { country: string; total: number }; index
       
       // Check if the image exists by trying to load it
       return new Promise<string | null>((resolve) => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => resolve(url);
         img.onerror = () => {
           console.warn(`Flag not found for country code: ${countryCode}`);
@@ -107,11 +108,12 @@ const CountryItem: React.FC<{ country: { country: string; total: number }; index
           {isLoading ? (
             <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
           ) : flagUrl ? (
-            <img 
+            <Image 
               src={flagUrl} 
               alt={`${country.country} flag`}
+              width={32}
+              height={24}
               className="w-full h-full object-cover"
-              onError={() => setFlagUrl(null)}
             />
           ) : (
             <span className="text-lg">🌍</span>

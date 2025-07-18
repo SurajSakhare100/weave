@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Review from '../models/Review.js';
-import { uploadMultipleImages, deleteMultipleImages, updateImage } from '../utils/imageUpload.js';
+import { uploadMultipleImages, deleteMultipleImages } from '../utils/imageUpload.js';
 import mongoose from 'mongoose';
 
 export const getProducts = asyncHandler(async (req, res) => {

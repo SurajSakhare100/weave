@@ -20,7 +20,7 @@ interface AddressCardProps {
   onSelect?: () => void
   onEdit?: () => void
   onDelete?: () => void
-  onSetDefault?: () => void
+
   showActions?: boolean
   submitting?: boolean
   handleContinue?: () => void
@@ -32,7 +32,7 @@ export function AddressCard({
   onSelect,
   onEdit,
   onDelete,
-  onSetDefault,
+
   showActions = true, 
   submitting = false,
   handleContinue = () => {},

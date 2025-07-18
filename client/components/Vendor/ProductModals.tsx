@@ -36,12 +36,6 @@ type CategoryApiResponse = {
   data: Category[];
 };
 
-// Add this above the AddProductModal
-const COLOR_PALETTE = [
-  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-  '#795548', '#9C27B0', '#3F51B5', '#2196F3', '#4CAF50', '#FF9800', '#FFC107', '#E91E63',
-];
-
 
 
 // Add Product Modal

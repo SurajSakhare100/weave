@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, X, Send, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Star, X, Send } from 'lucide-react';
 import { addReview, ReviewData } from '@/services/reviewService';
 import { toast } from 'sonner';
 
@@ -34,7 +34,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted, o
       await addReview(productId, formData);
       toast.success('Review submitted successfully!');
       onReviewSubmitted();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(error.response?.data?.message || 'Failed to submit review');
     } finally {
       setLoading(false);
