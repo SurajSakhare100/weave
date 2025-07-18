@@ -60,8 +60,9 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
       setReviews(prev => prev.filter(review => review._id !== reviewId));
       toast.success('Review deleted successfully');
       onReviewUpdate();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete review');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err?.response?.data?.message || 'Failed to delete review');
     }
   };
 
@@ -80,8 +81,9 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
         return review;
       }));
       toast.success('Response deleted successfully');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete response');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err?.response?.data?.message || 'Failed to delete response');
     }
   };
 
@@ -170,7 +172,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
             {/* Responses */}
             <ResponseList
               responses={review.responses}
-              onEditResponse={handleEditResponse}
+              onEditResponse={(responseId, content) => handleEditResponse(review._id, responseId, content)}
               onDeleteResponse={(responseId) => handleDeleteResponse(review._id, responseId)}
             />
 

@@ -10,50 +10,7 @@ import { initializeVendorAuth } from '../../utils/vendorAuth';
 import Image from 'next/image';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
-// Product interface
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  price: number;
-  mrp: number;
-  discount: number;
-  vendorId: string; // ObjectId reference to Vendor
-  vendor: boolean;
-  available: string;
-  category: string;
-  categorySlug?: string;
-  srtDescription?: string;
-  description?: string;
-  seoDescription?: string;
-  seoKeyword?: string;
-  seoTitle?: string;
-  pickup_location?: string;
-  return: boolean;
-  cancellation: boolean;
-  uni_id_1?: string;
-  uni_id_2?: string;
-  files: string[];
-  variant: boolean;
-  variantDetails: Array<{
-    size: string;
-    price: number;
-    mrp: number;
-    stock: number;
-  }>;
-  currVariantSize?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
-// Order interface
-interface Order {
-  _id: string;
-  orderId: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-}
 
 // Mock data for charts and widgets
 const customerGrowthData = [
@@ -97,7 +54,7 @@ const popularProducts = [
 export default function VendorDashboard() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { dashboard } = useSelector((state: RootState) => state.vendor);
+  const { } = useSelector((state: RootState) => state.vendor);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {

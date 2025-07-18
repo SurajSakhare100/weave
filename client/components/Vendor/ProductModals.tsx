@@ -41,29 +41,7 @@ const COLOR_PALETTE = [
   '#795548', '#9C27B0', '#3F51B5', '#2196F3', '#4CAF50', '#FF9800', '#FFC107', '#E91E63',
 ];
 
-function ColorPalette({ selectedColors, setSelectedColors }: { selectedColors: string[], setSelectedColors: (colors: string[]) => void }) {
-  const toggleColor = (color: string) => {
-    if (selectedColors.includes(color)) {
-      setSelectedColors(selectedColors.filter(c => c !== color));
-    } else {
-      setSelectedColors([...selectedColors, color]);
-    }
-  };
-  return (
-    <div className="flex flex-wrap gap-2 mt-1">
-      {COLOR_PALETTE.map(color => (
-        <button
-          key={color}
-          type="button"
-          className={`w-6 h-6 rounded-full border-2 ${selectedColors.includes(color) ? 'border-[#EE346C] scale-110' : 'border-gray-300'} transition-transform`}
-          style={{ backgroundColor: color }}
-          onClick={() => toggleColor(color)}
-          aria-label={color}
-        />
-      ))}
-    </div>
-  );
-}
+
 
 // Add Product Modal
 export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
@@ -398,8 +376,9 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
       await updateProduct(product._id, formData);
       onSuccess();
       onClose();
-    } catch (error: any) {
-      dispatch(setError(error?.response?.data?.message || 'Failed to update product'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      dispatch(setError(err?.response?.data?.message || 'Failed to update product'));
     } finally {
       setLoading(false);
     }
