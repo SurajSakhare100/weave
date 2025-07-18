@@ -1,30 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { 
   TrendingUp, 
   Clock, 
   ShoppingCart, 
-  ChevronDown, 
-  RefreshCw,
-  DollarSign,
-  Calendar,
   MessageSquare,
   Bell,
   Search,
-  Plus,
-  Home,
-  Tag,
-  Users,
-  Building,
-  Percent,
-  Sun,
-  Moon,
-  ArrowRight,
-  Shield,
-  Award
+  Plus
 } from 'lucide-react';
 import VendorLayout from '@/components/VendorLayout';
 import { vendorService, getMockVendorEarnings } from '@/services/vendorService';
@@ -52,7 +37,6 @@ interface EarningsData {
 
 const VendorEarnings: React.FC = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.vendor);
   const [isInitialized, setIsInitialized] = useState(false);
   const [earningsData, setEarningsData] = useState<EarningsData | null>(null);
@@ -73,7 +57,6 @@ const VendorEarnings: React.FC = () => {
       const response = await vendorService.getVendorEarnings();
       setEarningsData(response.data);
     } catch (error) {
-      console.error('Failed to fetch earnings data:', error);
       // Use mock data as fallback for development
       const mockResponse = getMockVendorEarnings();
       setEarningsData(mockResponse.data);

@@ -647,9 +647,21 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
           vendorOrderCount += item.quantity;
         }
       });
-      orderStatus = order.isDelivered ? 'Paid' : 'Pending';
+      
+      // Determine order status and use appropriate date
+      if (order.isDelivered) {
+        orderStatus = 'Paid';
+        // Use deliveredAt if available, otherwise use paidAt, fallback to createdAt
+        orderDate = order.deliveredAt || order.paidAt || order.createdAt;
+      } else if (order.isPaid) {
+        orderStatus = 'Paid';
+        orderDate = order.paidAt || order.createdAt;
+      } else {
+        orderStatus = 'Pending';
+        orderDate = order.createdAt;
+      }
     }
-    // Handle order structure (legacy format from seed data)
+    // Handle legacy order structure
     else if (order.order && order.order.length > 0) {
       order.order.forEach(item => {
         if (vendorProductIds.some(id => id.equals(item.product))) {
@@ -657,10 +669,10 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
           vendorOrderCount += item.quantity;
         }
       });
-      // Use the first item's status and date for the order
-      const firstItem = order.order[0];
-      orderStatus = firstItem.OrderStatus === 'Delivered' ? 'Paid' : 'Pending';
-      orderDate = new Date(firstItem.date);
+      
+      // Use order creation date for legacy orders
+      orderStatus = order.isDelivered ? 'Paid' : 'Pending';
+      orderDate = order.createdAt;
     }
 
     // Update totals
@@ -671,7 +683,7 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
     }
     totalSalesValue += vendorOrderTotal;
 
-    // Month breakdown
+    // Month breakdown using actual order date
     const month = orderDate.toLocaleString('default', { month: 'short', year: 'numeric' });
     if (!monthMap[month]) monthMap[month] = { totalSales: 0, customerCost: 0 };
     monthMap[month].totalSales += vendorOrderTotal;

@@ -211,7 +211,8 @@ async function seed() {
       isPaid: true,
       isDelivered: true,
       paidAt: new Date('2024-01-15'),
-      deliveredAt: new Date('2024-01-20')
+      deliveredAt: new Date('2024-01-20'),
+      createdAt: new Date('2024-01-10')
     },
     {
       user: user2._id,
@@ -244,7 +245,8 @@ async function seed() {
       isPaid: true,
       isDelivered: true,
       paidAt: new Date('2024-02-10'),
-      deliveredAt: new Date('2024-02-15')
+      deliveredAt: new Date('2024-02-15'),
+      createdAt: new Date('2024-02-05')
     },
     {
       user: user1._id,
@@ -277,7 +279,8 @@ async function seed() {
       isPaid: true,
       isDelivered: true,
       paidAt: new Date('2024-03-05'),
-      deliveredAt: new Date('2024-03-10')
+      deliveredAt: new Date('2024-03-10'),
+      createdAt: new Date('2024-02-28')
     },
     // Pending orders (contribute to balance)
     {
@@ -309,7 +312,8 @@ async function seed() {
       discountAmount: 0,
       totalPrice: products[3].price * 2,
       isPaid: false,
-      isDelivered: false
+      isDelivered: false,
+      createdAt: new Date('2024-03-15')
     },
     // More orders for better data distribution
     {
@@ -352,7 +356,8 @@ async function seed() {
       isPaid: true,
       isDelivered: true,
       paidAt: new Date('2024-04-12'),
-      deliveredAt: new Date('2024-04-18')
+      deliveredAt: new Date('2024-04-18'),
+      createdAt: new Date('2024-04-08')
     },
     {
       user: user2._id,
@@ -383,7 +388,8 @@ async function seed() {
       discountAmount: 0,
       totalPrice: products[2].price * 2,
       isPaid: false,
-      isDelivered: false
+      isDelivered: false,
+      createdAt: new Date('2024-04-20')
     }
   ];
 
