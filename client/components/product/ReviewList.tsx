@@ -208,9 +208,11 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
               <ResponseForm
                 reviewId={review._id}
                 productId={productId}
+                responseId={editingResponse?.responseId}
+                initialContent={editingResponse?.content || ''}
+                isEditing={!!editingResponse}
                 onResponseSubmitted={handleResponseSubmitted}
                 onCancel={() => setShowResponseForm(null)}
-                editingResponse={editingResponse}
               />
             )}
           </div>
