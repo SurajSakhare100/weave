@@ -35,7 +35,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted, o
       toast.success('Review submitted successfully!');
       onReviewSubmitted();
     } catch (error: unknown) {
-      toast.error(error.response?.data?.message || 'Failed to submit review');
+      toast.error((error as Error).message || 'Failed to submit review');
     } finally {
       setLoading(false);
     }
