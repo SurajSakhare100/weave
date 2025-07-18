@@ -13,7 +13,7 @@ interface EditProfileFieldProps {
   disabled?: boolean
 }
 
-export function EditProfileField({ label, value: _value, onUpdate, type = "text", disabled = false }: EditProfileFieldProps) {
+export function EditProfileField({ label, value, onUpdate, type = "text", disabled = false }: EditProfileFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
 

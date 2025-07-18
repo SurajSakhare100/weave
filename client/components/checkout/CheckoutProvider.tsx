@@ -31,11 +31,11 @@ interface CheckoutContextType {
   // Address
   selectedAddress: ShippingAddress | null;
   setSelectedAddress: (address: ShippingAddress) => void;
-  setShippingAddress: (_address: ShippingAddress) => void;
+  setShippingAddress: (address: ShippingAddress) => void;
   
   // Payment
   paymentMethod: 'online' | 'cod';
-  setPaymentMethod: (_method: 'online' | 'cod') => void;
+  setPaymentMethod: (method: 'online' | 'cod') => void;
   
   // Order
   orderLoading: boolean;

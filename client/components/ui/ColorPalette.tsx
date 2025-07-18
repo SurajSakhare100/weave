@@ -29,7 +29,7 @@ const DEFAULT_COLORS = [
 const ColorPalette: React.FC<ColorPaletteProps> = ({
   selectedColors,
   setSelectedColors,
-  colors: _colors = DEFAULT_COLORS,
+  colors = DEFAULT_COLORS,
   className = ''
 }) => {
   const toggleColor = (color: string) => {
