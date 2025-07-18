@@ -10,6 +10,7 @@ const withPWA = require('next-pwa')({
 const nextConfig = withPWA({
   /* config options here */
   reactStrictMode: true,
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -34,6 +35,14 @@ const nextConfig = withPWA({
         pathname: '/**',
       },
     ],
+  },
+  // Production optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  // Handle environment variables
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   },
 });
 

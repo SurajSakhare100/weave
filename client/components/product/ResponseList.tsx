@@ -6,8 +6,8 @@ import { RootState } from '@/store/store';
 
 interface ResponseListProps {
   responses: ReviewResponse[];
-  onEditResponse: (responseId: string, content: string) => void;
-  onDeleteResponse: (responseId: string) => void;
+  onEditResponse: (_responseId: string, _content: string) => void;
+  onDeleteResponse: (_responseId: string) => void;
 }
 
 const ResponseList: React.FC<ResponseListProps> = ({

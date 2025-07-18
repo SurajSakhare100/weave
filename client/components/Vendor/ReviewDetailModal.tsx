@@ -39,7 +39,7 @@ interface VendorReview {
 interface ReviewDetailModalProps {
   review: VendorReview | null;
   onClose: () => void;
-  onResponse: (reviewId: string, content: string) => void;
+  onResponse: (_reviewId: string, _content: string) => void;
   onEdit: () => void;
   onDelete: () => void;
 }

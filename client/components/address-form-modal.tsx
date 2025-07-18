@@ -41,7 +41,7 @@ export function AddressFormModal({ isOpen, onClose, onSubmit, address, isEditing
   })
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
-  const [country, setCountry] = useState("India")
+  const [country] = useState("India")
   const [addressType, setAddressType] = useState("Home")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
