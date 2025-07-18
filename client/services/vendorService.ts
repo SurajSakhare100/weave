@@ -5,11 +5,14 @@ import Cookies from 'js-cookie';
 // Vendor Authentication
 export async function vendorLogin(credentials: { email: string; password: string }) {
   const res = await api.post('/auth/vendor/login', credentials);
-  // Set token in cookie
+  
+  // Ensure token is properly stored
   if (res.data.token) {
-    Cookies.set('vendorToken', res.data.token, { expires: 7, sameSite: 'Lax' });
-    setupVendorAuthHeader(res.data.token);
+    const { setVendorToken } = await import('@/utils/vendorAuth');
+    setVendorToken(res.data.token);
+    console.log('Vendor token stored after login');
   }
+  
   return res.data;
 }
 
@@ -30,9 +33,22 @@ export async function vendorRegister(vendorData: {
 }
 
 export async function vendorLogout() {
-  Cookies.remove('vendorToken');
-  const res = await api.post('/auth/vendor/logout');
-  return res.data;
+  try {
+    // Try to call logout endpoint if we have a token
+    const token = Cookies.get('vendorToken');
+    if (token) {
+      await api.post('/auth/vendor/logout');
+    }
+  } catch (error) {
+    console.log('Logout endpoint failed, continuing with local cleanup');
+  } finally {
+    // Always clean up local storage
+    const { removeVendorToken } = await import('@/utils/vendorAuth');
+    removeVendorToken();
+    console.log('Vendor token removed');
+  }
+  
+  return { success: true };
 }
 
 // Vendor Profile Management
@@ -61,6 +77,49 @@ export async function getVendorDashboard() {
   const res = await api.get('/vendors/dashboard');
   return res.data;
 }
+
+// Vendor Earnings Analytics
+export async function getVendorEarnings() {
+  const res = await api.get('/vendors/earnings');
+  return res.data;
+}
+
+// Mock data for development/testing
+export const getMockVendorEarnings = () => {
+  return {
+    success: true,
+    data: {
+      totalEarnings: 128000,
+      balance: 512.64,
+      totalSalesValue: 64000,
+      monthlySales: [
+        { month: 'Jan 2024', totalSales: 8200000, customerCost: 120 },
+        { month: 'Mar 2024', totalSales: 8400000, customerCost: 90 },
+        { month: 'May 2024', totalSales: 8300000, customerCost: 110 },
+        { month: 'Jul 2024', totalSales: 8500000, customerCost: 85 },
+        { month: 'Sept 2024', totalSales: 8800000, customerCost: 75 },
+        { month: 'Nov 2024', totalSales: 8600000, customerCost: 95 }
+      ],
+      topCountries: [
+        { country: 'United States', total: 9827.31 },
+        { country: 'Germany', total: 4750.17 },
+        { country: 'Netherlands', total: 1019.00 },
+        { country: 'United Kingdom', total: 19.00 },
+        { country: 'Italy', total: 827.01 },
+        { country: 'Vietnam', total: 7750.88 }
+      ],
+      earningsTable: [
+        { date: '2024-08-15T00:00:00.000Z', status: 'Pending', productSalesCount: 68192, earnings: 3250.13 },
+        { date: '2024-03-05T00:00:00.000Z', status: 'Paid', productSalesCount: 21, earnings: 4189.09 },
+        { date: '2024-01-31T00:00:00.000Z', status: 'Paid', productSalesCount: 6, earnings: 19.00 },
+        { date: '2024-11-10T00:00:00.000Z', status: 'Pending', productSalesCount: 849, earnings: 4750.17 },
+        { date: '2024-06-23T00:00:00.000Z', status: 'Pending', productSalesCount: 6241, earnings: 2000.47 },
+        { date: '2024-02-04T00:00:00.000Z', status: 'Paid', productSalesCount: 33, earnings: 1092.10 },
+        { date: '2024-04-11T00:00:00.000Z', status: 'Pending', productSalesCount: 1368, earnings: 7750.88 }
+      ]
+    }
+  };
+};
 
 // Vendor Product Management
 export async function createProduct(productData: FormData) {

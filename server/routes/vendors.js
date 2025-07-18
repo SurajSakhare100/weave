@@ -12,7 +12,8 @@ import {
   getVendorStats,
   createVendorProductController,
   getVendorReviews,
-  getVendorReviewAnalytics
+  getVendorReviewAnalytics,
+  getVendorEarnings
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -33,6 +34,7 @@ const router = express.Router();
 router.get('/profile', vendorAuth, getVendorProfile);
 router.put('/profile', vendorAuth, updateVendorProfile);
 router.get('/dashboard', vendorAuth, getVendorDashboard);
+router.get('/earnings', vendorAuth, getVendorEarnings);
 router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
 
 // Vendor review routes

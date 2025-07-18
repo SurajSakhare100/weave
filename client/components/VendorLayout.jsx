@@ -88,10 +88,17 @@ const VendorLayout = ({ children }) => {
   const [openMenus, setOpenMenus] = useState({});
   const [theme, setTheme] = useState('light');
 
-  const handleLogout = () => {
-    vendorLogout();
-    dispatch(logout());
-    router.push('/vendor/login');
+  const handleLogout = async () => {
+    try {
+      await vendorLogout();
+      dispatch(logout());
+      router.push('/vendor/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      dispatch(logout());
+      router.push('/vendor/login');
+    }
   };
 
   const isActive = (href) => router.pathname === href;

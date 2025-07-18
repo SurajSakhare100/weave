@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
+import { initializeVendorAuth } from '../utils/vendorAuthInit';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Toaster } from 'sonner';
 
@@ -16,6 +17,9 @@ function UserHydrator() {
 
   useEffect(() => {
     const hydrate = async () => {
+      // Initialize vendor authentication
+      initializeVendorAuth();
+      
       const token = getUserToken();
       if (token && !isAuthenticated) {
         try {

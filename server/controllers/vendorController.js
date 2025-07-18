@@ -606,3 +606,120 @@ export const getVendorReviewAnalytics = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 }); 
+
+// @desc    Get vendor earnings analytics
+// @route   GET /api/vendors/earnings
+// @access  Private (Vendor)
+export const getVendorEarnings = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  console.log('Vendor ID:', vendorId);
+  
+  const vendorProductIds = await Product.find({ vendorId }).distinct('_id');
+  console.log('Vendor product IDs:', vendorProductIds);
+
+  // Get all orders - handle both orderItems and order structures
+  const orders = await Order.find({
+    $or: [
+      { 'orderItems.productId': { $in: vendorProductIds } },
+      { 'order.product': { $in: vendorProductIds } }
+    ]
+  });
+  console.log('Found orders:', orders.length);
+
+  let totalEarnings = 0;
+  let balance = 0;
+  let totalSalesValue = 0;
+  const monthMap = {};
+  const countryMap = {};
+  const earningsTable = [];
+
+  orders.forEach(order => {
+    let vendorOrderTotal = 0;
+    let vendorOrderCount = 0;
+    let orderStatus = 'Pending';
+    let orderDate = order.createdAt;
+
+    // Handle orderItems structure (new format)
+    if (order.orderItems && order.orderItems.length > 0) {
+      order.orderItems.forEach(item => {
+        if (vendorProductIds.some(id => id.equals(item.productId))) {
+          vendorOrderTotal += item.price * item.quantity;
+          vendorOrderCount += item.quantity;
+        }
+      });
+      orderStatus = order.isDelivered ? 'Paid' : 'Pending';
+    }
+    // Handle order structure (legacy format from seed data)
+    else if (order.order && order.order.length > 0) {
+      order.order.forEach(item => {
+        if (vendorProductIds.some(id => id.equals(item.product))) {
+          vendorOrderTotal += item.price * item.quantity;
+          vendorOrderCount += item.quantity;
+        }
+      });
+      // Use the first item's status and date for the order
+      const firstItem = order.order[0];
+      orderStatus = firstItem.OrderStatus === 'Delivered' ? 'Paid' : 'Pending';
+      orderDate = new Date(firstItem.date);
+    }
+
+    // Update totals
+    if (orderStatus === 'Paid') {
+      totalEarnings += vendorOrderTotal;
+    } else {
+      balance += vendorOrderTotal;
+    }
+    totalSalesValue += vendorOrderTotal;
+
+    // Month breakdown
+    const month = orderDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+    if (!monthMap[month]) monthMap[month] = { totalSales: 0, customerCost: 0 };
+    monthMap[month].totalSales += vendorOrderTotal;
+    monthMap[month].customerCost += vendorOrderCount;
+
+    // Country breakdown - use state as country if country is not available
+    const country = order.shippingAddress?.country || order.shippingAddress?.state || 'Unknown';
+    if (!countryMap[country]) countryMap[country] = 0;
+    countryMap[country] += vendorOrderTotal;
+
+    // Earnings table row
+    earningsTable.push({
+      date: orderDate.toISOString(),
+      status: orderStatus,
+      productSalesCount: vendorOrderCount,
+      earnings: vendorOrderTotal
+    });
+  });
+
+  // Format month breakdown
+  const monthlySales = Object.entries(monthMap).map(([month, data]) => ({
+    month,
+    totalSales: data.totalSales,
+    customerCost: data.customerCost
+  })).sort((a, b) => new Date(a.month) - new Date(b.month));
+
+  // Format top countries
+  const topCountries = Object.entries(countryMap)
+    .map(([country, total]) => ({ country, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
+
+  // Sort earnings table by date desc
+  earningsTable.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const responseData = {
+    totalEarnings,
+    balance,
+    totalSalesValue,
+    monthlySales,
+    topCountries,
+    earningsTable
+  };
+  
+  console.log('Earnings response data:', responseData);
+  
+  res.json({
+    success: true,
+    data: responseData
+  });
+}); 

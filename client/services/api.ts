@@ -26,8 +26,10 @@ api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = getAuthToken(config.url || '');
+      console.log(`API Request to ${config.url} - Token: ${!!token}`);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Authorization header set:', config.headers.Authorization);
       } else {
         console.log('API Request - No token found:', config.url);
       }
@@ -50,17 +52,21 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       switch (error.response.status) {
-        // case 401:
-        //   // Clear tokens on unauthorized
-        //   if (typeof window !== 'undefined') {
-        //     Cookies.remove('userToken');
-        //     Cookies.remove('vendorToken');
-        //     // Redirect to login if not already there
-        //     if (window.location.pathname !== '/login') {
-        //       window.location.href = '/login';
-        //     }
-        //   }
-        //   break;
+        case 401:
+          // Clear tokens on unauthorized
+          if (typeof window !== 'undefined') {
+            console.log('401 Unauthorized - clearing tokens');
+            Cookies.remove('userToken');
+            Cookies.remove('vendorToken');
+            // Redirect to appropriate login page
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/vendor/') && currentPath !== '/vendor/login') {
+              window.location.href = '/vendor/login';
+            } else if (!currentPath.includes('/vendor/') && currentPath !== '/login') {
+              window.location.href = '/login';
+            }
+          }
+          break;
         case 403:
           console.error('Access forbidden:', error.response.data);
           break;

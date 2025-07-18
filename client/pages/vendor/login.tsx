@@ -73,8 +73,8 @@ export default function VendorLoginPage() {
       
       const response = await vendorLogin(formData);
       
-      // Store token
-      setVendorToken(response.token);
+      // Token is already stored in vendorLogin function
+      console.log('Login successful, token received:', !!response.token);
       
       dispatch(loginSuccess({
         token: response.token,

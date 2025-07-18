@@ -177,79 +177,224 @@ async function seed() {
     number: '2222222222',
   });
 
-  // Create orders
-  await Order.create({
-    _id: user1._id,
-    order: [
-      {
-        product: products[0]._id,
-        proName: products[0].name,
-        quantity: 2,
-        price: products[0].price,
-        mrp: products[0].mrp,
-        variantSize: products[0].currVariantSize,
-        OrderStatus: 'Pending',
-        secretOrderId: 'ORD001',
-        pickup_location: products[0].pickup_location,
-        vendorId: vendor._id,
-        selling_price: products[0].price,
-        discount: products[0].discount,
-        payId: 'PAY001',
-        return: false,
-        cancellation: false,
-        slug: products[0].slug,
-        files: [],
-        uni_id_Mix: '',
-        order_id_shiprocket: '',
-        shipment_id: '',
-        date: new Date().toLocaleString('en-IN'),
-        details: {},
-        returnReason: '',
-        updated: '',
-        shipment_track_activities: [],
-        etd: '',
-        track_url: '',
-        payStatus: 'Pending',
-      }
-    ]
-  });
-  await Order.create({
-    _id: user2._id,
-    order: [
-      {
-        product: products[1]._id,
-        proName: products[1].name,
-        quantity: 1,
-        price: products[1].price,
-        mrp: products[1].mrp,
-        variantSize: products[1].currVariantSize,
-        OrderStatus: 'Pending',
-        secretOrderId: 'ORD002',
-        pickup_location: products[1].pickup_location,
-        vendorId: vendor._id,
-        selling_price: products[1].price,
-        discount: products[1].discount,
-        payId: 'PAY002',
-        return: false,
-        cancellation: false,
-        slug: products[1].slug,
-        files: [],
-        uni_id_Mix: '',
-        order_id_shiprocket: '',
-        shipment_id: '',
-        date: new Date().toLocaleString('en-IN'),
-        details: {},
-        returnReason: '',
-        updated: '',
-        shipment_track_activities: [],
-        etd: '',
-        track_url: '',
-        payStatus: 'Pending',
-      }
-    ]
-  });
+  // Create orders with proper structure for earnings calculation
+  const orders = [
+    // Paid orders (contribute to totalEarnings)
+    {
+      user: user1._id,
+      orderItems: [
+        {
+          productId: products[0]._id,
+          name: products[0].name,
+          quantity: 2,
+          price: products[0].price,
+          mrp: products[0].mrp,
+          variantSize: products[0].currVariantSize,
+          image: products[0].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Alice Johnson',
+        address: '123 Main St',
+        city: 'New York',
+        state: 'NY',
+        country: 'United States',
+        pincode: '10001',
+        phone: '1111111111'
+      },
+      paymentMethod: 'Credit Card',
+      itemsPrice: products[0].price * 2,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[0].price * 2,
+      isPaid: true,
+      isDelivered: true,
+      paidAt: new Date('2024-01-15'),
+      deliveredAt: new Date('2024-01-20')
+    },
+    {
+      user: user2._id,
+      orderItems: [
+        {
+          productId: products[1]._id,
+          name: products[1].name,
+          quantity: 1,
+          price: products[1].price,
+          mrp: products[1].mrp,
+          variantSize: products[1].currVariantSize,
+          image: products[1].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Bob Smith',
+        address: '456 Oak Ave',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'United States',
+        pincode: '90210',
+        phone: '2222222222'
+      },
+      paymentMethod: 'PayPal',
+      itemsPrice: products[1].price,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[1].price,
+      isPaid: true,
+      isDelivered: true,
+      paidAt: new Date('2024-02-10'),
+      deliveredAt: new Date('2024-02-15')
+    },
+    {
+      user: user1._id,
+      orderItems: [
+        {
+          productId: products[2]._id,
+          name: products[2].name,
+          quantity: 3,
+          price: products[2].price,
+          mrp: products[2].mrp,
+          variantSize: products[2].currVariantSize,
+          image: products[2].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Alice Johnson',
+        address: '123 Main St',
+        city: 'New York',
+        state: 'NY',
+        country: 'United States',
+        pincode: '10001',
+        phone: '1111111111'
+      },
+      paymentMethod: 'Credit Card',
+      itemsPrice: products[2].price * 3,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[2].price * 3,
+      isPaid: true,
+      isDelivered: true,
+      paidAt: new Date('2024-03-05'),
+      deliveredAt: new Date('2024-03-10')
+    },
+    // Pending orders (contribute to balance)
+    {
+      user: user2._id,
+      orderItems: [
+        {
+          productId: products[3]._id,
+          name: products[3].name,
+          quantity: 2,
+          price: products[3].price,
+          mrp: products[3].mrp,
+          variantSize: products[3].currVariantSize,
+          image: products[3].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Bob Smith',
+        address: '456 Oak Ave',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'United States',
+        pincode: '90210',
+        phone: '2222222222'
+      },
+      paymentMethod: 'PayPal',
+      itemsPrice: products[3].price * 2,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[3].price * 2,
+      isPaid: false,
+      isDelivered: false
+    },
+    // More orders for better data distribution
+    {
+      user: user1._id,
+      orderItems: [
+        {
+          productId: products[0]._id,
+          name: products[0].name,
+          quantity: 1,
+          price: products[0].price,
+          mrp: products[0].mrp,
+          variantSize: products[0].currVariantSize,
+          image: products[0].images?.[0]?.url || ''
+        },
+        {
+          productId: products[1]._id,
+          name: products[1].name,
+          quantity: 1,
+          price: products[1].price,
+          mrp: products[1].mrp,
+          variantSize: products[1].currVariantSize,
+          image: products[1].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Alice Johnson',
+        address: '123 Main St',
+        city: 'New York',
+        state: 'NY',
+        country: 'United States',
+        pincode: '10001',
+        phone: '1111111111'
+      },
+      paymentMethod: 'Credit Card',
+      itemsPrice: products[0].price + products[1].price,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[0].price + products[1].price,
+      isPaid: true,
+      isDelivered: true,
+      paidAt: new Date('2024-04-12'),
+      deliveredAt: new Date('2024-04-18')
+    },
+    {
+      user: user2._id,
+      orderItems: [
+        {
+          productId: products[2]._id,
+          name: products[2].name,
+          quantity: 2,
+          price: products[2].price,
+          mrp: products[2].mrp,
+          variantSize: products[2].currVariantSize,
+          image: products[2].images?.[0]?.url || ''
+        }
+      ],
+      shippingAddress: {
+        name: 'Bob Smith',
+        address: '456 Oak Ave',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'United States',
+        pincode: '90210',
+        phone: '2222222222'
+      },
+      paymentMethod: 'PayPal',
+      itemsPrice: products[2].price * 2,
+      taxPrice: 0,
+      shippingPrice: 0,
+      discountAmount: 0,
+      totalPrice: products[2].price * 2,
+      isPaid: false,
+      isDelivered: false
+    }
+  ];
+
+  await Order.insertMany(orders);
 
   console.log('Seed data inserted!');
+  console.log('Vendor email: vendor@example.com');
+  console.log('Vendor password: password123');
+  console.log('User emails: alice@example.com, bob@example.com');
+  console.log('User passwords: alice@example.com, password123');
+  
   await mongoose.disconnect();
 }
 

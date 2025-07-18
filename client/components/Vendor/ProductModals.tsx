@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import api from '@/services/api';
 import type { Product } from '@/types';
+import ColorPalette from '../ui/ColorPalette';
 
 // Place these at the top of the file
 const SIZE_OPTIONS = [
