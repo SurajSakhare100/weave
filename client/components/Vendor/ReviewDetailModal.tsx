@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Star, Calendar, User, Package, MessageSquare, Reply, Edit, Trash2, CheckCircle, Award } from 'lucide-react';
+import { X, Star, Calendar, Package, MessageSquare, Reply, Edit, Trash2, CheckCircle, Award } from 'lucide-react';
+import Image from 'next/image';
 
 // Interface for populated review data from API
 interface VendorReview {
@@ -39,8 +40,8 @@ interface ReviewDetailModalProps {
   review: VendorReview | null;
   onClose: () => void;
   onResponse: (reviewId: string, content: string) => void;
-  onEdit: (reviewId: string) => void;
-  onDelete: (reviewId: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
@@ -149,9 +150,11 @@ const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
             <div className="flex items-center space-x-4">
               <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
                 {review.proId.images && review.proId.images[0] && (
-                  <img
+                  <Image
                     src={review.proId.images[0].url}
                     alt={review.proId.name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
                   />
                 )}
@@ -220,7 +223,7 @@ const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
                 </button>
               )}
               <button
-                onClick={() => onEdit(review._id)}
+                onClick={onEdit}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Edit className="h-4 w-4" />
@@ -229,7 +232,7 @@ const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
             </div>
             
             <button
-              onClick={() => onDelete(review._id)}
+              onClick={onDelete}
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               <Trash2 className="h-4 w-4" />

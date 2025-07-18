@@ -16,6 +16,7 @@ import {
 import { Product } from '@/types'
 import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import ReviewForm from '@/components/product/ReviewForm';
 import ReviewList from '@/components/product/ReviewList';
@@ -26,7 +27,7 @@ interface ProductImage {
   url: string;
   public_id: string;
   is_primary?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Fix ProductWithReviews type

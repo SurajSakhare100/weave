@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { 
   Star, 
-  Filter, 
   Search, 
   MessageSquare, 
-  TrendingUp, 
-  Users, 
   Award,
   Calendar,
   Eye,
@@ -15,7 +13,6 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
-  BarChart3,
   Download,
   RefreshCw
 } from 'lucide-react';
@@ -205,12 +202,12 @@ const VendorReviews = () => {
     }
   };
 
-  const handleModalEdit = (reviewId: string) => {
+  const handleModalEdit = () => {
     // Handle edit logic
     toast.info('Edit functionality coming soon');
   };
 
-  const handleModalDelete = async (reviewId: string) => {
+  const handleModalDelete = async () => {
     if (!confirm('Are you sure you want to delete this review?')) return;
     
     try {
@@ -218,7 +215,7 @@ const VendorReviews = () => {
       toast.success('Review deleted successfully');
       setSelectedReview(null);
       fetchReviews(); // Refresh reviews
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete review');
     }
   };
@@ -534,9 +531,11 @@ const VendorReviews = () => {
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden">
                             {review.proId.images && review.proId.images[0] && (
-                              <img
+                              <Image
                                 src={review.proId.images[0].url}
                                 alt={review.proId.name || 'Product'}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
                               />
                             )}

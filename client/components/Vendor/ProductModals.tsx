@@ -12,7 +12,7 @@ import {
   Upload,
 } from 'lucide-react';
 import api from '@/services/api';
-import type { Product, ProductImage } from '@/types';
+import type { Product } from '@/types';
 
 // Place these at the top of the file
 const SIZE_OPTIONS = [
@@ -465,13 +465,13 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
                     <div className="flex flex-wrap gap-2 mt-4">
                       {existingImages.map((img, idx) => (
                         <div key={idx} className="relative group">
-                          <img src={img.url} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                          <Image src={img.url} alt="Product preview" width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                           <button type="button" onClick={() => removeExistingImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                         </div>
                       ))}
                       {imagePreviews.map((src, idx) => (
                         <div key={idx} className="relative group">
-                          <img src={src} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                          <Image src={src} alt="Product preview" width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                           <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                         </div>
                       ))}

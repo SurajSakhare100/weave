@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import VendorLayout from '@/components/VendorLayout';
+import Image from 'next/image';
 import { editVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
 import { Upload, Info, X } from 'lucide-react';
@@ -131,8 +132,9 @@ export default function VendorEditProductPage() {
       await editVendorProduct(id as string, formData);
       setSuccess(true);
       // setTimeout(() => router.push('/vendor/products'), 1200);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to update product');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error?.response?.data?.message || 'Failed to update product');
     } finally {
       setLoading(false);
     }
@@ -202,13 +204,13 @@ export default function VendorEditProductPage() {
                   <div className="flex flex-wrap gap-2 mt-4">
                     {existingImages.map((img, idx) => (
                       <div key={idx} className="relative group">
-                        <img src={img.url} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                        <Image src={img.url} alt="Product preview" width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                         <button type="button" onClick={() => removeExistingImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                       </div>
                     ))}
                     {imagePreviews.map((src, idx) => (
                       <div key={idx} className="relative group">
-                        <img src={src} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                        <Image src={src} alt="Product preview" width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                         <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                       </div>
                     ))}

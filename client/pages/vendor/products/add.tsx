@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import VendorLayout from '@/components/VendorLayout';
+import Image from 'next/image';
 import { addVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
 import { Upload, Info, X } from 'lucide-react';
@@ -196,7 +197,7 @@ export default function VendorAddProductPage() {
                   <div className="flex flex-wrap gap-2 mt-4">
                     {imagePreviews.map((src, idx) => (
                       <div key={idx} className="relative group">
-                        <img src={src} alt="Product preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                        <Image src={src} alt="Product preview" width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                         <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                       </div>
                     ))}

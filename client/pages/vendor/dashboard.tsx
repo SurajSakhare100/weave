@@ -6,9 +6,7 @@ import { RootState } from '../../store/store';
 import { setDashboard, setLoading, setError } from '../../features/vendor/vendorSlice';
 import { getVendorDashboard } from '../../services/vendorService';
 import { initializeVendorAuth } from '../../utils/vendorAuth';
-import { 
-  AlertCircle
-} from 'lucide-react';
+
 import Image from 'next/image';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
@@ -158,8 +156,6 @@ export default function VendorDashboard() {
   // }
 
   // Safe access to dashboard data with fallbacks
-  const recentProducts = (dashboard?.recentProducts || []) as Product[];
-  const recentOrders = (dashboard?.recentOrders || []) as Order[];
 
   return (
     <VendorLayout>
