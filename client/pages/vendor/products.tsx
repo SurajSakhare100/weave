@@ -86,9 +86,7 @@ export default function VendorProductsPage() {
     loadProducts(1);
   };
 
-  const handleEditProduct = (product: Product) => {
-    // No need to set selectedProduct here, as it's handled in the modal
-  };
+
 
   const handleDeleteProduct = (product: Product) => {
     deleteProduct(product._id)

@@ -27,7 +27,7 @@ export default function VendorEditProductPage() {
   const [keyFeatures, setKeyFeatures] = useState(['', '', '', '']);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [existingImages, setExistingImages] = useState<{url: string; public_id: string}[]>([]);
   const [price, setPrice] = useState('');
   const [mrp, setMrp] = useState('');
   const [offers, setOffers] = useState(false);

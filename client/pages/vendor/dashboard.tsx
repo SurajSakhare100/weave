@@ -7,15 +7,7 @@ import { setDashboard, setLoading, setError } from '../../features/vendor/vendor
 import { getVendorDashboard } from '../../services/vendorService';
 import { initializeVendorAuth } from '../../utils/vendorAuth';
 import { 
-  Package, 
-  ShoppingCart, 
-  DollarSign, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Eye
+  AlertCircle
 } from 'lucide-react';
 import Image from 'next/image';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
@@ -107,7 +99,7 @@ const popularProducts = [
 export default function VendorDashboard() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { profile, dashboard, error } = useSelector((state: RootState) => state.vendor);
+  const { dashboard } = useSelector((state: RootState) => state.vendor);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -166,26 +158,8 @@ export default function VendorDashboard() {
   // }
 
   // Safe access to dashboard data with fallbacks
-  const productStats = dashboard?.productStats || {
-    totalProducts: 0,
-    activeProducts: 0,
-    inactiveProducts: 0
-  };
-  const orderStats = dashboard?.orderStats || {
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    completedOrders: 0
-  };
   const recentProducts = (dashboard?.recentProducts || []) as Product[];
   const recentOrders = (dashboard?.recentOrders || []) as Order[];
-
-  const getImageUrl = (files: string[], index: number = 0) => {
-    if (files && files.length > index) {
-      return `http://localhost:5000/uploads/${files[index]}`;
-    }
-    return '/products/product.png';
-  };
 
   return (
     <VendorLayout>
@@ -235,9 +209,9 @@ export default function VendorDashboard() {
                 </div>
                 <div className="flex items-center gap-4 mt-4">
                   <div className="flex -space-x-2">
-                    <img src="/products/product.png" className="w-10 h-10 rounded-full border-2 border-white" />
-                    <img src="/products/product.png" className="w-10 h-10 rounded-full border-2 border-white" />
-                    <img src="/products/product.png" className="w-10 h-10 rounded-full border-2 border-white" />
+                    <Image src="/products/product.png" alt="Customer avatar" width={40} height={40} className="rounded-full border-2 border-white" />
+                    <Image src="/products/product.png" alt="Customer avatar" width={40} height={40} className="rounded-full border-2 border-white" />
+                    <Image src="/products/product.png" alt="Customer avatar" width={40} height={40} className="rounded-full border-2 border-white" />
                   </div>
                   <span className="text-sm text-gray-500">Courtney Henry, Jenny Wilson, Cameron Williamson</span>
                   <button className="ml-auto text-[#5A9BD8] text-sm font-semibold">View all</button>
@@ -298,7 +272,7 @@ export default function VendorDashboard() {
               <div className="space-y-4">
                 {comments.map((c, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <img src={c.avatar} className="w-8 h-8 rounded-full" />
+                    <Image src={c.avatar} alt={`${c.name} avatar`} width={32} height={32} className="rounded-full" />
                     <div>
                       <span className="font-semibold text-gray-700 text-sm">{c.name}</span>
                       <p className="text-gray-500 text-sm">{c.comment}</p>
@@ -315,7 +289,7 @@ export default function VendorDashboard() {
               <div className="space-y-3">
                 {popularProducts.map((p, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <img src={p.image} className="w-10 h-10 rounded-lg border" />
+                    <Image src={p.image} alt={`${p.name} product`} width={40} height={40} className="rounded-lg border" />
                     <div className="flex-1">
                       <span className="font-semibold text-gray-700 text-sm">{p.name}</span>
                     </div>

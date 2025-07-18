@@ -1,9 +1,7 @@
 import { useRouter } from "next/router"
-import { OrderSummary } from "@/components/order-summary"
 import { Button } from "@/components/ui/button"
 import Layout from "@/components/Layout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
-import Image from 'next/image'
 import { ChevronRight, ChevronUp, ChevronDown } from "lucide-react"
 import CartItem from '@/components/cart/CartItem'
 import { useState } from 'react'

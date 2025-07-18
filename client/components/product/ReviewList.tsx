@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Star, Edit, Trash2, Calendar, MessageSquare, Reply } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Star, Trash2, Calendar, Reply } from 'lucide-react';
 import { getReviews, removeReview, Review, removeReviewResponse } from '@/services/reviewService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -23,7 +23,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
 
   const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
 
-  const fetchReviews = async (pageNum: number = 1) => {
+  const fetchReviews = useCallback(async (pageNum: number = 1) => {
     try {
       const response = await getReviews(productId, pageNum);
       if (response.success) {
@@ -40,11 +40,11 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   useEffect(() => {
     fetchReviews();
-  }, [productId]);
+  }, [productId, fetchReviews]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -125,7 +125,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ productId, onReviewUpdate }) =>
     <div className="space-y-6">
       {reviews.map((review) => {
         // Handle cases where userId might be null or undefined
-        const userName = review.userId?.name || review.userId?.email || 'Anonymous User';
+        const userName = review.userId?.name || 'Anonymous User';
         const userInitial = userName.charAt(0).toUpperCase();
         
         return (

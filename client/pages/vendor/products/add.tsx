@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import VendorLayout from '@/components/VendorLayout';
 import { addVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
-import { Plus, Upload, Info, X } from 'lucide-react';
+import { Upload, Info, X } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -120,9 +120,10 @@ export default function VendorAddProductPage() {
       setSuccess(true);
       toast.success('Product added successfully!');
       setTimeout(() => router.push('/vendor/products'), 1200);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to add product');
-      toast.error(err?.response?.data?.message || 'Failed to add product');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error?.response?.data?.message || 'Failed to add product');
+      toast.error(error?.response?.data?.message || 'Failed to add product');
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ export default function VendorAddProductPage() {
                   <div className="flex flex-wrap gap-2 mt-4">
                     {imagePreviews.map((src, idx) => (
                       <div key={idx} className="relative group">
-                        <img src={src} alt="preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                        <img src={src} alt="Product preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
                         <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500"><X className="h-4 w-4" /></button>
                       </div>
                     ))}

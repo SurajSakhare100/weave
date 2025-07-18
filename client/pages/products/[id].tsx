@@ -14,16 +14,12 @@ import {
   Loader2
 } from 'lucide-react'
 import { Product } from '@/types'
-import ProductImageGallery from '@/components/product/ProductImageGallery'
 import ProductCard from '@/components/ProductCard'
 import Layout from '@/components/Layout'
-import Image from 'next/image'
 import { toast } from 'sonner'
 import ReviewForm from '@/components/product/ReviewForm';
 import ReviewList from '@/components/product/ReviewList';
 import ReviewSummary from '@/components/product/ReviewSummary';
-import ResponseForm from '@/components/product/ResponseForm';
-import ResponseList from '@/components/product/ResponseList';
 
 // Add this type above ProductWithReviews
 interface ProductImage {
@@ -81,11 +77,6 @@ const dummyFrequentlyBought = [
   { _id: '4', name: 'Bag name', price: 1999, mrp: 1999, colors: ['#D93B65', '#1E1E1E', '#7B5B4D', '#4D7B6B', '#C76A3D', '#6B7B4D'], files: ['image.png'], averageRating: 5, totalReviews: 745, slug: 'bag-4', available: 'true', stock: 10 },
 ];
 const dummyCompare = dummyFrequentlyBought;
-const dummyReviews = [
-  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
-  { name: 'Customer Name', rating: 4, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
-  { name: 'Customer Name', rating: 5, text: 'Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s...', date: '4 months ago' },
-];
 
 const dummyProductDetails = [
   { label: 'Product Weight', value: '500grams' },

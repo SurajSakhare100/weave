@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
 import { 
   Star, 
   Filter, 
@@ -22,7 +21,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import VendorLayout from '@/components/VendorLayout';
-import { RootState } from '@/store/store';
 import { getVendorReviews, getVendorReviewAnalytics, addVendorResponse } from '@/services/reviewService';
 import ReviewDetailModal from '@/components/Vendor/ReviewDetailModal';
 import { isVendorAuthenticated } from '@/utils/vendorAuth';
@@ -114,9 +112,10 @@ const VendorReviews = () => {
         setError(response.message || 'Failed to load reviews');
         setReviews([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch reviews:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load reviews. Please try again.';
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load reviews. Please try again.';
       setError(errorMessage);
       setReviews([]);
     } finally {
