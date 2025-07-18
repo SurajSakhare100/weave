@@ -48,7 +48,7 @@ const ResponseForm: React.FC<ResponseFormProps> = ({
       onResponseSubmitted();
     } catch (error: unknown) {
       const errorMessage = error && typeof error === 'object' && 'response' in error 
-        ? (error.response as any)?.data?.message 
+        ? (error.response as { data?: { message?: string } })?.data?.message 
         : 'Failed to submit response';
       toast.error(errorMessage || 'Failed to submit response');
     } finally {

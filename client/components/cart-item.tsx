@@ -14,7 +14,7 @@ interface CartItemProps {
   onRemove?: (id: string) => void
 }
 
-export function CartItem({ id, name, price, size, color, quantity: _quantity, image, onQuantityChange, onRemove }: CartItemProps) {
+export function CartItem({ id, name, price, size, color, quantity, image, onQuantityChange, onRemove }: CartItemProps) {
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1) {
       onQuantityChange(id, newQuantity)

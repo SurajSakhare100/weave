@@ -46,9 +46,14 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS configuration
+// CORS configuration for Vercel + Render deployment
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: [
+    process.env.CORS_ORIGIN || 'http://localhost:3000',
+    'https://*.vercel.app',
+    'https://*.onrender.com',
+    'https://weave-ecommerce.vercel.app', // Add your specific Vercel domain
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 };

@@ -123,9 +123,5 @@ ssl/
 # Vercel
 .vercel
 
-# Docker
-.dockerignore
-
-# Production files
-nginx.conf
-docker-compose.prod.yml 
+# Render
+.render-buildlogs 
