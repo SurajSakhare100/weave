@@ -35,7 +35,7 @@ interface EarningsData {
 }
 
 // Country Item Component
-const CountryItem: React.FC<{ country: { country: string; total: number }; index: number }> = ({ country, index }) => {
+const CountryItem: React.FC<{ country: { country: string; total: number }; index: number }> = ({ country }) => {
   const [flagUrl, setFlagUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -155,7 +155,7 @@ const VendorRevenueEarnings: React.FC = () => {
 
     const now = new Date();
     let startDate: Date;
-    let endDate = now;
+    const endDate = now;
 
     switch (timePeriod) {
       case '1month':
@@ -186,7 +186,7 @@ const VendorRevenueEarnings: React.FC = () => {
           const monthKey = itemDate.toLocaleString('default', { month: 'short', year: 'numeric' });
           existingSalesMap.set(monthKey, item);
         }
-      } catch (error) {
+      } catch {
         console.error('Error parsing date:', item.month);
       }
     });
@@ -208,7 +208,7 @@ const VendorRevenueEarnings: React.FC = () => {
       try {
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
-      } catch (error) {
+      } catch {
         return true; // Keep item if date parsing fails
       }
     });
@@ -263,7 +263,7 @@ const VendorRevenueEarnings: React.FC = () => {
       } else {
         throw new Error('Failed to load earnings data');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch earnings data:', error);
       setError('Failed to load earnings data. Please try again.');
     } finally {

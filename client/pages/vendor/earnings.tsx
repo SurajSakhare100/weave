@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { 
   TrendingUp, 
   Clock, 
@@ -9,10 +10,12 @@ import {
   MessageSquare,
   Bell,
   Search,
-  Plus
+  Plus,
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 import VendorLayout from '@/components/VendorLayout';
-import { vendorService, getMockVendorEarnings } from '@/services/vendorService';
+import { getVendorEarnings, getMockVendorEarnings } from '@/services/vendorService';
 
 interface EarningsData {
   totalEarnings: number;
@@ -54,9 +57,9 @@ const VendorEarnings: React.FC = () => {
   const fetchEarningsData = async () => {
     try {
       setLoading(true);
-      const response = await vendorService.getVendorEarnings();
+      const response = await getVendorEarnings();
       setEarningsData(response.data);
-    } catch (error) {
+    } catch {
       // Use mock data as fallback for development
       const mockResponse = getMockVendorEarnings();
       setEarningsData(mockResponse.data);

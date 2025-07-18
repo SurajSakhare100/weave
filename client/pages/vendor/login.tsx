@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { loginStart, loginSuccess, loginFailure, clearError } from '../../features/vendor/vendorSlice';
 import { vendorLogin } from '../../services/vendorService';
-import { setVendorToken } from '../../utils/vendorAuth';
+
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function VendorLoginPage() {
