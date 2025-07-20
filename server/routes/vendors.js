@@ -30,23 +30,19 @@ import { handleMultipleUpload } from '../middleware/upload.js';
 
 const router = express.Router();
 
-// Vendor routes (requires vendor authentication)
 router.get('/profile', vendorAuth, getVendorProfile);
 router.put('/profile', vendorAuth, updateVendorProfile);
 router.get('/dashboard', vendorAuth, getVendorDashboard);
 router.get('/earnings', vendorAuth, getVendorEarnings);
 router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
 
-// Vendor review routes
 router.get('/reviews', vendorAuth, validatePagination, getVendorReviews);
 router.get('/reviews/analytics', vendorAuth, getVendorReviewAnalytics);
 
-// Vendor review response routes
 router.post('/reviews/:reviewId/responses', vendorAuth, addVendorReviewResponse);
 router.put('/reviews/:reviewId/responses/:responseId', vendorAuth, updateVendorReviewResponse);
 router.delete('/reviews/:reviewId/responses/:responseId', vendorAuth, deleteVendorReviewResponse);
 
-// Admin routes
 router.get('/', protect, admin, validatePagination, validateSearch, getVendors);
 router.get('/stats', protect, admin, getVendorStats);
 router.get('/:id', protect, admin, validateId, getVendorById);

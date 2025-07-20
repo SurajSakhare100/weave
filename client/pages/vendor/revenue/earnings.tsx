@@ -7,9 +7,9 @@ import {
   ChevronDown, 
   RefreshCw
 } from 'lucide-react';
-import VendorLayout from '@/components/VendorLayout';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import VendorLayout from '@/components/Vendor/VendorLayout';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { getVendorEarnings } from '@/services/vendorService';
 import { useRequireVendorAuth } from '@/hooks/useRequireVendorAuth';
 import Image from 'next/image';
@@ -298,7 +298,8 @@ const VendorRevenueEarnings: React.FC = () => {
     return (
       <VendorLayout>
         <div className="flex justify-center items-center h-64">
-          <LoadingSpinner size="lg" text="Loading earnings data..." />
+          <LoadingSpinner size="lg" />
+          <span className="ml-3 text-gray-600">Loading earnings data...</span>
         </div>
       </VendorLayout>
     );

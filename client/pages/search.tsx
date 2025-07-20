@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import ProductCard from '@/components/ProductCard';
-import Layout from '@/components/Layout';
+import ProductCard from '@/components/products/ProductCard';
+import MainLayout from '@/components/layout/MainLayout';
 import { searchProducts } from '@/services/productService';
 import { Product } from '@/types';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ export default function SearchPage() {
   };
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-[#faf5f2] min-h-screen text-black">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Search Products</h1>
@@ -68,6 +68,6 @@ export default function SearchPage() {
           </div>
         </div>
       </section>
-    </Layout>
+    </MainLayout>
   );
 } 

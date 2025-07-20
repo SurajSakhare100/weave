@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { AddressCard } from "@/components/address-card"
-import { AddressFormModal } from "@/components/address-form-modal"
+import AddressCard from "@/components/user/AddressCard"
+import AddressFormModal from "@/components/user/AddressFormModal"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import {
   getUserAddresses,
   addUserAddress,
@@ -165,16 +165,16 @@ function CheckoutAddressPageContent() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e91e63]"></div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className=" bg-white md:px-10">
         <div className=" p-6">
           {/* Breadcrumb */}
@@ -217,8 +217,16 @@ function CheckoutAddressPageContent() {
             </div>
           )}
 
-          {/* Add New Address Link */}
-          <div className="mt-16 text-center w-full">
+          {/* Navigation Buttons */}
+          <div className="mt-16 flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/cart')}
+              className="text-[#8b7355] border-[#8b7355] hover:bg-[#8b7355] hover:text-white"
+            >
+              ← Back to Cart
+            </Button>
+            
             <button
               className="text-[#EE346C] text-center hover:text-[#c2185b] font-medium text-lg underline underline-offset-2"
               onClick={handleAddNewClick}
@@ -239,7 +247,7 @@ function CheckoutAddressPageContent() {
           isEditing={!!editingAddress}
         />
       </div>
-    </Layout>
+    </MainLayout>
   )
 }
 

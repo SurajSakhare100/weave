@@ -6,9 +6,7 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
 })
 
-/** @type {import('next').NextConfig} */
-const nextConfig = withPWA({
-  /* config options here */
+const nextConfig: NextConfig = withPWA({
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -33,18 +31,35 @@ const nextConfig = withPWA({
         hostname: 'flagcdn.com',
         pathname: '/**',
       },
-      // Add your Render backend domain
       {
         protocol: 'https',
         hostname: '*.onrender.com',
         pathname: '/**',
       },
     ],
+    formats: ['image/webp', 'image/avif'],
   },
-  // Production optimizations
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  // webpack: (config, { dev, isServer }) => {
+  //   if (!dev && !isServer) {
+  //     config.optimization.splitChunks = {
+  //       chunks: 'all',
+  //       cacheGroups: {
+  //         vendor: {
+  //           test: /[\\/]node_modules[\\/]/,
+  //           name: 'vendors',
+  //           chunks: 'all',
+  //         },
+  //       },
+  //     };
+  //   }
+  //   return config;
+  // },
 });
 
-module.exports = nextConfig;
+export default nextConfig;

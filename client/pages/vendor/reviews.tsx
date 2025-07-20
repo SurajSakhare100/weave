@@ -17,11 +17,11 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
-import VendorLayout from '@/components/VendorLayout';
+import VendorLayout from '@/components/Vendor/VendorLayout';
 import { getVendorReviews, getVendorReviewAnalytics, addVendorResponse } from '@/services/reviewService';
 import ReviewDetailModal from '@/components/Vendor/ReviewDetailModal';
 import { isVendorAuthenticated } from '@/utils/vendorAuth';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 // Interface for populated review data from API
 interface VendorReview {
@@ -257,8 +257,7 @@ const VendorReviews = () => {
     );
   }
 
-  // Debug: Always show this message to confirm the component is rendering
-  console.log('VendorReviews: Component rendering, pageError:', pageError, 'loading:', loading);
+  // Component rendering
 
   // Handle page-level errors
   if (pageError) {

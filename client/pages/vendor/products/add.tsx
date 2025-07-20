@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import VendorLayout from '@/components/VendorLayout';
+import VendorLayout from '@/components/Vendor/VendorLayout';
 import Image from 'next/image';
 import { addVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';

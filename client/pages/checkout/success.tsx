@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/router"
 import { CheckCircle, Package, Truck, Home, ShoppingBag, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import { useDispatch } from "react-redux"
 import { clearCartAsync } from "@/features/cart/cartSlice"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
@@ -32,7 +32,7 @@ function CheckoutSuccessPageContent() {
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
           <nav className="flex items-center space-x-2 text-sm mb-12">
@@ -192,7 +192,7 @@ function CheckoutSuccessPageContent() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }
 

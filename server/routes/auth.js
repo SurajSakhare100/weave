@@ -13,7 +13,6 @@ import {
 import { protect, vendorAuth } from '../middleware/auth.js';
 import { validateUserRegistration, validateUserLogin, validateVendorRegistration, validateVendorLogin } from '../middleware/validation.js';
 
-// User routes
 router.post('/register', validateUserRegistration, registerUser);
 router.post('/login', validateUserLogin, loginUser);
 router.post('/logout', logoutUser);
@@ -22,7 +21,6 @@ router
   .get(protect, getUserProfile)
   .put(protect, updateUserProfile);
 
-// Vendor routes
 router.post('/vendor/register', validateVendorRegistration, registerVendor);
 router.post('/vendor/login', validateVendorLogin, loginVendor);
 router.post('/vendor/logout', vendorAuth, logoutVendor);

@@ -20,16 +20,12 @@ export function useRequireVendorAuth(redirect = true) {
   const loggedIn = reduxAuthenticated || !!token;
 
   useEffect(() => {
-    // Debug authentication status
-    console.log('Vendor Auth Hook - Redux isAuthenticated:', reduxAuthenticated, 'token:', !!token, 'loggedIn:', loggedIn);
     debugAuth();
-    
     setIsInitialized(true);
   }, [reduxAuthenticated, token, loggedIn]);
 
   useEffect(() => {
     if (isInitialized && !loggedIn && redirect) {
-      console.log('Redirecting to vendor login - not authenticated');
       router.replace('/vendor/login');
     }
   }, [isInitialized, loggedIn, redirect, router]);

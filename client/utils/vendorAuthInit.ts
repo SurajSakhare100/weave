@@ -8,16 +8,13 @@ import { debugAuth } from './debugAuth';
 export const initializeVendorAuth = () => {
   if (typeof window === 'undefined') return;
   
-  console.log('Initializing vendor authentication...');
   debugAuth();
   
   const token = getVendorToken();
   if (token) {
-    console.log('Vendor token found, setting up auth headers');
     setupVendorAuthHeader(token);
     return { isAuthenticated: true, token };
   } else {
-    console.log('No vendor token found');
     return { isAuthenticated: false, token: null };
   }
 };

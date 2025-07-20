@@ -1,4 +1,4 @@
-import Layout from '@/components/Layout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useState, useEffect } from 'react';
 import { getUserOrders } from '../../services/userService';
 import Link from 'next/link';
@@ -75,11 +75,11 @@ export default function UserOrdersPage() {
     }
   }, [loggedIn]);
 
-  console.log('Orders page render:', { loggedIn, ordersCount: orders.length });
+  // Orders page render
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <section className="py-16 bg-[#faf5f2] min-h-screen">
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex justify-center items-center py-20">
@@ -87,12 +87,12 @@ export default function UserOrdersPage() {
             </div>
           </div>
         </section>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-[#faf5f2] min-h-screen">
         <div className="max-w-3xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Order History</h1>
@@ -153,6 +153,6 @@ export default function UserOrdersPage() {
           )}
         </div>
       </section>
-    </Layout>
+    </MainLayout>
   );
 } 

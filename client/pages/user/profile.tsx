@@ -1,4 +1,4 @@
-import Layout from '@/components/Layout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
 import Link from 'next/link'
@@ -7,10 +7,9 @@ import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 export default function UserProfile() {
   useRequireUserAuth();
   const user = useSelector((state: RootState) => state.user)
-  console.log('User Profile:', user);
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-[#faf5f2] min-h-screen text-black flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow p-8 flex flex-col items-center w-full max-w-md">
           <span className="text-2xl mb-4">👤</span>
@@ -23,9 +22,15 @@ export default function UserProfile() {
             <Link href="/user/addresses" className="bg-[#6c4323] text-white px-6 py-2 rounded hover:bg-[#6c4323]/90 transition text-center">
               Manage Addresses
             </Link>
+            <Link href="/" className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition text-center">
+              Back to Home
+            </Link>
+            <Link href="/products" className="bg-[#cf1a53] text-white px-6 py-2 rounded hover:bg-[#cf1a53]/90 transition text-center">
+              Continue Shopping
+            </Link>
           </div>
         </div>
       </section>
-    </Layout>
+    </MainLayout>
   )
 } 

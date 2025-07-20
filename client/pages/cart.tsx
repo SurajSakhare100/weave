@@ -5,7 +5,7 @@ import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
 import { getCart } from '../services/cartService';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import CartItem from '../components/cart/CartItem';
 import OrderSummary from '../components/cart/OrderSummary';
 
@@ -53,44 +53,44 @@ const CartPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Please login to view your cart</h2>
             <Button onClick={() => router.push('/login')}>Login</Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   if (items.length === 0) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
             <Button onClick={() => router.push('/products')}>Continue Shopping</Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-white py-12">
         <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8">
           <nav className="flex items-center space-x-2 text-lg mb-8">
@@ -111,7 +111,7 @@ const CartPage = () => {
               ))}
             </div>
             {/* Order Summary */}
-            <div>
+            <div className="space-y-4">
               <OrderSummary
                 summary={{
                   mrpTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0),
@@ -122,11 +122,30 @@ const CartPage = () => {
                   orderTotal: items.reduce((sum, i) => sum + (i.price * i.quantity), 0) + 40 + 10,
                 }}
               />
+              
+              {/* Checkout Button */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <Button 
+                  onClick={() => router.push('/checkout/order-summary')}
+                  className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white py-3 text-lg font-semibold"
+                >
+                  Proceed to Checkout
+                </Button>
+                <div className="mt-4 text-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => router.push('/products')}
+                    className="w-full"
+                  >
+                    Continue Shopping
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   );
 };
 

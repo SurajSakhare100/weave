@@ -86,8 +86,8 @@ const setStoredAddress = (address: ShippingAddress | null) => {
     } else {
       localStorage.removeItem('checkout_address');
     }
-  } catch (error) {
-    console.error('Error storing address:', error);
+  } catch {
+    // Silently handle storage errors
   }
 };
 
@@ -105,8 +105,8 @@ const setStoredPaymentMethod = (method: 'online' | 'cod') => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem('checkout_payment_method', method);
-  } catch (error) {
-    console.error('Error storing payment method:', error);
+  } catch {
+    // Silently handle storage errors
   }
 };
 

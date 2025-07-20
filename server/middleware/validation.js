@@ -235,7 +235,7 @@ const validateOrder = [
     .withMessage('Shipping address is required'),
   body('paymentMethod')
     .optional()
-    .isIn(['razorpay', 'cod', 'stripe'])
+    .isIn(['cod', 'stripe'])
     .withMessage('Invalid payment method'),
   handleValidationErrors
 ];

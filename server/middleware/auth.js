@@ -4,9 +4,6 @@ import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
 import Admin from '../models/Admin.js';
 
-// @desc    Protect routes - User authentication
-// @route   *
-// @access  Private
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -15,13 +12,8 @@ const protect = asyncHandler(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from the token
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
@@ -43,9 +35,6 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Admin authorization
-// @route   *
-// @access  Private/Admin
 const admin = asyncHandler(async (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
@@ -55,9 +44,6 @@ const admin = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Vendor authentication
-// @route   *
-// @access  Private/Vendor
 const vendorAuth = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -66,20 +52,14 @@ const vendorAuth = asyncHandler(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get vendor from the token
       req.vendor = await Vendor.findById(decoded.id).select('-password');
 
       if (!req.vendor) {
         return res.status(401).json({ message: 'Not authorized, vendor not found' });
       }
 
-      // Check if vendor is accepted
       if (!req.vendor.accept) {
         return res.status(403).json({ message: 'Vendor account not yet approved' });
       }
@@ -96,9 +76,6 @@ const vendorAuth = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Optional vendor authentication (doesn't require auth)
-// @route   *
-// @access  Public (with optional vendor info)
 const optionalVendorAuth = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -107,21 +84,14 @@ const optionalVendorAuth = asyncHandler(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get vendor from the token
       req.vendor = await Vendor.findById(decoded.id).select('-password');
 
-      // Don't throw error if vendor not found - just continue without vendor info
       if (req.vendor && !req.vendor.accept) {
-        req.vendor = null; // Clear vendor if not accepted
+        req.vendor = null;
       }
     } catch (error) {
-      // Don't throw error - just continue without vendor info
       console.log('Optional vendor auth failed:', error.message);
     }
   }

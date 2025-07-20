@@ -1,4 +1,4 @@
-import Layout from '@/components/Layout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useDispatch } from 'react-redux';
@@ -34,7 +34,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-[#faf5f2] text-black min-h-screen flex items-center justify-center">
         <form onSubmit={handleRegister} className="bg-white rounded-2xl shadow p-8 flex flex-col items-center w-full max-w-md">
           <h1 className="text-2xl font-bold mb-6">Register</h1>
@@ -80,6 +80,6 @@ export default function RegisterPage() {
           </button>
         </form>
       </section>
-    </Layout>
+    </MainLayout>
   );
 } 

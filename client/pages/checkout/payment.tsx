@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useRouter } from "next/router"
-import { PaymentOption } from "@/components/payment-option"
+import PaymentOption from "@/components/checkout/PaymentOption"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 import { ChevronRight } from "lucide-react"
 
@@ -70,7 +70,7 @@ function CheckoutPaymentPageContent() {
 
   if (!selectedAddress) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 mb-4">Please select a delivery address first</p>
@@ -79,13 +79,13 @@ function CheckoutPaymentPageContent() {
             </Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   if (cartItems.length === 0) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 mb-4">Your cart is empty</p>
@@ -94,12 +94,12 @@ function CheckoutPaymentPageContent() {
             </Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
           <nav className="flex items-center space-x-2 text-sm mb-12">
@@ -213,7 +213,7 @@ function CheckoutPaymentPageContent() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }
 

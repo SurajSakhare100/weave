@@ -1,7 +1,7 @@
-import Layout from '@/components/Layout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
-import ProductCard from '@/components/ProductCard'
+import ProductCard from '@/components/products/ProductCard'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getProducts } from '../../services/productService'
@@ -36,7 +36,7 @@ export default function WishlistPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <section className="py-16 bg-[#faf5f2] min-h-screen">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-center items-center py-20">
@@ -44,12 +44,12 @@ export default function WishlistPage() {
             </div>
           </div>
         </section>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-[#faf5f2] min-h-screen">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Wishlist</h1>
@@ -68,6 +68,6 @@ export default function WishlistPage() {
           )}
         </div>
       </section>
-    </Layout>
+    </MainLayout>
   )
 } 

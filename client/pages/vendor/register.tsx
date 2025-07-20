@@ -1,4 +1,4 @@
-import Layout from '@/components/Layout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -141,7 +141,7 @@ export default function VendorRegisterPage() {
   };
 
   return (
-    <Layout>
+    <MainLayout>
       <section className="py-16 bg-gray-50 text-black min-h-screen flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-2xl">
           <div className="text-center mb-8">
@@ -455,6 +455,6 @@ export default function VendorRegisterPage() {
           </div>
         </div>
       </section>
-    </Layout>
+    </MainLayout>
   );
 } 

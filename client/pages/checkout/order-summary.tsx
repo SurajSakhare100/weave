@@ -1,6 +1,6 @@
 import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
 import { ChevronRight, ChevronUp, ChevronDown } from "lucide-react"
 import CartItem from '@/components/cart/CartItem'
@@ -31,42 +31,42 @@ function CheckoutOrderSummaryPageContent() {
 
   if (cartLoading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   if (cartError) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 mb-4">{cartError}</p>
             <Button onClick={() => router.push('/cart')}>Back to Cart</Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   if (cartItems.length === 0) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-600 mb-4">Your cart is empty</p>
             <Button onClick={() => router.push('/products')}>Start Shopping</Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen  py-12">
         <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8">
           <nav className="flex items-center space-x-2 text-lg mb-8">
@@ -165,7 +165,7 @@ function CheckoutOrderSummaryPageContent() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }
 

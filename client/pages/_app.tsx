@@ -8,8 +8,8 @@ import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
 import { initializeVendorAuth } from '../utils/vendorAuthInit';
-import ErrorBoundary from '../components/ErrorBoundary';
 import { Toaster } from 'sonner';
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 function UserHydrator() {
   const dispatch = useDispatch();
@@ -17,7 +17,6 @@ function UserHydrator() {
 
   useEffect(() => {
     const hydrate = async () => {
-      // Initialize vendor authentication
       initializeVendorAuth();
       
       const token = getUserToken();
@@ -25,22 +24,17 @@ function UserHydrator() {
         try {
           const profile = await getUserProfile();
           if (profile.success && profile.data) {
-            // Just set authentication state without trying to login again
             dispatch(login({ 
               email: profile.data.email, 
-              password: '' // We don't have the password, just mark as authenticated
+              user: profile.data
             }));
           } else {
-            // If profile fetch fails, clear the token
             dispatch(logout());
           }
-        } catch (err) {
-          console.error('Failed to hydrate user:', err);
-          // Clear invalid token
+        } catch {
           dispatch(logout());
         }
       } else if (!token && isAuthenticated) {
-        // Clear authentication state if no token
         dispatch(logout());
       }
     };

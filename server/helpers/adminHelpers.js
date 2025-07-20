@@ -76,7 +76,7 @@ export default {
                     quantity: '$order.quantity',
                     price: '$order.price',
                     mrp: '$order.mrp',
-                    order_id_shiprocket: '$order.order_id_shiprocket',
+
                     shipment_id: '$order.shipment_id',
                     payId: '$order.payId',
                     OrderStatus: '$order.OrderStatus',
@@ -97,7 +97,7 @@ export default {
         }
     },
 
-    editOrder: ({ order_id_shiprocket, shipment_id, OrderStatus, userId, secretOrderId }, updated) => {
+    editOrder: ({ shipment_id, OrderStatus, userId, secretOrderId }, updated) => {
         return Order.updateOne(
             {
                 _id: new mongoose.Types.ObjectId(userId),
@@ -106,7 +106,6 @@ export default {
             {
                 $set: {
                     'order.$.shipment_id': shipment_id,
-                    'order.$.order_id_shiprocket': order_id_shiprocket,
                     'order.$.OrderStatus': OrderStatus,
                     'order.$.updated': updated
                 }

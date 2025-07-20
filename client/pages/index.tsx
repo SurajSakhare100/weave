@@ -1,20 +1,22 @@
-import Layout from '@/components/Layout';
-import Hero from '@/components/Hero';
-// import Bestsellers from '@/components/Bestsellers';
-import NewArrivals from '@/components/NewArrivals';
-import Exhibitions from '@/components/Exhibitions';
-import Testimonials from '@/components/Testimonials';
-import About from '@/components/About';
-import Bestsellers from '@/components/Bestsellers';
-export default function Home() {
+import MainLayout from '@/components/layout/MainLayout';
+import Hero from '@/components/home/Hero';
+import Bestsellers from '@/components/home/Bestsellers';
+import NewArrivals from '@/components/home/NewArrivals';
+import Exhibitions from '@/components/home/Exhibitions';
+import Testimonials from '@/components/home/Testimonials';
+import About from '@/components/home/About';
+
+const Home: React.FC = () => {
   return (
-    <Layout>
-        <Hero />
-        <Bestsellers />
-        <NewArrivals />
-        <Exhibitions />
-        <Testimonials />
-        <About />
-    </Layout>
+    <MainLayout>
+      <Hero />
+      <Bestsellers />
+      <NewArrivals />
+      <Exhibitions />
+      <Testimonials />
+      <About />
+    </MainLayout>
   );
-} 
+};
+
+export default Home; 

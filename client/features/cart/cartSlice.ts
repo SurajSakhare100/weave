@@ -34,26 +34,20 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
 
 export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product, quantity, variantSize }: { product: any, quantity: number, variantSize?: string }, { rejectWithValue }) => {
   try {
-    console.log('Adding to cart:', { product, quantity, variantSize });
     const result = await addToCart(product, quantity, variantSize)
-    console.log('Add to cart result:', result)
     
     if (result.success === false) {
-      console.error('Add to cart failed:', result.message)
       return rejectWithValue(result.message || 'Could not add to cart')
     }
     
     const data = await getCart()
-    console.log('Get cart result:', data)
     
     if (data.success === false) {
-      console.error('Get cart failed:', data.message)
       return rejectWithValue(data.message || 'Could not load cart')
     }
     
     return data.result || []
   } catch (err: any) {
-    console.error('Add cart item error:', err)
     return rejectWithValue('Could not add to cart')
   }
 })

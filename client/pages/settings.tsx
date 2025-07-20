@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import { getUserProfile } from "@/services/userService"
 
 interface UserProfile {
@@ -47,29 +47,29 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   if (error) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
             <Button onClick={loadProfile}>Try Again</Button>
           </div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
           <nav className="text-[#6c4323] mb-8">
@@ -142,6 +142,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }

@@ -7,7 +7,6 @@ const generateToken = (id) => {
   });
 };
 
-// Utility function to safely convert string to ObjectId
 export const toObjectId = (id) => {
   if (!id) return null;
   if (typeof id === 'string') {

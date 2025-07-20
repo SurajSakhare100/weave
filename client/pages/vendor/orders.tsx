@@ -1,4 +1,4 @@
-import VendorLayout from '@/components/VendorLayout';
+import VendorLayout from '@/components/Vendor/VendorLayout';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -76,7 +76,6 @@ export default function VendorOrdersPage() {
       };
       
       const data = await getVendorOrders(params);
-      console.log(data)
       dispatch(setOrders(data));
     } catch (error: unknown) {
       console.error('Error loading orders:', error);

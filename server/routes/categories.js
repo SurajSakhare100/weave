@@ -22,7 +22,6 @@ import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Public routes
 router.get('/', getCategories);
 router.get('/header', getHeaderCategories);
 router.get('/main-sub', getMainSubCategories);
@@ -31,12 +30,10 @@ router.get('/search', validateSearch, searchCategories);
 router.get('/slug/:slug', getCategoryBySlug);
 router.get('/:id', validateId, getCategoryById);
 
-// Protected routes (Admin only)
 router.post('/', protect, admin, validateCategory, createCategory);
 router.put('/:id', protect, admin, validateId, validateCategory, updateCategory);
 router.delete('/:id', protect, admin, validateId, deleteCategory);
 
-// Sub-category routes (Admin only)
 router.post('/:id/main-sub', protect, admin, validateId, addMainSubCategory);
 router.post('/:id/sub', protect, admin, validateId, addSubCategory);
 

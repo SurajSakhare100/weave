@@ -14,13 +14,13 @@ import {
   Loader2
 } from 'lucide-react'
 import { Product } from '@/types'
-import ProductCard from '@/components/ProductCard'
-import Layout from '@/components/Layout'
+import ProductCard from '@/components/products/ProductCard'
+import MainLayout from '@/components/layout/MainLayout'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import ReviewForm from '@/components/product/ReviewForm';
-import ReviewList from '@/components/product/ReviewList';
-import ReviewSummary from '@/components/product/ReviewSummary';
+import ReviewForm from '@/components/reviews/ReviewForm';
+import ReviewList from '@/components/reviews/ReviewList';
+import ReviewSummary from '@/components/reviews/ReviewSummary';
 
 // Add this type above ProductWithReviews
 interface ProductImage {
@@ -233,7 +233,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="bg-white min-h-screen text-black">
       <div className="max-w-7xl mx-auto py-16">
         {/* Main Product Section */}
@@ -467,6 +467,6 @@ export default function ProductDetailPage() {
         )}
       </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 } 

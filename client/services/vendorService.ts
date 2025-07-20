@@ -10,7 +10,6 @@ export async function vendorLogin(credentials: { email: string; password: string
   if (res.data.token) {
     const { setVendorToken } = await import('@/utils/vendorAuth');
     setVendorToken(res.data.token);
-    console.log('Vendor token stored after login');
   }
   
   return res.data;
@@ -40,12 +39,11 @@ export async function vendorLogout() {
       await api.post('/auth/vendor/logout');
     }
   } catch (error) {
-    console.log('Logout endpoint failed, continuing with local cleanup');
+    // Logout endpoint failed, continuing with local cleanup
   } finally {
     // Always clean up local storage
     const { removeVendorToken } = await import('@/utils/vendorAuth');
     removeVendorToken();
-    console.log('Vendor token removed');
   }
   
   return { success: true };

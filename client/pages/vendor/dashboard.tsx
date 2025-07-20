@@ -1,4 +1,4 @@
-import VendorLayout from '@/components/VendorLayout';
+import VendorLayout from '@/components/Vendor/VendorLayout';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';

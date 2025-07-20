@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
-import { AddressCard } from "@/components/address-card"
-import { AddressFormModal } from "@/components/address-form-modal"
+import { useRouter } from "next/router"
+import AddressCard from "@/components/user/AddressCard"
+import AddressFormModal from "@/components/user/AddressFormModal"
 import { Button } from "@/components/ui/button"
-import Layout from "@/components/Layout"
+import MainLayout from "@/components/layout/MainLayout"
 import { getUserAddresses, addUserAddress, updateUserAddress, deleteUserAddress, setDefaultAddress } from "@/services/userService"
 import { Plus } from "lucide-react"
 
@@ -30,6 +31,7 @@ interface AddressData {
 }
 
 export default function UserAddressesPage() {
+  const router = useRouter()
   const [addresses, setAddresses] = useState<Address[]>([])
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
@@ -114,20 +116,29 @@ export default function UserAddressesPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
         </div>
-      </Layout>
+      </MainLayout>
     )
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-[#fafafa]">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-[#6c4323]">My Addresses</h1>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/user/profile')}
+                className="text-[#6c4323] border-[#6c4323] hover:bg-[#6c4323] hover:text-white"
+              >
+                ← Back to Profile
+              </Button>
+              <h1 className="text-3xl font-bold text-[#6c4323]">My Addresses</h1>
+            </div>
             <Button 
               onClick={handleAddNewClick}
               className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
@@ -180,6 +191,6 @@ export default function UserAddressesPage() {
           isEditing={!!editingAddress}
         />
       </div>
-    </Layout>
+    </MainLayout>
   )
 } 

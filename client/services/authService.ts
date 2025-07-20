@@ -29,7 +29,6 @@ export async function logout() {
     await api.post('/auth/logout');
   } catch (error) {
     // Ignore errors on logout
-    console.log('Logout endpoint error (ignored):', error);
   }
   
   return { success: true, message: 'Logged out successfully' };

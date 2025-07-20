@@ -35,7 +35,6 @@ export const setupVendorAuthHeader = (token: string) => {
     // Import the api instance instead of global axios
     const api = require('@/services/api').default;
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    console.log('Vendor auth header set successfully');
   } catch (error) {
     console.error('Error setting up vendor auth header:', error);
   }
@@ -47,7 +46,6 @@ export const clearVendorAuthHeader = () => {
     // Import the api instance instead of global axios
     const api = require('@/services/api').default;
     delete api.defaults.headers.common['Authorization'];
-    console.log('Vendor auth header cleared successfully');
   } catch (error) {
     console.error('Error clearing vendor auth header:', error);
   }

@@ -12,21 +12,15 @@ export async function getCart() {
 
 export async function addToCart(product: any, quantity: number = 1, variantSize?: string) {
   try {
-    console.log('Cart service - Input:', { product, quantity, variantSize });
-    
-    // Send the exact structure the server expects
     const cartItem = {
-      proId: product?._id, // Product ID
+      proId: product?._id,
       quantity: quantity,
       price: product?.price,
       mrp: product?.mrp,
       variantSize: variantSize || product?.currVariantSize || 'M'
     };
     
-    console.log('Cart service - Sending:', cartItem);
-    
     const res = await api.post(`/users/cart`, cartItem);
-    console.log('Cart service - Response:', res.data);
     return res.data;
   } catch (error: any) {
     console.error('Cart service - Error:', error);
@@ -46,9 +40,7 @@ export async function updateCartItem(itemId: string, quantity: number) {
 
 export async function removeFromCart(itemId: string) {
   try {
-    console.log('Cart service - Removing item:', itemId);
     const res = await api.delete(`/users/cart/${itemId}`);
-    console.log('Cart service - Remove response:', res.data);
     return res.data;
   } catch (error: any) {
     console.error('Error removing from cart:', error);
@@ -58,9 +50,7 @@ export async function removeFromCart(itemId: string) {
 
 export async function clearCart() {
   try {
-    console.log('Cart service - Clearing cart');
     const res = await api.delete(`/users/cart`);
-    console.log('Cart service - Clear response:', res.data);
     return res.data;
   } catch (error: any) {
     console.error('Error clearing cart:', error);

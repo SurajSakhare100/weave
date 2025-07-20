@@ -14,7 +14,7 @@ import {
   ChevronDown,
   RefreshCw
 } from 'lucide-react';
-import VendorLayout from '@/components/VendorLayout';
+import VendorLayout from '@/components/Vendor/VendorLayout';
 import { getVendorEarnings, getMockVendorEarnings } from '@/services/vendorService';
 
 interface EarningsData {
