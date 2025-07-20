@@ -13,12 +13,12 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      'no-console': 'off', // Allow console statements for development
+      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
       'no-debugger': 'error',
       'no-unused-vars': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
-      // '@typescript-eslint/prefer-const': 'error', // Commented out due to plugin issue
+      '@typescript-eslint/prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       'prefer-const': 'error',
       'no-var': 'error',
