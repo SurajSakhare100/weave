@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import VendorLayout from '@/components/Vendor/VendorLayout';
-import DraftsHeader from '@/components/Vendor/ProductManagement/DraftsHeader';
 import DraftsListView from '@/components/Vendor/ProductManagement/DraftsListView';
 import DraftsGridView from '@/components/Vendor/ProductManagement/DraftsGridView';
 import DraftsActionBar from '@/components/Vendor/ProductManagement/DraftsActionBar';
+import ProductHeader from '@/components/Vendor/ProductManagement/ProductHeader';
 import { getVendorDraftProducts, publishVendorProducts, deleteVendorProducts } from '@/services/vendorService';
 import { DraftProduct } from '@/types/vendor';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import ProductHeader from '@/components/Vendor/ProductManagement/ProductHeader';
 
 export default function VendorDraftsPage() {
   const router = useRouter();
@@ -193,7 +192,7 @@ export default function VendorDraftsPage() {
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">You don't have any draft products.</p>
+                <p className="text-gray-500 text-lg">You don&apos;t have any draft products.</p>
                 <p className="text-gray-400 mt-2">Create a new product to get started.</p>
               </div>
             ) : (

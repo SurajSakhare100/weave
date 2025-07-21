@@ -3,8 +3,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
-import { login as loginAction } from '../features/user/userSlice';
-import { register as registerService } from '../services/authService';
+import { login as loginAction } from '@/features/user/userSlice';
+import { register as registerService } from '@/services/authService';
 import { toast } from 'sonner';
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -21,7 +21,7 @@ export default function RegisterPage() {
     setError('');
     try {
       const data = await registerService({ name, email, password });
-      dispatch(loginAction({ email: data.email, password:data.password }));
+      dispatch(loginAction({ email: data.email, user: data.user }));
       toast.success('Registration successful!');
       router.push('/');
     } catch (err: unknown) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { createResponse } from '@/services/reviewService';
+import { addVendorResponse } from '@/services/reviewService';
 
 interface ResponseFormProps {
   reviewId: string;
@@ -26,10 +26,7 @@ const ResponseForm: React.FC<ResponseFormProps> = ({
 
     try {
       setSubmitting(true);
-      const response = await createResponse({
-        reviewId,
-        comment: comment.trim()
-      });
+      const response = await addVendorResponse(reviewId, comment.trim());
 
       if (response.success) {
         setComment('');

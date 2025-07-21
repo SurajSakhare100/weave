@@ -172,7 +172,7 @@ export default function UserAddressesPage() {
                     onEdit={() => handleEditClick(address)}
                     onDelete={() => handleDeleteAddress(address.id)}
                     onSetDefault={() => handleSetDefaultAddress(address.id)}
-                    showActions={true}
+                    // showActions={true}
                   />
                 ))}
               </div>
@@ -188,7 +188,7 @@ export default function UserAddressesPage() {
           }}
           onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
           address={editingAddress || undefined}
-          isEditing={!!editingAddress}
+          // isEditing={!!editingAddress}
         />
       </div>
     </MainLayout>

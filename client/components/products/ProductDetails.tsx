@@ -27,7 +27,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
 
   const handleAddToCart = () => {
     dispatch(addCartItem({
-      product: product,
+      product,
       quantity: 1,
       variantSize: 'M'
     }));

@@ -21,6 +21,7 @@ interface Product {
   images?: Array<{ url: string; is_primary?: boolean }>;
   averageRating?: number;
   totalReviews?: number;
+  files?: string[]; // Added for the new_code
 }
 
 interface ProductCardProps {
@@ -44,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.preventDefault();
     if (product.available === 'true') {
       dispatch(addCartItem({
-        product: product,
+        product,
         quantity: 1,
         variantSize: selectedColor || product.currVariantSize || 'M'
       }));

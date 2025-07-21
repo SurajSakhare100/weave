@@ -42,7 +42,7 @@ export default function Vendor404() {
               <h1 className="text-6xl font-bold text-[#3475A6] mb-2">404</h1>
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Page Not Found</h2>
               <p className="text-gray-600 mb-8">
-                Sorry, the vendor page you're looking for doesn't exist or has been moved.
+                Sorry, the vendor page you&apos;re looking for doesn&apos;t exist or has been moved.
               </p>
             </div>
 
