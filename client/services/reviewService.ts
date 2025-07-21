@@ -39,7 +39,7 @@ export interface ResponseData {
   content: string;
 }
 
-export interface ReviewResponse {
+export interface ReviewApiResponse {
   success: boolean;
   data: {
     reviews: Review[];
@@ -61,7 +61,7 @@ export interface ReviewResponse {
 }
 
 // Get reviews for a product
-export async function getReviews(productId: string, page: number = 1, limit: number = 10): Promise<ReviewResponse> {
+export async function getReviews(productId: string, page: number = 1, limit: number = 10): Promise<ReviewApiResponse> {
   const res = await api.get(`/products/${productId}/reviews`, {
     params: { page, limit }
   });

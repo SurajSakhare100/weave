@@ -735,3 +735,354 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
     data: responseData
   });
 }); 
+
+// @desc    Get vendor released products with analytics
+// @route   GET /api/vendors/products/released
+// @access  Private (Vendor)
+export const getVendorReleasedProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const skip = (page - 1) * limit;
+
+  // Build search query
+  const searchQuery = {
+    vendorId,
+    available: 'true', // Only released products
+    status: 'active', // Only active products
+    ...(search && { name: { $regex: search, $options: 'i' } })
+  };
+
+  // Get products with basic info
+  const products = await Product.find(searchQuery)
+    .populate('category', 'name')
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(limit);
+
+  // Get total count for pagination
+  const total = await Product.countDocuments(searchQuery);
+
+  // Get analytics data for each product
+  const productsWithAnalytics = await Promise.all(
+    products.map(async (product) => {
+      // Get sales data from orders
+      const orderItems = await Order.aggregate([
+        {
+          $unwind: '$orderItems'
+        },
+        {
+          $match: {
+            'orderItems.productId': product._id,
+            isPaid: true
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: { $multiply: ['$orderItems.price', '$orderItems.quantity'] } },
+            totalQuantity: { $sum: '$orderItems.quantity' },
+            orderCount: { $sum: 1 }
+          }
+        }
+      ]);
+
+      // Get reviews data
+      const reviews = await Review.find({ proId: product._id });
+      const averageRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => {
+            const ratingMap = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
+            return sum + (ratingMap[review.stars] || 0);
+          }, 0) / reviews.length
+        : 0;
+
+      // Get views data (mock for now - you can implement actual view tracking)
+      const views = Math.floor(Math.random() * 2000) + 100; // Mock data
+
+      // Calculate sales growth (mock for now)
+      const salesGrowth = Math.floor(Math.random() * 50) + 10; // Mock data
+
+      const analytics = orderItems[0] || { totalSales: 0, totalQuantity: 0, orderCount: 0 };
+
+      // Get primary image from Cloudinary images array
+      let primaryImageUrl = '/products/product.png'; // fallback
+      let allImages = [];
+      
+      if (product.images && product.images.length > 0) {
+        // Use Cloudinary images
+        allImages = product.images.map(img => img.url);
+        const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+        primaryImageUrl = primaryImage.url;
+      } else if (product.files && product.files.length > 0) {
+        // Fallback to legacy files field
+        allImages = product.files;
+        primaryImageUrl = product.files[0];
+      }
+
+      return {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        mrp: product.mrp,
+        status: 'active',
+        sales: analytics.totalQuantity || 0,
+        salesGrowth: salesGrowth,
+        views: views,
+        rating: Math.round(averageRating * 10) / 10,
+        reviewCount: reviews.length,
+        files: allImages, // Use all images from Cloudinary
+        primaryImage: primaryImageUrl, // Primary image for display
+        available: product.available,
+        stock: product.stock,
+        colors: product.colors,
+        totalReviews: reviews.length,
+        averageRating: Math.round(averageRating * 10) / 10,
+        discount: product.discount,
+        vendorId: product.vendorId,
+        vendor: product.vendor,
+        description: product.description,
+        pickup_location: product.pickup_location,
+        return: product.return,
+        cancellation: product.cancellation,
+        category: product.category,
+        variant: product.variant,
+        variantDetails: product.variantDetails,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        __v: product.__v,
+        slug: product.slug
+      };
+    })
+  );
+
+  res.json({
+    success: true,
+    data: productsWithAnalytics,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    }
+  });
+}); 
+
+// @desc    Unpublish multiple vendor products
+// @route   POST /api/vendors/products/unpublish
+// @access  Private (Vendor)
+export const unpublishVendorProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  // Verify all products belong to the vendor
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found or do not belong to you');
+  }
+
+  // Update products status to draft
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId
+    },
+    {
+      status: 'draft'
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} products moved to draft successfully`,
+    data: {
+      modifiedCount: result.modifiedCount
+    }
+  });
+});
+
+// @desc    Delete multiple vendor products
+// @route   DELETE /api/vendors/products/bulk
+// @access  Private (Vendor)
+export const deleteVendorProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  // Verify all products belong to the vendor
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found or do not belong to you');
+  }
+
+  // Delete products
+  const result = await Product.deleteMany({
+    _id: { $in: productIds },
+    vendorId
+  });
+
+  res.json({
+    success: true,
+    message: `${result.deletedCount} products deleted successfully`,
+    data: {
+      deletedCount: result.deletedCount
+    }
+  });
+}); 
+
+// @desc    Get vendor draft products
+// @route   GET /api/vendors/products/drafts
+// @access  Private (Vendor)
+export const getVendorDraftProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const skip = (page - 1) * limit;
+
+  // Build search query for draft products
+  const searchQuery = {
+    vendorId,
+    status: 'draft', // Only draft products
+    ...(search && { name: { $regex: search, $options: 'i' } })
+  };
+
+  // Get products with basic info
+  const products = await Product.find(searchQuery)
+    .populate('category', 'name')
+    .sort('-updatedAt') // Sort by last edited
+    .skip(skip)
+    .limit(limit);
+
+  // Get total count for pagination
+  const total = await Product.countDocuments(searchQuery);
+
+  // Format products with Cloudinary images
+  const formattedProducts = products.map((product) => {
+    // Get primary image from Cloudinary images array
+    let primaryImageUrl = '/products/product.png'; // fallback
+    let allImages = [];
+    
+    if (product.images && product.images.length > 0) {
+      // Use Cloudinary images
+      allImages = product.images.map(img => img.url);
+      const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+      primaryImageUrl = primaryImage.url;
+    } else if (product.files && product.files.length > 0) {
+      // Fallback to legacy files field
+      allImages = product.files;
+      primaryImageUrl = product.files[0];
+    }
+
+    // Format last edited date
+    const lastEdited = product.updatedAt ? 
+      new Date(product.updatedAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }) : '3D Product';
+
+    return {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      mrp: product.mrp,
+      status: product.status,
+      files: allImages, // Use all images from Cloudinary
+      primaryImage: primaryImageUrl, // Primary image for display
+      available: product.available,
+      stock: product.stock,
+      colors: product.colors,
+      totalReviews: product.totalReviews || 0,
+      averageRating: product.averageRating || 0,
+      discount: product.discount,
+      vendorId: product.vendorId,
+      vendor: product.vendor,
+      description: product.description,
+      pickup_location: product.pickup_location,
+      return: product.return,
+      cancellation: product.cancellation,
+      category: product.category,
+      variant: product.variant,
+      variantDetails: product.variantDetails,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      __v: product.__v,
+      slug: product.slug,
+      lastEdited: lastEdited
+    };
+  });
+
+  res.json({
+    success: true,
+    data: formattedProducts,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    }
+  });
+}); 
+
+// @desc    Publish multiple vendor products
+// @route   POST /api/vendors/products/publish
+// @access  Private (Vendor)
+export const publishVendorProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  // Verify all products belong to the vendor
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found or do not belong to you');
+  }
+
+  // Update products status to active
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId
+    },
+    {
+      status: 'active',
+      available: 'true'
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} products published successfully`,
+    data: {
+      modifiedCount: result.modifiedCount
+    }
+  });
+}); 

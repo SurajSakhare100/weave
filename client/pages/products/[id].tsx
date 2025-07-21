@@ -21,6 +21,13 @@ import { toast } from 'sonner'
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewList from '@/components/reviews/ReviewList';
 import ReviewSummary from '@/components/reviews/ReviewSummary';
+import { Review } from '@/services/reviewService'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Add this type above ProductWithReviews
 interface ProductImage {
@@ -166,7 +173,7 @@ export default function ProductDetailPage() {
         await dispatch(addCartItem({
           product,
           quantity,
-          variantSize: selectedColor || product.currVariantSize
+          variantSize: selectedColor || product.currVariantSize || ''
         })).unwrap()
         // Show success message or update UI
       } catch (error) {
@@ -320,7 +327,7 @@ export default function ProductDetailPage() {
           <div className="flex gap-6 overflow-x-auto pb-2">
             {dummyFrequentlyBought.map((item) => (
               <div key={item._id} className="min-w-[250px] max-w-[250px]">
-                <ProductCard product={item} />
+                <ProductCard product={item as unknown as Product} />
               </div>
             ))}
           </div>
@@ -381,45 +388,75 @@ export default function ProductDetailPage() {
                   Help other customers by sharing your thoughts about this product
                 </p>
               </div>
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setShowReviewForm(true)}
-                  className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-                >
-                  <Star className="h-5 w-5" />
-                  <span>Write a Review</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => router.push(`/login?redirect=/products/${id}`)}
-                  className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-                >
-                  <Star className="h-5 w-5" />
-                  <span>Login to Review</span>
-                </button>
-              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  {isAuthenticated ? (
+                    <button
+                      className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+                    >
+                      <Star className="h-5 w-5" />
+                      <span>Write a Review</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => router.push(`/login?redirect=/products/${id}`)}
+                      className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+                    >
+                      <Star className="h-5 w-5" />
+                      <span>Login to Review</span>
+                    </button>
+                  )}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <ReviewForm
+                    productId={product._id}
+                    onReviewSubmitted={() => {
+                      window.location.reload();
+                    }}
+                    onCancel={() => {
+                      // Close dialog via AlertDialogCancel
+                    }}
+                  />
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Customer Reviews</h2>
-            {isAuthenticated ? (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-              >
-                <Star className="h-5 w-5" />
-                <span>Write a Review</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => router.push(`/login?redirect=/products/${id}`)}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 font-medium"
-              >
-                <Star className="h-5 w-5" />
-                <span>Login to Review</span>
-              </button>
-            )}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                {isAuthenticated ? (
+                  <button
+                    className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
+                  >
+                    <Star className="h-5 w-5" />
+                    <span>Write a Review</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => router.push(`/login?redirect=/products/${id}`)}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 font-medium"
+                  >
+                    <Star className="h-5 w-5" />
+                    <span>Login to Review</span>
+                  </button>
+                )}
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <ReviewForm
+                  productId={product._id}
+                  onReviewSubmitted={() => {
+                    window.location.reload();
+                  }}
+                  onCancel={() => {
+                    // Close dialog via AlertDialogCancel
+                  }}
+                />
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Review Summary */}
@@ -432,39 +469,27 @@ export default function ProductDetailPage() {
           {/* Review List */}
           <div className="mt-8">
             <ReviewList
-              productId={product._id}
-              onReviewUpdate={() => {
-                // Refresh product data after review update
+              reviews={
+                (product.reviews as any[]).map((review) => ({
+                  ...review,
+                  userId: {
+                    name: review.userId?.name ?? '',
+                    email: review.userId?.email ?? '',
+                  },
+                }))
+              }
+              onResponse={() => {
+                window.location.reload();
+              }}
+              onEdit={() => {
+                window.location.reload();
+              }}
+              onDelete={() => {
                 window.location.reload();
               }}
             />
           </div>
         </div>
-
-        {/* Review Form Modal */}
-        {showReviewForm && (
-          <ReviewForm
-            productId={product._id}
-            onReviewSubmitted={() => {
-              setShowReviewForm(false);
-              window.location.reload();
-            }}
-            onCancel={() => setShowReviewForm(false)}
-          />
-        )}
-
-        {/* Floating Add Review Button */}
-        {isAuthenticated && (
-          <div className="fixed bottom-6 right-6 z-40">
-            <button
-              onClick={() => setShowReviewForm(true)}
-              className="bg-pink-500 text-white p-4 rounded-full shadow-lg hover:bg-pink-600 transition-all duration-300 hover:scale-110 flex items-center justify-center"
-              title="Write a Review"
-            >
-              <Star className="h-6 w-6" />
-            </button>
-          </div>
-        )}
       </div>
       </div>
     </MainLayout>

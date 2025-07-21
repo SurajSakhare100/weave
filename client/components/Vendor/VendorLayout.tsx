@@ -19,7 +19,6 @@ import {
   Percent,
   LogOut,
   Menu,
-  X,
   Sun,
   Moon,
   Star
@@ -49,15 +48,11 @@ const sidebarSections: SidebarSection[] = [
       { label: 'Analytics', icon: BarChart2, href: '/vendor/products/analytics' },
       { label: 'Drafts', icon: FileText, href: '/vendor/products/drafts' },
       { label: 'Released', icon: Send, href: '/vendor/products/released' },
-      { label: 'Comments', icon: MessageCircle, href: '/vendor/products/comments' },
+      { label: 'Reviews', icon: MessageCircle, href: '/vendor/products/reviews' },
       { label: 'Scheduled', icon: Calendar, href: '/vendor/products/scheduled' },
     ],
   },
-  {
-    label: 'Reviews',
-    icon: Star,
-    href: '/vendor/reviews',
-  },
+  
   {
     label: 'Customers',
     icon: Users,
@@ -235,7 +230,7 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 flex h-16 bg-white shadow-sm border-b border-gray-200">
+        {/* <div className="sticky top-0 z-30 flex h-16 bg-white shadow-sm border-b border-gray-200">
           <button
             onClick={() => setSidebarOpen(true)}
             className="px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#5A9BD8] lg:hidden"
@@ -245,10 +240,9 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
           <div className="flex-1 px-4 flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
             <div className="flex items-center space-x-4">
-              {/* Add any top bar content here */}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Page content */}
         <main className="flex-1">

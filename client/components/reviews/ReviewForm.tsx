@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createReview } from '@/services/reviewService';
+import { addReview } from '@/services/reviewService';
 
 interface ReviewFormProps {
   productId: string;
@@ -35,11 +35,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted, o
 
     try {
       setSubmitting(true);
-      const response = await createReview({
-        productId,
-        rating,
+      const response = await addReview(productId, {
+        stars: ['one', 'two', 'three', 'four', 'five'][rating - 1] as any,
         title: title.trim(),
-        comment: comment.trim()
+        review: comment.trim(),
       });
 
       if (response.success) {

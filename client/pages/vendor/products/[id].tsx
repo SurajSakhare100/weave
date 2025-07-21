@@ -20,6 +20,7 @@ export default function VendorEditProductPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+  const [productNotFound, setProductNotFound] = useState(false);
   // Form fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -48,8 +49,15 @@ export default function VendorEditProductPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setError(null);
+    setProductNotFound(false);
+    
     api.get(`/products/${id}`).then(res => {
       const p = res.data.data;
+      if (!p) {
+        setProductNotFound(true);
+        return;
+      }
       setName(p.name || '');
       setDescription(p.description || '');
       setAdditionalDetails(p.srtDescription || '');
@@ -64,8 +72,51 @@ export default function VendorEditProductPage() {
       setSizes(p.sizes || []);
       setColors(p.colors || []);
       setTags(p.tags || []);
-    }).catch(() => setError('Failed to load product')).finally(() => setLoading(false));
+    }).catch((err) => {
+      if (err.response?.status === 404) {
+        setProductNotFound(true);
+      } else {
+        setError('Failed to load product');
+      }
+    }).finally(() => setLoading(false));
   }, [id]);
+
+  // Redirect to 404 if product not found
+  useEffect(() => {
+    if (productNotFound) {
+      router.push('/vendor/404');
+    }
+  }, [productNotFound, router]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <VendorLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3475A6]"></div>
+        </div>
+      </VendorLayout>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <VendorLayout>
+        <div className="p-6">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => router.back()}
+              className="bg-[#3475A6] text-white px-4 py-2 rounded hover:bg-[#2a5a8a]"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </VendorLayout>
+    );
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

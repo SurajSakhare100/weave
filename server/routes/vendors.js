@@ -13,7 +13,12 @@ import {
   createVendorProductController,
   getVendorReviews,
   getVendorReviewAnalytics,
-  getVendorEarnings
+  getVendorEarnings,
+  getVendorReleasedProducts,
+  getVendorDraftProducts,
+  unpublishVendorProducts,
+  deleteVendorProducts,
+  publishVendorProducts
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -35,6 +40,17 @@ router.put('/profile', vendorAuth, updateVendorProfile);
 router.get('/dashboard', vendorAuth, getVendorDashboard);
 router.get('/earnings', vendorAuth, getVendorEarnings);
 router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
+
+// New route for released products
+router.get('/products/released', vendorAuth, validatePagination, getVendorReleasedProducts);
+
+// New route for draft products
+router.get('/products/drafts', vendorAuth, validatePagination, getVendorDraftProducts);
+
+// Bulk operations for products
+router.post('/products/unpublish', vendorAuth, unpublishVendorProducts);
+router.post('/products/publish', vendorAuth, publishVendorProducts);
+router.delete('/products/bulk', vendorAuth, deleteVendorProducts);
 
 router.get('/reviews', vendorAuth, validatePagination, getVendorReviews);
 router.get('/reviews/analytics', vendorAuth, getVendorReviewAnalytics);

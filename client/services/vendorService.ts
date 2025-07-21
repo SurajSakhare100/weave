@@ -230,3 +230,49 @@ export const editVendorProduct = async (id: string, formData: FormData) => {
 export const deleteVendorProduct = async (id:string) => {
   return api.delete(`/products/${id}`);
 }; 
+
+// Vendor Released Products
+export async function getVendorReleasedProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
+
+  const res = await api.get(`/vendors/products/released?${queryParams}`);
+  return res.data;
+}
+
+// Vendor Draft Products
+export async function getVendorDraftProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
+
+  const res = await api.get(`/vendors/products/drafts?${queryParams}`);
+  return res.data;
+}
+
+// Bulk product operations
+export async function unpublishVendorProducts(productIds: string[]) {
+  const res = await api.post('/vendors/products/unpublish', { productIds });
+  return res.data;
+}
+
+export async function publishVendorProducts(productIds: string[]) {
+  const res = await api.post('/vendors/products/publish', { productIds });
+  return res.data;
+}
+
+export async function deleteVendorProducts(productIds: string[]) {
+  const res = await api.delete('/vendors/products/bulk', { data: { productIds } });
+  return res.data;
+} 
