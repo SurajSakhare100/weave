@@ -77,17 +77,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm w-full p-4 hover:shadow-lg transition-shadow duration-300 group">
       <Link href={`/products/${product._id}`}>
-        <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden">
+        <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden aspect-square w-full">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
-            width={400}
-            height={400}
-            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
           />
+
           <button 
             onClick={handleWishlistToggle}
             className="absolute top-3 right-3 bg-[#FFF4EC] backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-[#FFF2EC]"
@@ -106,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       <div className="mt-4">
         <Link href={`/products/${product._id}`}>
-          <h3 className="text-md font-semibold text-[#5E3A1C] hover:text-pink-500 transition-colors duration-200">
+          <h3 className="self-stretch justify-start text-text-primary text-xl font-medium  leading-relaxed">
             {product.name}
           </h3>
         </Link>
@@ -128,7 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         <div className="w-full flex justify-between items-center mt-3">
           <div className="flex items-baseline space-x-2 w-full">
-            <p className="text-md font-bold">₹{product.price}</p>
+            <p className="text-center justify-start text-primary text-xl font-semibold  leading-relaxed ">₹{product.price}</p>
           </div>
 
           <div className="flex text-sm items-center w-full">

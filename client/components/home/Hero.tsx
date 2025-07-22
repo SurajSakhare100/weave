@@ -1,27 +1,29 @@
 import React from 'react';
 import Link from 'next/link';
+import CategoryScroller from './EssentialsBar';
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative bg-gradient-to-r from-[#f5e7df] to-[#e5d6c3] py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-[#5E3A1C] mb-6">
-            Welcome to Weave
-          </h1>
-          <p className="text-xl text-[#8b7355] mb-8 max-w-2xl mx-auto">
-            Discover unique products from talented vendors around the world
-          </p>
+    <section className="hero-section relative h-screen flex flex-col justify-between items-center text-white">
+      
+      {/* Top content (can include headings if needed later) */}
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div className="text-center px-4 sm:px-6 lg:px-8">
           <Link 
             href="/products" 
-            className="bg-[#cf1a53] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#b01545] transition-colors"
+            className="bg-[#cf1a53] text-white px-8 py-3 mt-15 rounded-lg text-lg font-semibold hover:bg-[#b01545] transition-colors"
           >
             Shop Now
           </Link>
         </div>
       </div>
+
+      {/* Category scroller at the very bottom */}
+      <div className="w-full">
+        <CategoryScroller />
+      </div>
     </section>
   );
 };
 
-export default Hero; 
+export default Hero;

@@ -5,6 +5,7 @@ import NewArrivals from '@/components/home/NewArrivals';
 import Exhibitions from '@/components/home/Exhibitions';
 import Testimonials from '@/components/home/Testimonials';
 import About from '@/components/home/About';
+import CategoryScroller from '@/components/home/EssentialsBar';
 
 const Home: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const Home: React.FC = () => {
       <Bestsellers />
       <NewArrivals />
       <Exhibitions />
+      <CategoryScroller />
       <Testimonials />
       <About />
     </MainLayout>
