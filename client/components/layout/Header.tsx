@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
-import { ShoppingCart, User, Heart, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Heart, Search, Menu, X, ArrowDownNarrowWide, ArrowDown, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getUserToken } from '@/services/authService';
 import { RootState } from '@/store/store';
@@ -48,7 +48,9 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
               <nav className="hidden md:flex text-sm items-center space-x-6 flex-1">
                 <div className="relative group">
                   <button className="flex items-center font-medium focus:outline-none">
-                    Shop <span className="ml-1">▼</span>
+                    Shop <span className="ml-1">
+                      <ChevronDown />
+                    </span>
                   </button>
                   <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all">
                     <Link href="/products" className="block px-4 py-2 hover:bg-gray-100">All Products</Link>

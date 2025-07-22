@@ -244,82 +244,142 @@ export default function ProductDetailPage() {
       <div className="bg-white min-h-screen text-black">
       <div className="max-w-7xl mx-auto py-16">
         {/* Main Product Section */}
-        <div className=" rounded-2xl flex flex-col lg:flex-row gap-12">
-          {/* Product Images */}
-          <div className="lg:w-1/2">
-            <Image src={getPrimaryImage()} alt={product?.name || ''} width={400} height={400} />
-            {product && product.images && product.images.length > 0 && (
-              <div className="flex gap-2">
-                {product.images.map((img, idx) => (
-                  <Image key={img.public_id || idx} src={img.url} alt={product.name} width={100} height={100} />
-                ))}
-              </div>
-            )}
+<div className="flex flex-col lg:flex-row gap-12 rounded-2xl">
+  {/* Left: Images */}
+  <div className="lg:w-1/2">
+    {/* Main Image */}
+    <div className="relative w-full bg-white rounded-xl border p-6 flex items-center justify-center">
+      <Image
+        src={getPrimaryImage()}
+        alt={product.name}
+        width={400}
+        height={400}
+        className="rounded-lg object-contain"
+      />
+    </div>
+
+    {/* Thumbnails */}
+    {product.images && product.images.length > 0 && (
+      <div className="flex overflow-x-auto gap-4 mt-4">
+        {product.images.map((img, idx) => (
+          <div key={img.public_id || idx} className="shrink-0 w-20 h-20 rounded-lg border overflow-hidden">
+            <Image
+              src={img.url}
+              alt={product.name}
+              width={80}
+              height={80}
+              className="object-cover w-full h-full"
+            />
           </div>
-          {/* Product Info */}
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="flex items-start justify-between">
-              <h1 className="text-2xl font-bold mb-1">{product.name}</h1>
-              <button
-                onClick={handleWishlistToggle}
-                className="ml-2 p-2 rounded-full border border-gray-200 hover:bg-gray-100"
-              >
-                <Heart className={`h-6 w-6 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-2">Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer took a galley</p>
-            <div className="flex items-center gap-2 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-              ))}
-              <span className="ml-2 text-gray-600 text-sm">(874)</span>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-semibold">Color:</span>
-              <span className="ml-2">Orange</span>
-              <div className="flex items-center ml-4 gap-2">
-                {product.colors?.map((color) => (
-                  <span key={color} className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: color }}></span>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mb-2">
-              <span className="text-2xl font-bold text-pink-600">-40%</span>
-              <span className="text-2xl font-bold">₹{product.price}</span>
-              <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-semibold">Limited Deal</span>
-              {product.mrp > product.price && (
-                <>
-                  <span className="text-gray-500 line-through ml-2">M.R.P: ₹{product.mrp}</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
-                    {calculateDiscount()}% OFF
-                  </span>
-                </>
-              )}
-            </div>
-            <div className="text-xs text-pink-600 font-semibold mb-1">Note: We offer worldwide shipping for all orders.</div>
-            <div className="text-sm text-gray-700 mb-2">Delivery expected within the next 3-4 business days, to p 416734</div>
-            <div className="flex gap-4 mb-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={product.available !== 'true'}
-                className="bg-pink-500 text-white px-8 py-3 rounded font-semibold hover:bg-pink-600 transition"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Add to Cart
-              </button>
-              <button className="bg-white border border-pink-500 text-pink-500 px-8 py-3 rounded font-semibold hover:bg-pink-50 transition">Buy Now</button>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm mb-2">
-              {dummyProductDetails.map((detail) => (
-                <div key={detail.label} className="flex flex-col">
-                  <span className="text-gray-500">{detail.label}</span>
-                  <span className="font-semibold">{detail.value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="text-xs text-gray-600">Enjoy a worry-free shopping experience.<br />5 days Return & Exchange</div>
-          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Right: Product Info */}
+  <div className="flex-1 flex flex-col gap-4">
+    {/* Title + Wishlist */}
+    <div className="flex items-start justify-between">
+      <h1 className="text-2xl font-bold text-primary">{product.name}</h1>
+      <button
+        onClick={handleWishlistToggle}
+        className="p-2 rounded-full border hover:bg-gray-100"
+      >
+        <Heart
+          className={`h-6 w-6 ${
+            inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'
+          }`}
+        />
+      </button>
+    </div>
+
+   <div className="w-[623px] justify-start text-secondary text-sm font-medium leading-tight">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley </div>
+    {/* Star Rating */}
+    <div className="flex items-center gap-1 mb-1">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-5 w-5 ${
+            i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+          }`}
+        />
+      ))}
+      <span className="ml-2 text-sm text-gray-500">(874)</span>
+    </div>
+
+    {/* Colors */}
+    <div className="flex items-center gap-2">
+      <span className="font-semibold text-sm">Color:</span>
+      <span className="text-sm">Orange</span>
+      <div className="flex items-center ml-4 gap-2">
+        {product.colors?.map((color) => (
+          <span
+            key={color}
+            className="w-6 h-6 rounded-full border border-gray-300 shadow-inner"
+            style={{ backgroundColor: color }}
+          ></span>
+        ))}
+      </div>
+    </div>
+
+    {/* Price Section */}
+    <div className="flex items-center flex-wrap gap-3 mt-2">
+      <div className="justify-start text-[#B04848] text-3xl font-normal leading-loose">-40%</div>
+      <div className="justify-start text-primary text-3xl font-semibold leading-7">₹{product.price}</div>
+      {/* <span className="text-2xl font-bold text-black">₹{product.price}</span> */}
+      <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-semibold">Limited Deal</span>
+      {product.mrp > product.price && (
+        <>
+          <span className="text-sm text-gray-400 line-through">M.R.P: ₹{product.mrp}</span>
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+            {calculateDiscount()}% OFF
+          </span>
+        </>
+      )}
+    </div>
+
+    {/* Shipping Note */}
+    <p className="text-xs font-semibold text-pink-600">
+      Note: We offer worldwide shipping for all orders.
+    </p>
+    <p className="text-sm text-gray-600">
+      Delivery expected within the next 3–4 business days, to 📍416734
+    </p>
+
+    {/* Buttons */}
+    <div className="flex gap-4 mt-4">
+      <button
+        onClick={handleAddToCart}
+        disabled={product.available !== 'true'}
+        className="bg-pink-500 text-white px-8 py-3 rounded font-semibold hover:bg-pink-600 transition"
+      >
+        Add to Cart
+      </button>
+      <button className="bg-white border border-pink-500 text-pink-500 px-8 py-3 rounded font-semibold hover:bg-pink-50 transition">
+        Buy Now
+      </button>
+    </div>
+
+    {/* Product Details */}
+    <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+      {dummyProductDetails.map((detail) => (
+        <div key={detail.label}>
+          <span className="text-primary">{detail.label}</span>
+          <br />
+          <span className="font-semibold text-secondary">{detail.value}</span>
         </div>
+      ))}
+    </div>
+
+    <div className="text-xs text-gray-600 mt-4">
+      Enjoy a worry-free shopping experience. <br />
+      <span className="inline-flex items-center gap-1 border px-2 py-1 rounded text-gray-800 mt-1 text-xs">
+        🛡 5 days Return & Exchange
+      </span>
+    </div>
+  </div>
+</div>
+
 
         {/* Frequently Bought Together */}
         <div className="mt-16">
