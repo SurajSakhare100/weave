@@ -44,10 +44,11 @@ app.use('/api/', limiter);
 
 const corsOptions = {
   origin: [
-    process.env.CORS_ORIGIN || 'http://localhost:3000',
+    process.env.CORS_ORIGIN ,
     'https://*.vercel.app',
     'https://*.onrender.com',
     'https://weave-ecommerce.vercel.app',
+    'http://localhost:3000'
   ],
   credentials: true,
   optionsSuccessStatus: 200
