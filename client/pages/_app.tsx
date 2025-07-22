@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "@/styles/vendor-globals.css";
 import type { AppProps } from "next/app";
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
@@ -10,6 +11,7 @@ import { login, logout } from '../features/user/userSlice';
 import { initializeVendorAuth } from '../utils/vendorAuthInit';
 import { Toaster } from 'sonner';
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { useRouter } from 'next/router';
 
 function UserHydrator() {
   const dispatch = useDispatch();
@@ -43,12 +45,27 @@ function UserHydrator() {
   return null;
 }
 
+function VendorStyleManager() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (router.pathname.startsWith('/vendor')) {
+      document.body.classList.add('vendor-theme');
+    } else {
+      document.body.classList.remove('vendor-theme');
+    }
+  }, [router.pathname]);
+  
+  return null;
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ErrorBoundary>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <UserHydrator />
+          <VendorStyleManager />
           <Toaster richColors position="top-right" />
           <Component {...pageProps} />
         </PersistGate>

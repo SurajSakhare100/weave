@@ -141,12 +141,11 @@ export default function VendorRegisterPage() {
   };
 
   return (
-    <MainLayout>
-      <section className="py-16 bg-gray-50 text-black min-h-screen flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-2xl">
+      <section className="py-16 vendor-bg-secondary vendor-text-primary min-h-screen flex items-center justify-center">
+        <div className="vendor-bg-primary rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Vendor Registration</h1>
-            <p className="text-gray-600">Create your vendor account to start selling</p>
+            <h1 className="text-3xl font-bold vendor-text-important mb-2">Vendor Registration</h1>
+            <p className="vendor-text-secondary">Create your vendor account to start selling</p>
           </div>
 
           {/* Progress Steps */}
@@ -455,6 +454,5 @@ export default function VendorRegisterPage() {
           </div>
         </div>
       </section>
-    </MainLayout>
   );
 } 

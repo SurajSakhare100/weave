@@ -32,15 +32,15 @@
   --vendor-success-light: #34d399;
   
   /* Vendor Background Colors */
-  --vendor-bg-primary: #F6F9FC;
+  --vendor-bg-primary: #ffffff;
   --vendor-bg-secondary: #F4FAFF;
   --vendor-bg-tertiary: #f1f5f9;
   --vendor-bg-sidebar: #1e293b;
   --vendor-bg-sidebar-hover: #334155;
   
   /* Vendor Text Colors */
-  --vendor-text-primary: #3475A6;
-  --vendor-text-secondary: #7A7A7A;
+  --vendor-text-primary: #1e293b;
+  --vendor-text-secondary: #64748b;
   --vendor-text-tertiary: #94a3b8;
   --vendor-text-inverse: #ffffff;
   --vendor-text-sidebar: #cbd5e1;
@@ -79,7 +79,7 @@
 }
 
 /* Vendor Global Styles */
-.vendor-theme body {
+body {
   font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--vendor-bg-secondary);
   color: var(--vendor-text-primary);

@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -38,7 +36,40 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
+  
+  /* Product Card Colors */
+  --product-card-bg: #ffffff;
+  --product-card-border: #e5e7eb;
+  --product-card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --product-card-shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --product-image-bg: #faf5f2;
+  --product-name-color: #5E3A1C;
+  --product-price-color: #5E3A1C;
+  --product-rating-color: #fbbf24;
+  --product-rating-empty: #d1d5db;
+  --product-button-border: #EE346C;
+  --product-button-text: #EE346C;
+  --product-button-bg: #ffffff;
+  --product-button-hover-bg: #fef2f2;
+  --product-heart-bg: #FFF4EC;
+  --product-heart-active: #EE346C;
+  --product-heart-inactive: #6b7280;
+  --product-color-border: #EE346C;
+  --product-color-border-transparent: transparent;
+  
+  /* Address Selection Colors */
+  --address-selected-bg: #faf5f2;
+  --address-unselected-bg: #ffffff;
+  --address-border: #e5e7eb;
+  --address-selected-border: #EE346C;
+  --address-text-primary: #5E3A1C;
+  --address-text-secondary: #6b7280;
+  --address-button-primary: #EE346C;
+  --address-button-hover: #c2185b;
+  --address-radio-selected: #EE346C;
+  --address-radio-unselected: #d1d5db;
+  --breadcrumb-color: #8b7355;
+  --breadcrumb-hover: #6b5635;
 }
 
 @theme inline {
@@ -79,13 +110,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -138,40 +162,6 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #5E3A1C;
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: #8C6A52;
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {

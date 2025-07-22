@@ -38,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
       </Head>
 
       <div className="bg-white" style={{ color: '#5E3A1C' }}>
-        <div className="bg-primary text-white text-center py-2 text-base font-medium">
+        <div className="bg-[#5E3A1C] text-white text-center py-2 text-base font-medium">
           Shipping available across the globe!
         </div>
         

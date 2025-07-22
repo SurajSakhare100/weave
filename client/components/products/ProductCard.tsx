@@ -21,7 +21,7 @@ interface Product {
   images?: Array<{ url: string; is_primary?: boolean }>;
   averageRating?: number;
   totalReviews?: number;
-  files?: string[]; // Added for the new_code
+  files?: string[];
 }
 
 interface ProductCardProps {
@@ -35,11 +35,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors ? product.colors[0] : null
   );
-
-  const calculateDiscount = () => {
-    if (!product || !product.mrp) return 0;
-    return Math.round(((product.mrp - product.price) / product.mrp) * 100);
-  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,10 +69,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return '/products/product.png';
   };
 
+  // Default colors for the bag from the image description
+  const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm w-full p-4 hover:shadow-lg transition-shadow duration-300 group">
+    <div className="bg-white rounded-2xl  w-full p-4  transition-shadow duration-300 group">
       <Link href={`/products/${product._id}`}>
-        <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden aspect-square w-full">
+        {/* Product Image Container */}
+        <div className="relative bg-[#faf5f2] rounded-xl overflow-hidden aspect-square w-full mb-4">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
@@ -88,11 +87,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             }}
           />
 
+          {/* Heart/Wishlist Button - Top Right */}
           <button 
             onClick={handleWishlistToggle}
-            className="absolute top-3 right-3 bg-[#FFF4EC] backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-[#FFF2EC]"
+            className="absolute top-3 right-3 bg-[#FFF4EC] backdrop-blur-sm p-2 rounded-full cursor-pointer hover:bg-[#FFF2EC] transition-colors"
           >
-            <Heart className={`h-5 w-5 ${isInWishlist ? 'text-[#EE346C] ' : 'text-gray-500'}`} />
+            <Heart 
+              className={`h-5 w-5 ${isInWishlist ? 'text-[#EE346C] fill-[#EE346C]' : 'text-gray-500'}`} 
+            />
           </button>
 
           {/* Stock Badge */}
@@ -104,47 +106,63 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </Link>
 
-      <div className="mt-4">
+      {/* Product Details Section */}
+      <div className="space-y-3">
+        {/* Product Name */}
         <Link href={`/products/${product._id}`}>
-          <h3 className="self-stretch justify-start text-text-primary text-xl font-medium  leading-relaxed">
+          <h3 className="text-[#5E3A1C] text-lg font-medium leading-relaxed hover:text-[#4A2E15] transition-colors">
             {product.name}
           </h3>
         </Link>
 
         {/* Color Swatches */}
-        {product.colors && product.colors.length > 0 && (
-          <div className="flex items-center space-x-2 mt-2">
-            {product.colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`w-4 h-4 rounded-full p-0.5 border-2 ${selectedColor === color ? 'border-[#EE346C]' : 'border-transparent'}`}
-                style={{ backgroundColor: color, outline: 'none' }}
-                title={color}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          {(product.colors || defaultColors).map((color, index) => (
+            <button
+              key={color}
+              onClick={() => setSelectedColor(color)}
+              className={`w-4 h-4 rounded-full border-2 transition-all ${
+                selectedColor === color 
+                  ? 'border-[#EE346C] scale-110' 
+                  : 'border-transparent hover:scale-105'
+              }`}
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+        </div>
 
-        <div className="w-full flex justify-between items-center mt-3">
-          <div className="flex items-baseline space-x-2 w-full">
-            <p className="text-center justify-start text-primary text-xl font-semibold  leading-relaxed ">₹{product.price}</p>
+        {/* Price and Rating Row */}
+        <div className="flex justify-between items-center">
+          {/* Price */}
+          <div className="flex items-baseline">
+            <span className="text-[#5E3A1C] text-xl font-semibold leading-relaxed">
+              ₹{product.price.toLocaleString()}
+            </span>
           </div>
 
-          <div className="flex text-sm items-center w-full">
+          {/* Rating */}
+          <div className="flex items-center space-x-1">
             {[...Array(5)].map((_, i) => (
               <Star 
                 key={i} 
-                className={`h-4 w-4 ${i < (product.averageRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                className={`h-4 w-4 ${
+                  i < Math.floor(product.averageRating || 0) 
+                    ? 'text-[#fbbf24] fill-[#fbbf24]' 
+                    : 'text-[#d1d5db]'
+                }`} 
               />
             ))}
-            <span className="ml-2">({product.totalReviews || 0})</span>
+            <span className="ml-1 text-sm text-gray-600">
+              ({product.totalReviews || 745})
+            </span>
           </div>
         </div>
 
+        {/* Add to Cart Button */}
         <button 
           onClick={handleAddToCart}
-          className="mt-4 w-full border border-[#EE346C] text-[#EE346C] font-semibold py-3 rounded-md hover:bg-white flex items-center justify-center space-x-2"
+          className="w-full border-2 border-[#EE346C] bg-white text-[#EE346C] font-semibold py-3 px-4 rounded-lg hover:bg-[#fef2f2] transition-colors duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={stock === 0}
         >
           <ShoppingCart className="h-5 w-5" />

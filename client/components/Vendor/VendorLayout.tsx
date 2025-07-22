@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/features/vendor/vendorSlice';
@@ -19,8 +19,6 @@ import {
   Percent,
   LogOut,
   Menu,
-  Sun,
-  Moon,
   Star
 } from 'lucide-react';
 
@@ -96,7 +94,6 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
-  const [theme, setTheme] = useState('light');
 
   const handleLogout = async () => {
     try {
@@ -119,16 +116,14 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const handleThemeToggle = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+
 
   // Sidebar rendering
   const Sidebar = (
-    <aside className="flex flex-col h-full w-64 bg-white border-r border-gray-200 rounded-xl shadow-sm">
+    <aside className="flex flex-col h-full w-64 bg-white border-r border-gray-200 p-2 rounded-xl shadow-sm">
       {/* Logo/Header */}
       <div className="flex h-16 items-center px-6 border-b border-gray-100">
-        <Store className="h-8 w-8 text-[#5A9BD8] mr-2" />
+        <Store className="h-8 w-8 vendor-text-secondary mr-2" />
         <span className="text-lg font-semibold text-gray-800">Vendor Panel</span>
       </div>
       {/* Navigation */}
@@ -144,7 +139,7 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   ${
                     (isActive(section.href) || isParentActive(section.children))
                       ? 'bg-[#5A9BD8] text-white shadow'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      : 'vendor-text-secondary hover:bg-gray-100'
                   }
                 `}
                 onClick={() => {
@@ -153,8 +148,8 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                 }}
                 aria-expanded={open}
               >
-                <Icon className={`h-5 w-5 mr-3 ${isActive(section.href) || isParentActive(section.children) ? 'text-white' : 'text-[#5A9BD8]'}`} />
-                <span className="flex-1 text-left">{section.label}</span>
+                <Icon className={`h-5 w-5 mr-3 ${isActive(section.href) || isParentActive(section.children) ? 'text-white' : ''}`} />
+                <span className="flex-1 text-left font-semiboldy">{section.label}</span>
                 {hasChildren && (
                   <svg className={`w-4 h-4 ml-auto transition-transform ${open ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 )}
@@ -175,7 +170,7 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                         `}
                         onClick={() => router.push(child.href)}
                       >
-                        <ChildIcon className={`h-4 w-4 mr-3 ${isActive(child.href) ? 'text-white' : 'text-[#5A9BD8]'}`} />
+                        <ChildIcon className={`h-4 w-4 mr-3 ${isActive(child.href) ? 'text-white' : 'vendor-text-secondary'}`} />
                         {child.label}
                       </button>
                     );
@@ -186,17 +181,8 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
           );
         })}
       </nav>
-      {/* Theme toggle and logout */}
-      <div className="mt-auto px-4 py-4 border-t border-gray-100 flex flex-col gap-2">
-        <div className="flex items-center justify-between mb-2">
-          <button
-            className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${theme === 'light' ? 'bg-[#f4f8fb] text-gray-700 border-gray-200' : 'bg-gray-800 text-white border-gray-700'}`}
-            onClick={handleThemeToggle}
-          >
-            {theme === 'light' ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
-            {theme === 'light' ? 'Light' : 'Dark'}
-          </button>
-        </div>
+      {/* Logout */}
+      <div className="mt-auto px-4 py-4 border-t border-gray-100">
         <button
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -209,7 +195,7 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen vendor-bg-primary vendor-text-primary">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">

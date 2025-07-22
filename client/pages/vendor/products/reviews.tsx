@@ -257,9 +257,6 @@ const VendorReviews = () => {
     );
   }
 
-  // Component rendering
-
-  // Handle page-level errors
   if (pageError) {
     return (
       <VendorLayout>

@@ -122,17 +122,17 @@ export default function VendorProductsPage() {
   return (
     <VendorLayout>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
-      <section className="py-16 bg-gray-50 min-h-screen text-black">
+      <section className="py-16 vendor-bg-secondary vendor-text-primary min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">My Products</h1>
-              <p className="text-gray-600">Manage your product catalog ({totalProducts} products)</p>
+              <h1 className="text-3xl font-bold vendor-text-important mb-2">My Products</h1>
+              <p className="vendor-text-secondary">Manage your product catalog ({totalProducts} products)</p>
             </div>
             <button
               onClick={() => router.push('/vendor/products/add')}
-              className="mt-4 md:mt-0 flex items-center bg-[#5A9BD8] text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="mt-4 md:mt-0 flex items-center vendor-nav-btn px-6 py-3 rounded-lg font-semibold"
             >
               <Plus className="h-5 w-5 mr-2" />
               Add New Product
@@ -147,7 +147,7 @@ export default function VendorProductsPage() {
           )}
 
           {/* Filters and Search */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+          <div className="vendor-bg-primary rounded-xl shadow-sm p-6 border vendor-border-primary mb-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               {/* Search */}
               <form onSubmit={handleSearch} className="flex-1 max-w-md">
@@ -202,13 +202,13 @@ export default function VendorProductsPage() {
           {/* Products */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5A9BD8]"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 vendor-text-important"></div>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20">
-              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500 mb-6">
+              <Package className="h-16 w-16 vendor-text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-medium vendor-text-primary mb-2">No products found</h3>
+              <p className="vendor-text-secondary mb-6">
                 {searchTerm || filterStatus !== 'all' 
                   ? 'Try adjusting your search or filters'
                   : 'Get started by adding your first product'

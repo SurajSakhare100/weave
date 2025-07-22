@@ -74,6 +74,7 @@ function CheckoutAddressPageContent() {
   }
 
   const handleAddressSelect = (addressId: string) => {
+    console.log('Selecting address:', addressId)
     setSelectedAddress(addressId)
   }
 
@@ -146,8 +147,10 @@ function CheckoutAddressPageContent() {
   }
 
   const handleContinue = () => {
+    console.log('Continue clicked, selected address:', selectedAddress)
     if (selectedAddress) {
       const address = addresses.find((addr) => addr.id === selectedAddress)
+      console.log('Found address:', address)
       if (address) {
         const shippingAddress = {
           name: address.name,
@@ -157,9 +160,13 @@ function CheckoutAddressPageContent() {
           pincode: address.pin,
           phone: address.number,
         }
+        console.log('Setting shipping address:', shippingAddress)
         setShippingAddress(shippingAddress)
         router.push("/checkout/order-summary")
       }
+    } else {
+      console.log('No address selected')
+      alert('Please select an address to continue')
     }
   }
 
@@ -167,7 +174,7 @@ function CheckoutAddressPageContent() {
     return (
       <MainLayout>
         <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e91e63]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EE346C]"></div>
         </div>
       </MainLayout>
     )
@@ -175,60 +182,65 @@ function CheckoutAddressPageContent() {
 
   return (
     <MainLayout>
-      <div className=" bg-white md:px-10">
-        <div className=" p-6">
+      <div className="bg-white min-h-screen">
+        <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center mb-4  text-md  space-x-2">
-            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/')}>Home</span>
+          <nav className="flex items-center mb-8 text-sm space-x-2">
+            <span 
+              className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer transition-colors" 
+              onClick={() => router.push('/')}
+            >
+              Home
+            </span>
             <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>
+            <span 
+              className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer transition-colors" 
+              onClick={() => router.push('/cart')}
+            >
+              Cart
+            </span>
             <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355]">Select Address</span>
+            <span className="text-[#8b7355] font-medium">Select Address</span>
           </nav>
+
+          {/* Page Title */}
+          <h1 className="text-2xl font-semibold text-[#5E3A1C] mb-8">
+            Select Delivery Address
+          </h1>
 
           {addresses.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-[#8b7355] mb-6 text-lg">No addresses found.</p>
               <Button
                 onClick={handleAddNewClick}
-                className="bg-[#e91e63] hover:bg-[#c2185b] text-white px-8 py-3 rounded-md font-medium"
+                className="bg-[#EE346C] hover:bg-[#c2185b] text-white px-8 py-3 rounded-lg font-medium"
               >
                 Add New Address
               </Button>
             </div>
           ) : (
-            <div className="space-y-0 max-w-2xl" >
+            <div className="space-y-4 max-w-2xl">
               {addresses.map((address) => (
-                <div key={address.id} className="relative">
-                  <AddressCard
-                    address={{ ...address, addressType: address.addressType || "Home" }}
-                    isSelected={selectedAddress === address.id}
-                    onSelect={() => handleAddressSelect(address.id)}
-                    onEdit={() => handleEditClick(address)}
-                    onDelete={() => handleDeleteAddress(address.id)}
-                    onSetDefault={() => handleSetDefaultAddress(address.id)}
-                    showActions={true}
-                    handleContinue={handleContinue}
-                    submitting={submitting}
-                  />
-
-                </div>
+                <AddressCard
+                  key={address.id}
+                  address={{ ...address, addressType: address.addressType || "Home" }}
+                  isSelected={selectedAddress === address.id}
+                  onSelect={() => handleAddressSelect(address.id)}
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteAddress}
+                  onSetDefault={handleSetDefaultAddress}
+                  showActions={true}
+                  handleContinue={handleContinue}
+                  submitting={submitting}
+                />
               ))}
             </div>
           )}
 
-          {/* Navigation Buttons */}
-          <div className="mt-16 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/cart')}
-              className="text-[#8b7355] border-[#8b7355] hover:bg-[#8b7355] hover:text-white"
-            >
-              ← Back to Cart
-            </Button>
-            
+          {/* Add New Address Link */}
+          <div className="mt-12 text-center">
             <button
-              className="text-[#EE346C] text-center hover:text-[#c2185b] font-medium text-lg underline underline-offset-2"
+              className="text-[#EE346C] text-lg font-medium hover:text-[#c2185b] transition-colors underline underline-offset-2"
               onClick={handleAddNewClick}
             >
               Add Delivery Address

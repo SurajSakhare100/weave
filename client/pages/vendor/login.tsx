@@ -89,13 +89,12 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <MainLayout>
-      <section className="py-16 bg-gray-50 text-black min-h-screen flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Vendor Login</h1>
-            <p className="text-gray-600">Welcome back! Please sign in to your account.</p>
-          </div>
+      <section className="py-16 vendor-bg-secondary vendor-text-primary min-h-screen flex items-center justify-center">
+        <div className="vendor-bg-primary rounded-2xl shadow-lg p-8 flex flex-col items-center w-full max-w-md">
+                      <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold vendor-text-important mb-2">Vendor Login</h1>
+              <p className="vendor-text-secondary">Welcome back! Please sign in to your account.</p>
+            </div>
 
           {error && (
             <div className="w-full mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
@@ -106,7 +105,7 @@ export default function VendorLoginPage() {
 
           <form onSubmit={handleSubmit} className="w-full space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium vendor-text-primary mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -129,7 +128,7 @@ export default function VendorLoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium vendor-text-primary mb-2">
                 Password
               </label>
               <div className="relative">
@@ -161,7 +160,7 @@ export default function VendorLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full vendor-nav-btn py-3 px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -175,11 +174,11 @@ export default function VendorLoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="vendor-text-secondary">
               Don&apos;t have an account?{' '}
               <button
                 onClick={() => router.push('/vendor/register')}
-                className="text-[#5A9BD8] hover:text-blue-700 font-medium"
+                className="vendor-text-important hover:underline font-medium"
               >
                 Register here
               </button>
@@ -187,6 +186,5 @@ export default function VendorLoginPage() {
           </div>
         </div>
       </section>
-    </MainLayout>
   );
 } 
