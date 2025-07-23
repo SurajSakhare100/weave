@@ -123,7 +123,9 @@ export default function VendorDashboard() {
             <input type="text" placeholder="Search here" className="px-4 py-2 rounded-lg bg-white text-gray-700 w-72 focus:outline-none focus:ring-2 focus:ring-[#357ab8]" />
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-white text-[#5A9BD8] font-semibold px-5 py-2 rounded-lg shadow hover:bg-blue-50 transition-colors">+ Add product</button>
+            <button 
+              onClick={() => router.push('/vendor/products/add')}
+            className="bg-white text-[#5A9BD8] font-semibold px-5 py-2 rounded-lg shadow hover:bg-blue-50 transition-colors">+ Add product</button>
             <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-[#357ab8]">SD</div>
           </div>
         </div>
