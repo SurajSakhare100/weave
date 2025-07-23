@@ -470,13 +470,13 @@ const updateProfile = async (req, res) => {
 // Delete account
 const deleteAccount = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
 
     // Delete all user-related data
     const userId = req.user._id;
@@ -499,10 +499,10 @@ const deleteAccount = async (req, res) => {
     // Finally, delete the user account
     await User.findByIdAndDelete(userId);
 
-    res.json({
-      success: true,
+  res.json({
+    success: true,
       message: 'Account and all associated data deleted successfully'
-    });
+  });
   } catch (error) {
     console.error('Error deleting account:', error);
     res.status(500).json({

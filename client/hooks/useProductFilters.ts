@@ -33,19 +33,23 @@ const useProductFilters = (): UseProductFiltersReturn => {
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
 
+  // Better default price range based on seed file prices
+  const defaultMinPrice = router.query.minPrice ? Number(router.query.minPrice) : 0;
+  const defaultMaxPrice = router.query.maxPrice ? Number(router.query.maxPrice) : 3000;
+
   const [filters, setFilters] = useState({
-    category: '',
-    availability: '',
-    size: '',
-    colors: '',
-    minPrice: '',
-    maxPrice: '',
-    sort: '-createdAt'
+    category: (router.query.category as string) || '',
+    availability: (router.query.availability as string) || '',
+    size: (router.query.size as string) || '',
+    colors: (router.query.colors as string) || '',
+    minPrice: defaultMinPrice.toString(),
+    maxPrice: defaultMaxPrice.toString(),
+    sort: (router.query.sort as string) || '-createdAt'
   });
 
   const [priceRange, setPriceRange] = useState({
-    min: Number(filters.minPrice) || 0,
-    max: Number(filters.maxPrice) || 10000
+    min: defaultMinPrice,
+    max: defaultMaxPrice
   });
 
   const [openFilters, setOpenFilters] = useState<{ [key: string]: boolean }>({ 
@@ -60,7 +64,7 @@ const useProductFilters = (): UseProductFiltersReturn => {
     const query = { ...newFilters };
     Object.keys(query).forEach(key => {
       const filterKey = key as keyof typeof query;
-      if (query[filterKey] === '' || query[filterKey] === null) {
+      if (query[filterKey] === '' || query[filterKey] === null || query[filterKey] === undefined) {
         delete query[filterKey];
       }
     });
@@ -79,12 +83,14 @@ const useProductFilters = (): UseProductFiltersReturn => {
   }, [filters, updateQuery]);
 
   const handleColorSwatchClick = useCallback((color: string) => {
-    let selectedColors = filters.colors ? filters.colors.split(',') : [];
+    let selectedColors = filters.colors ? filters.colors.split(',').filter(c => c.trim()) : [];
+    
     if (selectedColors.includes(color)) {
       selectedColors = selectedColors.filter(c => c !== color);
     } else {
       selectedColors.push(color);
     }
+    
     const newFilters = { ...filters, colors: selectedColors.join(',') };
     setFilters(newFilters);
     updateQuery(newFilters);
@@ -98,12 +104,14 @@ const useProductFilters = (): UseProductFiltersReturn => {
   }, [filters, updateQuery]);
 
   const handleSizeClick = useCallback((sizeOption: string) => {
-    let selectedSizes = filters.size ? filters.size.split(',') : [];
+    let selectedSizes = filters.size ? filters.size.split(',').filter(s => s.trim()) : [];
+    
     if (selectedSizes.includes(sizeOption)) {
       selectedSizes = selectedSizes.filter(s => s !== sizeOption);
     } else {
       selectedSizes.push(sizeOption);
     }
+    
     const newFilters = { ...filters, size: selectedSizes.join(',') };
     setFilters(newFilters);
     updateQuery(newFilters);
@@ -115,12 +123,12 @@ const useProductFilters = (): UseProductFiltersReturn => {
       availability: '',
       size: '',
       colors: '',
-      minPrice: '',
-      maxPrice: '',
+      minPrice: '0',
+      maxPrice: '3000',
       sort: '-createdAt'
     };
     setFilters(newFilters);
-    setPriceRange({ min: 0, max: 10000 });
+    setPriceRange({ min: 0, max: 3000 });
     router.push({ pathname: '/products' }, undefined, { shallow: true });
   }, [router]);
 
