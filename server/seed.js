@@ -61,6 +61,17 @@ async function seed() {
       return: true,
       cancellation: true,
       files: [],
+      images: [{
+        url: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&h=600&fit=crop',
+        public_id: 'sample_rainbow_tote',
+        width: 800,
+        height: 600,
+        format: 'jpg',
+        bytes: 50000,
+        thumbnail_url: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400&h=300&fit=crop',
+        small_thumbnail_url: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=200&h=150&fit=crop',
+        is_primary: true
+      }],
       variant: false,
       variantDetails: [],
       reviews: [],

@@ -126,12 +126,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               key={color}
               type="button"
               onClick={() => setSelectedColor(color)}
-              className={`w-4 h-4 rounded-full border-2 transition-all focus:outline-none relative
-                ${selectedColor === color ? 'border-[#EE346C] scale-110' : 'border-transparent hover:scale-105'}
-              `}
+              className={`w-4 h-4 rounded-full border-2 transition-all border-[#5E3A1C] focus:outline-none relative`}
               style={{
                 background: `linear-gradient(white, white) padding-box, ${color} border-box`,
-                borderColor: selectedColor === color ? '#EE346C' : 'transparent',
+                borderColor: selectedColor === color ? '#5E3A1C' : 'transparent',
                 borderWidth: '2px',
                 padding: '2px'
               }}

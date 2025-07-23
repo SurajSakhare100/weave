@@ -15,6 +15,7 @@ interface OrderItem {
       thumbnail_url?: string;
       is_primary?: boolean;
     }>;
+    primaryImage?: string;
   };
   name: string;
   quantity: number;
@@ -49,7 +50,6 @@ export default function PastOrdersSection() {
 
       const response = await getUserOrders();
 
-      console.log('Orders API Response:', response); // Debug log
 
       if (response.success === false) {
         setError(response.message || 'Failed to load orders');
@@ -62,7 +62,6 @@ export default function PastOrdersSection() {
         setOrders([]);
       }
     } catch (error: unknown) {
-      console.error('Error fetching orders:', error);
       const err = error as { response?: { status?: number }; error?: string };
       if (err.response?.status === 401) {
         setError('Please login to view your orders.');
@@ -162,8 +161,7 @@ export default function PastOrdersSection() {
                           <Image
                             src={
                               item.productId.images?.[0]?.url ||
-                                item.productId.files?.[0] ? `/uploads/${item.productId.files[0]}` :
-                                item.image ||
+                              item.productId.primaryImage ||
                                 "/products/product.png"
                             }
                             alt={item.productId.name || item.name || "Product"}
