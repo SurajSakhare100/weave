@@ -50,7 +50,7 @@ export async function removeFromCart(itemId: string) {
 
 export async function clearCart() {
   try {
-    const res = await api.delete(`/users/cart`);
+    const res = await api.delete(`/users/cart`);  // Clear the entire cart
     return res.data;
   } catch (error: any) {
     console.error('Error clearing cart:', error);

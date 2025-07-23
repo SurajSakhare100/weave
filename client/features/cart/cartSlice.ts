@@ -3,12 +3,19 @@ import { getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearC
 
 interface CartItem {
   proId: string
-  name: string
-  price: number
   quantity: number
-  size?: string
-  color?: string
-  image?: string
+  price: number
+  mrp: number
+  variantSize?: string
+  item: {
+    _id: string
+    name: string
+    images?: {
+      url: string
+    }[]
+    color?: string
+    size?: string
+  }
 }
 
 interface CartState {
@@ -26,6 +33,7 @@ const initialState: CartState = {
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
   try {
     const data = await getCart()
+    // The server returns { result: [], amount: {} }
     return data.result || []
   } catch (err: any) {
     return rejectWithValue('Could not load cart')
@@ -93,7 +101,6 @@ export const clearCartAsync = createAsyncThunk('cart/clearCartAsync', async (_, 
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not clear cart')
     }
-    // Always refetch cart after clearing
     const data = await getCart()
     if (data.success === false) {
       return rejectWithValue(data.message || 'Could not load cart')

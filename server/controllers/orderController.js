@@ -3,10 +3,9 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Coupon from '../models/Coupon.js';
+import userHelpers from '../helpers/userHelpers.js';
 
-// @desc    Create new order
-// @route   POST /api/orders
-// @access  Private
+
 const createOrder = asyncHandler(async (req, res) => {
   try {
     const {
@@ -90,11 +89,7 @@ const createOrder = asyncHandler(async (req, res) => {
     const createdOrder = await order.save();
 
     // Clear the user's cart after successful order creation
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.cart = [];
-      await user.save();
-    }
+    await userHelpers.emtyCart(req.user._id);
 
     res.status(201).json({
       success: true,

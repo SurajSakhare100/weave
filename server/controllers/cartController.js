@@ -137,14 +137,15 @@ export const removeFromCart = asyncHandler(async (req, res) => {
     }
     
     await userHelpers.removeItemCart({ userId, proId });
-    res.json({ success: true, removed: true });
+    const cart = await userHelpers.getCartItems(userId);
+    res.json({ success: true, removed: true, cart });
   } catch (error) {
     console.error('Cart controller - Remove error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// DELETE /users/cart - Clear entire cart
+// DELETE /users/cart
 export const clearCart = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
@@ -157,11 +158,12 @@ export const clearCart = asyncHandler(async (req, res) => {
       res.status(404);
       throw new Error('User not found');
     }
-    user.cart = [];
-    await user.save();
-    // Return updated (empty) cart
+    
+    // Use the proper cart clearing function
+    await userHelpers.emtyCart(userId);
+    
+    // Return empty cart data
     const cart = await userHelpers.getCartItems(userId);
-    console.log('Cart controller - Cart cleared successfully');
     res.json({ success: true, message: 'Cart cleared successfully', cart });
   } catch (error) {
     console.error('Cart controller - Clear cart error:', error);

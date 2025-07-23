@@ -1,63 +1,105 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
-import { updateCartQuantity, removeCartItem } from '../features/cart/cartSlice';
-import { getCart } from '../services/cartService';
+import { fetchCart, updateCartQuantity, removeCartItem, clearCartAsync } from '../features/cart/cartSlice';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import MainLayout from "@/components/layout/MainLayout"
 import Breadcrumb from "@/components/ui/Breadcrumb"
-import CartItem from '../components/cart/CartItem';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import CartItem from '../components/cart/CartItem.jsx';
+import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CartItem {
   proId: string;
-  name: string;
-  price: number;
   quantity: number;
-  size?: string;
-  color?: string;
-  image?: string;
+  price: number;
+  mrp: number;
+  variantSize?: string;
+  item: {
+    _id: string;
+    name: string;
+    images?: {
+      url: string;
+    }[];
+    color?: string;
+    size?: string;
+  };
 }
 
 const CartPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { items, loading } = useSelector((state: RootState) => state.cart);
+  const { items, loading, error } = useSelector((state: RootState) => state.cart);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const [summaryOpen, setSummaryOpen] = useState(true);
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadCart();
+      dispatch(fetchCart()).catch((error) => {
+        toast.error('Failed to load cart. Please try again.');
+      });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dispatch]);
 
-  const loadCart = async () => {
-    try {
-      const response = await getCart();
-      if (response.success) {
-        // Cart is already loaded via Redux, no need to dispatch again
-      }
-    } catch (error) {
-      console.error('Failed to load cart:', error);
-    }
-  };
-
-  const handleQuantityChange = (proId: string, newQuantity: number) => {
+  const handleQuantityChange = async (proId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    dispatch(updateCartQuantity({ proId, quantity: newQuantity }));
+    
+    setUpdatingItems(prev => new Set(prev).add(proId));
+    try {
+      await dispatch(updateCartQuantity({ proId, quantity: newQuantity })).unwrap();
+      toast.success('Quantity updated successfully');
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+      toast.error('Failed to update quantity. Please try again.');
+    } finally {
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(proId);
+        return newSet;
+      });
+    }
   };
 
-  const handleRemoveItem = (proId: string) => {
-    dispatch(removeCartItem(proId));
+  const handleRemoveItem = async (proId: string) => {
+    setUpdatingItems(prev => new Set(prev).add(proId));
+    try {
+      await dispatch(removeCartItem(proId)).unwrap();
+      toast.success('Item removed from cart');
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+      toast.error('Failed to remove item. Please try again.');
+    } finally {
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(proId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (!confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await dispatch(clearCartAsync()).unwrap();
+      toast.success('Cart cleared successfully');
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+      toast.error('Failed to clear cart. Please try again.');
+    }
   };
 
   // Calculate totals
   const itemTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = items.length > 0 ? 40 : 0;
-  const discount = Math.round(itemTotal * 0.1); // 10% discount for demo
-  const totalAmount = itemTotal + deliveryFee - discount;
+  // const deliveryFee = items.length > 0 ? 40 : 0;
+  // const discount = Math.round(itemTotal * 0.1); // 10% discount for demo
+  const deliveryFee = 40;
+  const discount = 0; // 10% discount for demo
+  const totalAmount = Math.max(0, itemTotal + deliveryFee - discount);
 
   if (!isAuthenticated) {
     return (
@@ -78,6 +120,20 @@ const CartPage = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4 text-red-600">Error loading cart</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => dispatch(fetchCart())}>Try Again</Button>
           </div>
         </div>
       </MainLayout>
@@ -111,12 +167,26 @@ const CartPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Cart Items */}
             <div className="flex flex-col gap-6">
-              {items.map((item: CartItem) => (
-                <CartItem
-                  key={item.proId}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Shopping Cart ({items.length} items)</h2>
+                {items.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handleClearCart}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear Cart
+                  </Button>
+                )}
+              </div>
+              {items.filter(item => item && item.proId && item.item).map((item: CartItem) => (
+                <CartItem 
+                  key={item.proId} 
                   item={item}
                   onQuantityChange={handleQuantityChange}
                   onRemove={handleRemoveItem}
+                  isUpdating={updatingItems.has(item.proId)}
                 />
               ))}
             </div>
@@ -168,22 +238,13 @@ const CartPage = () => {
               </div>
               
               {/* Checkout Button */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <Button 
+              <div className="w-fit mt-6">
+                <Button
                   onClick={() => router.push('/checkout/address')}
-                  className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white py-3 text-lg font-semibold"
+                  className="w-full bg-bg-button  text-white py-3 px-10 text-lg font-semibold"
                 >
-                  Proceed to Checkout
+                  Continue to checkout
                 </Button>
-                <div className="mt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => router.push('/products')}
-                    className="w-full"
-                  >
-                    Continue Shopping
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
