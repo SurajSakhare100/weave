@@ -27,7 +27,7 @@ const Bestsellers: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="py-16 bg-white">
+      <section className="py-16 " style={{ backgroundColor: '#F9F9F9' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12 text-[#5E3A1C]">Bestsellers</h2>
           <div className="flex justify-center">
@@ -39,7 +39,7 @@ const Bestsellers: React.FC = () => {
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 " style={{ backgroundColor: '#F9F9F9' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
        <div className="w-full flex justify-between items-center mb-12">
         <div className="text-primary text-2xl font-medium leading-7 tracking-wide">
