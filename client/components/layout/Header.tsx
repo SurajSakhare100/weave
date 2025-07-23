@@ -90,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                   <Heart className="w-4 h-4" />
                 </Link>
                 {isAuthenticated && token ? (
-                  <Link href="/user/profile" className="p-2 hover:text-[#cf1a53] transition-colors">
+                  <Link href="/user/settings" className="p-2 hover:text-[#cf1a53] transition-colors">
                     <User className="w-4 h-4" />
                   </Link>
                 ) : (
@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                     <Heart className="w-4 h-4" />
                   </Link>
                   {isAuthenticated && token ? (
-                    <Link href="/user/profile" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/user/settings" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                       <User className="w-4 h-4" />
                     </Link>
                   ) : (

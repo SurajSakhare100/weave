@@ -6,6 +6,7 @@ import AddressCard from "@/components/user/AddressCard"
 import AddressFormModal from "@/components/user/AddressFormModal"
 import { Button } from "@/components/ui/button"
 import MainLayout from "@/components/layout/MainLayout"
+import Breadcrumb from "@/components/ui/Breadcrumb"
 import {
   getUserAddresses,
   addUserAddress,
@@ -14,11 +15,12 @@ import {
   setDefaultAddress,
 } from "@/services/userService"
 import { useCheckout, CheckoutProvider } from "@/components/checkout/CheckoutProvider"
-import { ChevronRight } from "lucide-react"
 
 interface Address {
+  firstName: string
+  lastName: string
   id: string
-  name: string
+  country: string
   address: string
   locality: string
   city: string
@@ -48,14 +50,18 @@ function CheckoutAddressPageContent() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     loadAddresses()
+
   }, [])
 
   const loadAddresses = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await getUserAddresses()
       if (response.success) {
         setAddresses(response.data)
@@ -65,9 +71,15 @@ function CheckoutAddressPageContent() {
         } else if (response.data.length > 0) {
           setSelectedAddress(response.data[0].id)
         }
+      } else {
+        console.error("Failed to load addresses:", response.message)
+        setAddresses([])
+        setError("Failed to load addresses. Please try again.")
       }
     } catch (error) {
       console.error("Error loading addresses:", error)
+      setAddresses([])
+      setError("Failed to load addresses. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -81,13 +93,26 @@ function CheckoutAddressPageContent() {
   const handleAddAddress = async (addressData: AddressData) => {
     try {
       setSubmitting(true)
+      setError(null)
       const response = await addUserAddress(addressData)
       if (response.success) {
         await loadAddresses()
         setShowAddressModal(false)
+        setSuccessMessage("Address added successfully!")
+        if (addresses.length === 0) {
+          const newAddresses = await getUserAddresses()
+          if (newAddresses.success && newAddresses.data.length > 0) {
+            setSelectedAddress(newAddresses.data[0].id)
+          }
+        }
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        console.error("Failed to add address:", response.message)
+        setError("Failed to add address. Please try again.")
       }
     } catch (error) {
       console.error("Error adding address:", error)
+      setError("Failed to add address. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -153,7 +178,7 @@ function CheckoutAddressPageContent() {
       console.log('Found address:', address)
       if (address) {
         const shippingAddress = {
-          name: address.name,
+          name: `${address.firstName} ${address.lastName}`,
           address: [address.address, `${address.locality}, ${address.city}`, `${address.state} - ${address.pin}`],
           city: address.city,
           state: address.state,
@@ -162,7 +187,7 @@ function CheckoutAddressPageContent() {
         }
         console.log('Setting shipping address:', shippingAddress)
         setShippingAddress(shippingAddress)
-        router.push("/checkout/order-summary")
+        router.push("/checkout/payment")
       }
     } else {
       console.log('No address selected')
@@ -173,8 +198,11 @@ function CheckoutAddressPageContent() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EE346C]"></div>
+        <div className="min-h-screen bg-bg-tertiary flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-bg-button mx-auto mb-4"></div>
+            <p className="text-primary text-lg">Loading your addresses...</p>
+          </div>
         </div>
       </MainLayout>
     )
@@ -182,48 +210,84 @@ function CheckoutAddressPageContent() {
 
   return (
     <MainLayout>
-      <div className="bg-white min-h-screen">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="bg-background min-h-screen">
+        <div className=" px-12 py-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center mb-8 text-sm space-x-2">
-            <span 
-              className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer transition-colors" 
-              onClick={() => router.push('/')}
-            >
-              Home
-            </span>
-            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span 
-              className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer transition-colors" 
-              onClick={() => router.push('/cart')}
-            >
-              Cart
-            </span>
-            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355] font-medium">Select Address</span>
-          </nav>
+          <Breadcrumb
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Cart', href: '/cart' },
+              { label: 'Select Address', isCurrent: true }
+            ]}
+            className="mb-8"
+          />
 
-          {/* Page Title */}
-          <h1 className="text-2xl font-semibold text-[#5E3A1C] mb-8">
-            Select Delivery Address
-          </h1>
+
+
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-700">{error}</p>
+              </div>
+              <div className="mt-3">
+                <Button
+                  onClick={loadAddresses}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-700 border-red-300 hover:bg-red-50"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Success State */}
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-green-700">{successMessage}</p>
+              </div>
+            </div>
+          )}
 
           {addresses.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-[#8b7355] mb-6 text-lg">No addresses found.</p>
-              <Button
-                onClick={handleAddNewClick}
-                className="bg-[#EE346C] hover:bg-[#c2185b] text-white px-8 py-3 rounded-lg font-medium"
-              >
-                Add New Address
-              </Button>
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-semibold text-primary mb-4">No Delivery Address Found</h2>
+                <p className="text-primary mb-8 text-lg leading-relaxed">
+                  We need a delivery address to complete your order. Please add your first address to continue with checkout.
+                </p>
+                <Button
+                  onClick={handleAddNewClick}
+                  className="bg-bg-button hover:opacity-90 text-white px-8 py-4 rounded-lg font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Your First Address
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4 max-w-2xl">
+            <div className="space-y-6 max-w-3xl ">
               {addresses.map((address) => (
                 <AddressCard
                   key={address.id}
-                  address={{ ...address, addressType: address.addressType || "Home" }}
+                  address={{ ...address, addressType: address.addressType || "Home", firstName: address.firstName || '', lastName: address.lastName || '', country: address.country || 'India' }}
                   isSelected={selectedAddress === address.id}
                   onSelect={() => handleAddressSelect(address.id)}
                   onEdit={handleEditClick}
@@ -238,9 +302,9 @@ function CheckoutAddressPageContent() {
           )}
 
           {/* Add New Address Link */}
-          <div className="mt-12 text-center">
+          <div className="mt-24 text-center">
             <button
-              className="text-[#EE346C] text-lg font-medium hover:text-[#c2185b] transition-colors underline underline-offset-2"
+              className="text-bg-button text-lg font-medium hover:opacity-80 transition-colors underline underline-offset-2 cursor-pointer"
               onClick={handleAddNewClick}
             >
               Add Delivery Address
@@ -254,9 +318,21 @@ function CheckoutAddressPageContent() {
             setShowAddressModal(false)
             setEditingAddress(null)
           }}
-          onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
-          address={editingAddress || undefined}
-          isEditing={!!editingAddress}
+          onSubmit={editingAddress ? (address: Address) => handleEditAddress(address as any) : (address: Address) => handleAddAddress(address as any)}
+          address={editingAddress ? {
+            ...editingAddress,
+            firstName: editingAddress.firstName || '',
+            lastName: editingAddress.lastName || '',
+            country: editingAddress.country || 'India',
+            address: editingAddress.address || '',
+            locality: editingAddress.locality || '',
+            city: editingAddress.city || '',
+            state: editingAddress.state || '',
+            pin: editingAddress.pin || '',
+            number: editingAddress.number || '',
+            isDefault: editingAddress.isDefault || false,
+            addressType: editingAddress.addressType || 'Home',
+          } : undefined}
         />
       </div>
     </MainLayout>

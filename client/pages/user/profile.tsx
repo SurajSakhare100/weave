@@ -16,6 +16,9 @@ export default function UserProfile() {
           <h1 className="text-2xl font-bold mb-2">{user.email}</h1>
           <div className="mb-2">Wishlist: <Link href="/user/wishlist" className="text-pink-500 underline">{user.wishlist.length} items</Link></div>
           <div className="flex flex-col gap-3 mt-4 w-full">
+            <Link href="/user/settings" className="bg-[#EE346C] text-white px-6 py-2 rounded hover:bg-[#c2185b] transition text-center">
+              Settings & Orders
+            </Link>
             <Link href="/user/orders" className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition text-center">
               View Orders
             </Link>

@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getCart } from '../../services/cartService';
 import { placeOrder } from '../../services/orderService';
+import { useDispatch } from 'react-redux';
+import { clearCartAsync } from '../../features/cart/cartSlice';
+import { AppDispatch } from '../../store/store';
 
 interface CheckoutItem {
   proId: string;
@@ -51,6 +54,7 @@ interface CheckoutContextType {
   // Actions
   refreshCart: () => Promise<void>;
   clearCheckoutState: () => void;
+  clearCartCompletely: () => Promise<void>;
 }
 
 const CheckoutContext = createContext<CheckoutContextType | undefined>(undefined);
@@ -124,6 +128,7 @@ interface CartItem {
 }
 
 export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [cartItems, setCartItems] = useState<CheckoutItem[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
   const [cartError, setCartError] = useState<string | null>(null);
@@ -162,6 +167,21 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     setPaymentMethodState('online');
     setStoredAddress(null);
     setStoredPaymentMethod('online');
+  };
+
+  const clearCartCompletely = async () => {
+    try {
+      console.log('Clearing cart completely...');
+      // Clear local state
+      setCartItems([]);
+      // Clear checkout state
+      clearCheckoutState();
+      // Clear Redux store
+      await dispatch(clearCartAsync());
+      console.log('Cart cleared completely');
+    } catch (error) {
+      console.error('Error clearing cart completely:', error);
+    }
   };
 
   const refreshCart = async () => {
@@ -236,8 +256,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       }
 
       // Clear cart and checkout state after successful order
-      setCartItems([]);
-      clearCheckoutState();
+      console.log('Order placed successfully, clearing cart...');
+      await clearCartCompletely();
+      console.log('Cart cleared successfully after order placement');
       return true;
     } catch (error: unknown) {
       console.error('Error placing order:', error);
@@ -265,7 +286,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     totalAmount,
     discount,
     refreshCart,
-    clearCheckoutState
+    clearCheckoutState,
+    clearCartCompletely
   };
 
   return (

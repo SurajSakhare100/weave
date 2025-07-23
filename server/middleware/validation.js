@@ -244,33 +244,41 @@ const validateOrder = [
 // @route   POST /api/users/addresses
 // @access  Private
 const validateAddress = [
-  body('name')
+  body('firstName')
     .trim()
     .isLength({ min: 2, max: 50 })
-    .withMessage('Name must be between 2 and 50 characters'),
+    .withMessage('First name must be between 2 and 50 characters'),
+  body('lastName')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
+  body('country')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Country must be between 2 and 50 characters'),
   body('number')
     .matches(/^\d{10}$/)
-    .withMessage('Mobile number must be exactly 10 digits'),
-  body('pin')
-    .matches(/^\d{6}$/)
-    .withMessage('Pincode must be exactly 6 digits'),
-  body('locality')
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Locality must be between 2 and 100 characters'),
-  body('address')
-    .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Address must be between 5 and 200 characters'),
-  body('city')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('City must be between 2 and 50 characters'),
-  body('state')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('State must be between 2 and 50 characters'),
-  body('addressType')
+  //   .withMessage('Mobile number must be exactly 10 digits'),
+  // body('pin')
+  //   .matches(/^\d{6}$/)
+  //   .withMessage('Pincode must be exactly 6 digits'),
+  // body('locality')
+  //   .trim()
+  //   .isLength({ min: 2, max: 100 })
+  //   .withMessage('Locality must be between 2 and 100 characters'),
+  // body('address')
+  //   .trim()
+  //   .isLength({ min: 5, max: 200 })
+  //   .withMessage('Address must be between 5 and 200 characters'),
+  // body('city')
+  //   .trim()
+  //   .isLength({ min: 2, max: 50 })
+  //   .withMessage('City must be between 2 and 50 characters'),
+  // body('state')
+  //   .trim()
+  //   .isLength({ min: 2, max: 50 })
+  //   .withMessage('State must be between 2 and 50 characters'),
+  ,body('addressType')
     .optional()
     .isIn(['Home', 'Work', 'Other'])
     .withMessage('Address type must be Home, Work, or Other'),

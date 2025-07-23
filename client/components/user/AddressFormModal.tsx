@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Loader2 } from 'lucide-react';
+import { Loader2, Save, X } from 'lucide-react';
 
 interface Address {
   _id?: string;
   id?: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   number: string;
   pin: string;
   locality: string;
   address: string;
   city: string;
   state: string;
+  country: string;
   addressType?: string;
   isDefault?: boolean;
 }
@@ -31,13 +33,15 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
   loading = false
 }) => {
   const [formData, setFormData] = useState<Address>({
-    name: '',
+    firstName: '',
+    lastName: '',
     number: '',
     pin: '',
     locality: '',
     address: '',
     city: '',
     state: '',
+    country: 'India',
     addressType: 'Home',
     isDefault: false
   });
@@ -49,13 +53,15 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
       setFormData(address);
     } else {
       setFormData({
-        name: '',
+        firstName: '',
+        lastName: '',
         number: '',
         pin: '',
         locality: '',
         address: '',
         city: '',
         state: '',
+        country: 'India',
         addressType: 'Home',
         isDefault: false
       });
@@ -66,12 +72,16 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
   const validateForm = () => {
     const newErrors: Partial<Address> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
     }
 
     if (!formData.number.trim()) {
-      newErrors.number = 'Phone number is required';
+      newErrors.number = 'Mobile number is required';
     }
 
     if (!formData.address.trim()) {
@@ -79,11 +89,11 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
     }
 
     if (!formData.locality.trim()) {
-      newErrors.locality = 'Locality is required';
+      newErrors.locality = 'Area, street, sector is required';
     }
 
     if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
+      newErrors.city = 'Town/City is required';
     }
 
     if (!formData.state.trim()) {
@@ -127,216 +137,283 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {address ? 'Edit Address' : 'Add New Address'}
+    <div className='fixed inset-0 z-50 h-full flex items-center justify-center text-primary'>
+      <div className='fixed inset-0 bg-[#F0F0F0] opacity-20 z-10'>
+
+      </div>
+      {/* Modal/Form container */}
+      <div className="relative bg-gradient-to-b from-[#5E3A1C] to-[#FCFCFC] rounded-xl md:h-[98%] w-full md:w-[400px] mx-auto h-full flex flex-col items-center justify-center gap-2 z-50 p-4 border border-border-border-tertiary">
+      {/* Close button outside modal */}
+      <button
+        onClick={onClose}
+        className="self-end top-6 right-6 text-white hover:text-gray-200 transition-colors z-10"
+        disabled={loading}
+      >
+        <X className="h-6 w-6 cursor-pointer" />
+      </button>
+      
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md h-full overflow-y-auto">
+        {/* Header */}
+        <div className="py-4 px-6 ">
+          <h2 className="text-lg font-semibold text-primary">
+            Add Delivery Address
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={loading}
-          >
-            <X className="h-6 w-6" />
-          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-6 space-y-4">
+          {/* Country */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name *
+            <label className="block text-sm font-medium text-primary mb-2">
+              Country
+            </label>
+            <select
+              name="country"
+              value={formData.country}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-border-tertiary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="India">India</option>
+            </select>
+          </div>
+
+          {/* First Name */}
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              First name
             </label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="firstName"
+              value={formData.firstName}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.name ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.firstName ? 'border-red-300' : 'border-border-tertiary'
               }`}
-              placeholder="Enter your full name"
+              placeholder="First name"
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            {errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
             )}
           </div>
 
+          {/* Last Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number *
+            <label className="block text-sm font-medium text-primary mb-2">
+              Last name
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.lastName ? 'border-red-300' : 'border-border-tertiary'
+              }`}
+              placeholder="Last name"
+            />
+            {errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+            )}
+          </div>
+
+          {/* Mobile Number */}
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              Mobile number
             </label>
             <input
               type="tel"
               name="number"
               value={formData.number}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.number ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.number ? 'border-red-300' : 'border-border-tertiary'
               }`}
-              placeholder="Enter your phone number"
+              placeholder="Mobile number"
             />
             {errors.number && (
               <p className="mt-1 text-sm text-red-600">{errors.number}</p>
             )}
           </div>
 
+          {/* Flat, House no., Building */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address *
+            <label className="block text-sm font-medium text-primary mb-2">
+              Flat, House no., Building
             </label>
             <input
               type="text"
               name="address"
               value={formData.address}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.address ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.address ? 'border-red-300' : 'border-border-tertiary'
               }`}
-              placeholder="Street address, apartment, suite, etc."
+              placeholder="Flat, House no., Building"
             />
             {errors.address && (
               <p className="mt-1 text-sm text-red-600">{errors.address}</p>
             )}
           </div>
 
+          {/* Area, street, sector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Locality *
+            <label className="block text-sm font-medium text-primary mb-2">
+              Area, street, sector
             </label>
             <input
               type="text"
               name="locality"
               value={formData.locality}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.locality ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.locality ? 'border-red-300' : 'border-border-tertiary'
               }`}
-              placeholder="Locality, area, neighborhood"
+              placeholder="Area, street, sector"
             />
             {errors.locality && (
               <p className="mt-1 text-sm text-red-600">{errors.locality}</p>
             )}
           </div>
 
+          {/* State */}
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              State
+            </label>
+            <select
+              name="state"
+              value={formData.state}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary text-primary bg-white h-10 ${
+                errors.state ? 'border-red-300' : 'border-border-tertiary'
+              }`}
+            >
+              <option value="">Select State</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Assam">Assam</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Goa">Goa</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Sikkim">Sikkim</option>
+            </select>
+            {errors.state && (
+              <p className="mt-1 text-sm text-red-600">{errors.state}</p>
+            )}
+          </div>
+
+          {/* Pincode and City */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City *
+              <label className="block text-sm font-medium text-primary mb-2">
+                Pincode
+              </label>
+              <input
+                type="text"
+                name="pin"
+                value={formData.pin}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  errors.pin ? 'border-red-300' : 'border-border-tertiary'
+                }`}
+                placeholder="Pincode"
+                maxLength={6}
+              />
+              {errors.pin && (
+                <p className="mt-1 text-sm text-red-600">{errors.pin}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-primary mb-2">
+                Town/City
               </label>
               <input
                 type="text"
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.city ? 'border-red-300' : 'border-gray-300'
+                className={`w-full px-3 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  errors.city ? 'border-red-300' : 'border-border-tertiary'
                 }`}
-                placeholder="City"
+                placeholder="Town/City"
               />
               {errors.city && (
                 <p className="mt-1 text-sm text-red-600">{errors.city}</p>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State *
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.state ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="State"
-              />
-              {errors.state && (
-                <p className="mt-1 text-sm text-red-600">{errors.state}</p>
-              )}
-            </div>
           </div>
 
+          {/* Address Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pincode *
+            <label className="block text-sm font-medium text-primary mb-3">
+              Address Type
             </label>
-            <input
-              type="text"
-              name="pin"
-              value={formData.pin}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.pin ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="6-digit pincode"
-              maxLength={6}
-            />
-            {errors.pin && (
-              <p className="mt-1 text-sm text-red-600">{errors.pin}</p>
+            <div className="flex  items-center gap-2">
+              <label className="flex w-full items-center gap-2 p-3 border border-border-tertiary rounded cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="addressType"
+                  value="Home"
+                  checked={formData.addressType === 'Home'}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 accent-primary  text-primary focus:ring-primary border-border-tertiary"
+                />
+                <span className="ml-3 text-primary font-medium">Home</span>
+              </label>
+              <label className="flex w-full items-center p-3 border border-border-tertiary rounded cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="addressType"
+                  value="Work"
+                  checked={formData.addressType === 'Work'}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 accent-primary focus:ring-primary border-border-tertiary"
+                />
+                <span className="ml-3 text-primary font-medium">Work</span>
+              </label>
+            </div>
+            {errors.addressType && (
+              <p className="mt-1 text-sm text-red-600">{errors.addressType}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address Type
-            </label>
-            <select
-              name="addressType"
-              value={formData.addressType}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Home">Home</option>
-              <option value="Work">Work</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="isDefault"
-              checked={formData.isDefault}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label className="ml-2 block text-sm text-gray-900">
-              Set as default address
-            </label>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              disabled={loading}
-            >
-              Cancel
-            </button>
+          {/* Continue Button */}
+          <div className="pt-2 pb-4">
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="w-full bg-bg-button text-white font-semibold py-3 px-6 rounded hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Saving...
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <Save className="h-4 w-4 mr-2" />
-                  {address ? 'Update Address' : 'Save Address'}
-                </div>
-              )}
+              {loading ? 'Processing...' : 'Continue'}
             </button>
           </div>
         </form>
       </div>
+    </div>
     </div>
   );
 };

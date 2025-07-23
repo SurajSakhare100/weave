@@ -1,9 +1,11 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/router';
 
-interface BreadcrumbItem {
+export interface BreadcrumbItem {
   label: string;
   href?: string;
+  isCurrent?: boolean;
 }
 
 interface BreadcrumbProps {
@@ -12,20 +14,32 @@ interface BreadcrumbProps {
 }
 
 const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' }) => {
+  const router = useRouter();
+
+  const handleClick = (item: BreadcrumbItem) => {
+    if (item.href && !item.isCurrent) {
+      router.push(item.href);
+    }
+  };
+
   return (
-    <nav className={`flex items-center space-x-2 text-sm ${className}`}>
+    <nav className={`flex items-center space-x-2 text-md ${className}`}>
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          {index > 0 && <ChevronRight className="h-4 w-4 text-gray-400" />}
-          {item.href ? (
-            <a
-              href={item.href}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              {item.label}
-            </a>
-          ) : (
-            <span className="text-gray-900">{item.label}</span>
+          <span
+            className={`transition-colors ${
+              item.isCurrent
+                ? 'text-primary font-medium'
+                : item.href
+                ? 'text-primary hover:text-secondary cursor-pointer'
+                : 'text-primary'
+            }`}
+            onClick={() => handleClick(item)}
+          >
+            {item.label}
+          </span>
+          {index < items.length - 1 && (
+            <ChevronRight className="h-4 w-4 text-primary" />
           )}
         </React.Fragment>
       ))}

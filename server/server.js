@@ -35,7 +35,7 @@ app.use('/uploads', (req, res, next) => {
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -45,9 +45,6 @@ app.use('/api/', limiter);
 const corsOptions = {
   origin: [
     process.env.CORS_ORIGIN ,
-    'https://*.vercel.app',
-    'https://*.onrender.com',
-    'https://weave-ecommerce.vercel.app',
     'http://localhost:3000'
   ],
   credentials: true,

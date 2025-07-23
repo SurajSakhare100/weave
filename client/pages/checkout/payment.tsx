@@ -107,11 +107,13 @@ function CheckoutPaymentPageContent() {
             <ChevronRight className="h-4 w-4 text-[#8b7355]" />
             <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/cart')}>Cart</span>
             <ChevronRight className="h-4 w-4 text-[#8b7355]" />
-            <span className="text-[#8b7355]">Payment</span>
+            <span className="text-[#8b7355] hover:text-[#6b5635] cursor-pointer" onClick={() => router.push('/checkout/address')}>Select Address</span>
+            <ChevronRight className="h-4 w-4 text-[#8b7355]" />
+            <span className="text-[#8b7355] font-medium">Place Your Order</span>
           </nav>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-2xl font-bold mb-6">Payment Method</h1>
+            <h1 className="text-2xl font-bold mb-6">Place Your Order</h1>
             
             <div className="space-y-6">
               <div>

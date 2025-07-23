@@ -9,7 +9,9 @@ import { Plus } from "lucide-react"
 
 interface Address {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  country: string;
   address: string;
   locality: string;
   city: string;
@@ -168,7 +170,7 @@ export default function UserAddressesPage() {
                 {addresses.map((address) => (
                   <AddressCard
                     key={address.id}
-                    address={{ ...address, addressType: address.addressType || 'Home' }}
+                    address={{ ...address, addressType: address.addressType || 'Home', firstName: address.firstName || '', lastName: address.lastName || '', country: address.country || 'India' }}
                     onEdit={() => handleEditClick(address)}
                     onDelete={() => handleDeleteAddress(address.id)}
                     onSetDefault={() => handleSetDefaultAddress(address.id)}
@@ -186,7 +188,7 @@ export default function UserAddressesPage() {
             setShowAddressModal(false)
             setEditingAddress(null)
           }}
-          onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
+          onSubmit={editingAddress ? (address: Address) => handleEditAddress(address as any) : (address: Address) => handleAddAddress(address as any)}
           address={editingAddress || undefined}
           // isEditing={!!editingAddress}
         />
