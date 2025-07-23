@@ -31,7 +31,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { wishlist } = useSelector((state: RootState) => state.user);
-  const isInWishlist = wishlist.includes(product._id);
+  const isInWishlist = wishlist ? wishlist.includes(product._id) : false;
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors ? product.colors[0] : null
   );
