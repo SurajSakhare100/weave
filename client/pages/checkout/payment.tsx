@@ -80,7 +80,7 @@ function CheckoutPaymentPageContent() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
           <nav className="flex items-center space-x-2 text-sm mb-8">
@@ -111,7 +111,7 @@ function CheckoutPaymentPageContent() {
                         className="w-4 h-4 text-[#cf1a53]"
                       />
                       <div>
-                        <span className="font-bold text-lg">₹{itemTotal.toLocaleString()}</span>
+                        <span className="font-bold text-lg">₹{(itemTotal+10+deliveryFee)}</span>
                         <span className="font-bold text-lg ml-2">Pay Online</span>
                       </div>
                     </div>
@@ -234,7 +234,7 @@ function CheckoutPaymentPageContent() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-lg">To Pay</span>
-                    <span className="line-through text-lg">₹{(itemTotal + deliveryFee).toLocaleString()}</span>
+                    <span className="line-through text-lg">₹{(itemTotal+10+deliveryFee +discount).toLocaleString()}</span>
                     <span className="font-bold text-lg">₹{totalAmount.toLocaleString()}</span>
                   </div>
                   <button className="p-1">
@@ -249,7 +249,7 @@ function CheckoutPaymentPageContent() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{itemTotal.toLocaleString()}</span>
+                    <span className="font-medium">₹{(itemTotal+10+deliveryFee +discount).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery</span>
@@ -269,7 +269,7 @@ function CheckoutPaymentPageContent() {
                   )}
                   <div className="flex justify-between font-bold text-lg border-t border-gray-200 pt-3">
                     <span>Total</span>
-                    <span>₹{totalAmount.toLocaleString()}</span>
+                    <span>₹{itemTotal+10+deliveryFee}</span>
                   </div>
                 </div>
               </div>

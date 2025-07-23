@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
   const { items } = useSelector((state: RootState) => state.cart);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const cartItemCount = items?.length || 0;
   const token = getUserToken();
@@ -75,9 +75,21 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
               </div>
 
               <div className="hidden md:flex items-center space-x-6 flex-1 text-sm justify-end">
-                <Link href="/search" className="p-2 hover:text-[#cf1a53] transition-colors">
-                  <Search className="w-4 h-4" />
-                </Link>
+                <form onSubmit={handleSearch} className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#cf1a53]"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
+                </form>
                 <Link href="/cart" className="relative p-2 hover:text-[#cf1a53] transition-colors">
                   <ShoppingCart className="w-4 h-4" />
                   {cartItemCount > 0 && (
@@ -121,10 +133,25 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 <Link href="/about" className="block px-3 py-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   About Us
                 </Link>
-                <div className="flex space-x-4 mt-4">
-                  <Link href="/search" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Search className="w-4 h-4" />
-                  </Link>
+                <form onSubmit={handleSearch} className="w-full mb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search products..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#cf1a53]"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+                <div className="flex space-x-4">
                   <Link href="/cart" className="relative p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                     <ShoppingCart className="w-4 h-4" />
                     {cartItemCount > 0 && (

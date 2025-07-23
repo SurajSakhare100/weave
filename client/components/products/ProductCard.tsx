@@ -73,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-<div className="p-4 bg-white rounded-2xl inline-flex flex-col justify-start items-center gap-5 transition-shadow duration-300 group w-full">
+<div className="p-4  rounded-2xl inline-flex flex-col justify-start items-center gap-5 transition-shadow duration-300 group w-full">
   <Link href={`/products/${product._id}`} className="w-full">
     {/* Product Image Container */}
     <div className="relative aspect-[4/3] w-full bg-[#faf5f2] rounded-xl overflow-hidden">
@@ -121,18 +121,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Color Swatches */}
         <div className="flex items-center gap-2">
-          {(product.colors || defaultColors).map((color, index) => (
+          {(product.colors && product.colors.length > 0 ? product.colors : defaultColors).map((color, index) => (
             <button
               key={color}
+              type="button"
               onClick={() => setSelectedColor(color)}
-              className={`w-4 h-4 rounded-full border-2 transition-all ${
-                selectedColor === color
-                  ? 'border-[#EE346C] scale-110'
-                  : 'border-transparent hover:scale-105'
-              }`}
-              style={{ backgroundColor: color }}
+              className={`w-4 h-4 rounded-full border-2 transition-all focus:outline-none relative
+                ${selectedColor === color ? 'border-[#EE346C] scale-110' : 'border-transparent hover:scale-105'}
+              `}
+              style={{
+                background: `linear-gradient(white, white) padding-box, ${color} border-box`,
+                borderColor: selectedColor === color ? '#EE346C' : 'transparent',
+                borderWidth: '2px',
+                padding: '2px'
+              }}
               title={color}
-            />
+              aria-label={`Select color ${color}`}
+            >
+              <span
+                className="block w-full h-full rounded-full"
+                style={{
+                  backgroundColor: color,
+                  display: 'block',
+                  width: '100%',
+                  height: '100%',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </button>
           ))}
         </div>
 

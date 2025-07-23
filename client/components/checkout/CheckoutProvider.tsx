@@ -171,7 +171,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
 
   const clearCartCompletely = async () => {
     try {
-      console.log('Clearing cart completely...');
       // Clear local state
       setCartItems([]);
       // Clear checkout state
