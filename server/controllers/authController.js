@@ -1,4 +1,8 @@
 import User from '../models/User.js';
+import Cart from '../models/Cart.js';
+import Order from '../models/Order.js';
+import Wishlist from '../models/Wishlist.js';
+import Review from '../models/Review.js';
 import generateToken from '../utils/generateToken.js';
 import asyncHandler from 'express-async-handler';
 import { sendEmail } from '../utils/emailService.js';
@@ -465,22 +469,47 @@ const updateProfile = async (req, res) => {
 
 // Delete account
 const deleteAccount = async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (!user) {
-    return res.status(404).json({
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Delete all user-related data
+    const userId = req.user._id;
+
+    // Delete user's cart
+    await Cart.deleteMany({ user: userId });
+
+    // Delete user's orders
+    await Order.deleteMany({ user: userId });
+
+    // Delete user's wishlist
+    await Wishlist.deleteMany({ user: userId });
+
+    // Delete user's addresses (if stored separately)
+    // Note: If addresses are embedded in user document, they'll be deleted with user
+
+    // Delete user's reviews
+    await Review.deleteMany({ user: userId });
+
+    // Finally, delete the user account
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      success: true,
+      message: 'Account and all associated data deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({
       success: false,
-      message: 'User not found'
+      message: 'Error deleting account'
     });
   }
-
-  // Soft delete - mark as inactive
-  user.isActive = false;
-  await user.save();
-
-  res.json({
-    success: true,
-    message: 'Account deleted successfully'
-  });
 };
 
 export {

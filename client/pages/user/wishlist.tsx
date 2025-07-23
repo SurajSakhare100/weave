@@ -50,7 +50,7 @@ export default function WishlistPage() {
 
   return (
     <MainLayout>
-      <section className="py-16 bg-[#faf5f2] min-h-screen">
+      <section className="py-16 bg-white min-h-screen">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Wishlist</h1>
           {products.length === 0 ? (

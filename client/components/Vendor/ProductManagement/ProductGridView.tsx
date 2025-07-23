@@ -32,7 +32,7 @@ export default function ProductGridView({
           {/* Product Image with Checkbox */}
           <div className="relative">
             <img
-              src={product.primaryImage || product.files[0] || '/products/product.png'}
+              src={product.primaryImage || '/products/product.png'}
               alt={product.name}
               className="w-full h-48 object-cover"
             />

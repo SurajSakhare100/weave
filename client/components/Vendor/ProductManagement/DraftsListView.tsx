@@ -61,7 +61,7 @@ export default function DraftsListView({
               <td className="p-4">
                 <div className="flex items-center space-x-3">
                   <img
-                    src={product.files[0] || '/products/product.png'}
+                    src={product.primaryImage || '/products/product.png'}
                     alt={product.name}
                     className="w-12 h-12 object-cover rounded"
                   />

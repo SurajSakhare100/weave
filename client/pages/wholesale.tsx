@@ -3,174 +3,350 @@ import { useState } from 'react';
 
 export default function WholesalePage() {
   const [formData, setFormData] = useState({
-    name: '',
+    businessName: '',
     email: '',
-    phone: '',
-    company: '',
-    message: '',
-    quantity: ''
+    quantity: '',
+    products: '',
+    city: '',
+    orderType: 'bulk',
+    mobile: '',
+    state: 'Maharashtra'
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  const states = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+    'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+  ];
+
+  const quantityOptions = [
+    '50-100 units',
+    '100-500 units', 
+    '500-1000 units',
+    '1000-5000 units',
+    '5000+ units'
+  ];
+
+  const productOptions = [
+    'Traditional Wear',
+    'Western Wear',
+    'Accessories',
+    'Home Decor',
+    'Jewelry',
+    'Footwear',
+    'All Products'
+  ];
+
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!formData.businessName.trim()) {
+      newErrors.businessName = 'Business name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.mobile.trim()) {
+      newErrors.mobile = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(formData.mobile.replace(/\s/g, ''))) {
+      newErrors.mobile = 'Please enter a valid 10-digit mobile number';
+    }
+
+    if (!formData.quantity) {
+      newErrors.quantity = 'Quantity is required';
+    }
+
+    if (!formData.products) {
+      newErrors.products = 'Product selection is required';
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = 'City is required';
+    }
+
+    if (!formData.state) {
+      newErrors.state = 'State is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Thank you for your wholesale inquiry! We will get back to you soon.');
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    // Here you would typically send the data to your backend
+    console.log('Wholesale inquiry submitted:', formData);
+    
+    alert('Thank you for your wholesale inquiry! We will get back to you within 24 hours.');
+    
+    // Reset form
     setFormData({
-      name: '',
+      businessName: '',
       email: '',
-      phone: '',
-      company: '',
-      message: '',
-      quantity: ''
+      quantity: '',
+      products: '',
+      city: '',
+      orderType: 'bulk',
+      mobile: '',
+      state: 'Maharashtra'
     });
+    setErrors({});
   };
 
   return (
     <MainLayout>
       <section className="py-16 bg-[#faf5f2] text-black min-h-screen">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Wholesale & Bulk Inquiry</h1>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">Wholesale & Bulk Inquiry</h1>
+            <p className="text-lg text-gray-600">Request a Bulk Purchase or Wholesale Deal</p>
+          </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Information */}
-            <div className="bg-white rounded-2xl shadow p-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Bulk Order Benefits</h2>
-              
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">💰</div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-6">
                   <div>
-                    <h3 className="font-semibold text-gray-800">Competitive Pricing</h3>
-                    <p className="text-gray-600 text-sm">Special wholesale rates for bulk orders</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Name / Store Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.businessName ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter your business name"
+                    />
+                    {errors.businessName && (
+                      <p className="text-red-500 text-sm mt-1">{errors.businessName}</p>
+                    )}
                   </div>
-                </div>
-                
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">🚚</div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Direct Shipping</h3>
-                    <p className="text-gray-600 text-sm">Efficient logistics for large orders</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">🎯</div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Custom Solutions</h3>
-                    <p className="text-gray-600 text-sm">Tailored products for your business needs</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">🤝</div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Dedicated Support</h3>
-                    <p className="text-gray-600 text-sm">Personal account manager for wholesale clients</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-8 p-4 bg-pink-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Minimum Order Requirements</h3>
-                <p className="text-sm text-gray-600">
-                  Minimum order value: ₹50,000<br/>
-                  Lead time: 2-4 weeks<br/>
-                  Payment terms: 50% advance, 50% before shipping
-                </p>
-              </div>
-            </div>
 
-            {/* Contact Form */}
-            <div className="bg-white rounded-2xl shadow p-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Send Inquiry</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="example@example.com"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Note: Enter a valid email address (e.g., example@example.com).
+                    </p>
+                    {errors.email && (
+                      <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Quantity Required *
+                    </label>
+                    <select
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.quantity ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select quantity range</option>
+                      {quantityOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {errors.quantity && (
+                      <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product(s) Interested In *
+                    </label>
+                    <select
+                      name="products"
+                      value={formData.products}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.products ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select products</option>
+                      {productOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {errors.products && (
+                      <p className="text-red-500 text-sm mt-1">{errors.products}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City name *
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.city ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter your city"
+                    />
+                    {errors.city && (
+                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                    )}
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    required
-                  />
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Order Type
+                    </label>
+                    <div className="space-y-3">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="orderType"
+                          value="bulk"
+                          checked={formData.orderType === 'bulk'}
+                          onChange={handleInputChange}
+                          className="mr-3 text-pink-500 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-700">Bulk Purchase</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="orderType"
+                          value="wholesale"
+                          checked={formData.orderType === 'wholesale'}
+                          onChange={handleInputChange}
+                          className="mr-3 text-pink-500 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-700">Wholesale Deal</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mobile number *
+                    </label>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Note: Enter a 10-digit mobile number (e.g., 9876543210).
+                    </p>
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.mobile ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="9876543210"
+                      maxLength={10}
+                    />
+                    {errors.mobile && (
+                      <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                    )}
+                  </div>
+
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                    <p className="text-sm text-pink-700 font-medium">
+                      Note: A minimum quantity of 50 units is required per order.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State *
+                    </label>
+                    <select
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                        errors.state ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      {states.map((state) => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                    {errors.state && (
+                      <p className="text-red-500 text-sm mt-1">{errors.state}</p>
+                    )}
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Phone *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    required
-                  />
+              </div>
+
+              {/* Additional Notes */}
+              <div className="border-t pt-6">
+                <div className="space-y-2">
+                  <p className="text-pink-600 text-sm">
+                    Note: We accept bulk orders for weddings, customized orders, corporate gifts, and events, as well as wholesale inquiries.
+                  </p>
+                  <p className="text-pink-600 text-sm">
+                    Worldwide shipping is available.
+                  </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Company Name</label>
-                  <input
-                    type="text"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Estimated Quantity</label>
-                  <input
-                    type="text"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 1000 pieces"
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Message *</label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    rows={4}
-                    placeholder="Tell us about your requirements, preferred products, timeline, etc."
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    required
-                  />
-                </div>
-                
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-center pt-6">
                 <button
                   type="submit"
-                  className="w-full bg-pink-500 text-white font-semibold py-3 rounded-lg hover:bg-pink-600 transition-colors"
+                  className="bg-pink-500 text-white font-semibold py-3 px-8 rounded-lg hover:bg-pink-600 transition-colors text-lg"
                 >
-                  Send Inquiry
+                  Continue
                 </button>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
         </div>
       </section>

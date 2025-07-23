@@ -1,19 +1,24 @@
 import MainLayout from '@/components/layout/MainLayout';
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { getUserProfile, updateUserProfile } from '../../services/userService';
+import { useSelector, useDispatch } from 'react-redux';
+import { getUserProfile, updateUserProfile, deleteAccount } from '../../services/userService';
 import { useRequireUserAuth } from '../../hooks/useRequireUserAuth';
 import SettingsLayout from '@/components/user/SettingsLayout';
 import EditProfileForm from '@/components/user/EditProfileForm';
 import AddressesSection from '@/components/user/AddressesSection';
 import PastOrdersSection from '@/components/user/PastOrdersSection';
+import DeleteAccountModal from '@/components/user/DeleteAccountModal';
 import { RootState } from '../../store/store';
+import { logout } from '../../features/user/userSlice';
+import { useRouter } from 'next/router';
 
 
 
 export default function UserSettingsPage() {
   const loggedIn = useRequireUserAuth();
   const { user } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState({
     firstName: '',
     lastName: '',
@@ -22,6 +27,8 @@ export default function UserSettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('edit-profile');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,6 +100,29 @@ export default function UserSettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setDeleteLoading(true);
+      const response = await deleteAccount();
+      
+      if (response.success) {
+        // Clear user data from Redux store
+        dispatch(logout());
+        
+        // Redirect to home page
+        router.push('/');
+      } else {
+        throw new Error(response.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case 'edit-profile':
@@ -117,11 +147,44 @@ export default function UserSettingsPage() {
           </div>
         );
       
-      case 'my-account':
+      case 'profile':
         return (
           <div className="bg-white rounded-2xl p-6">
-            <h2 className="text-2xl font-bold text-primary mb-6">My Account</h2>
-            <p className="text-[#6b7280]">Account settings coming soon...</p>
+            <h2 className="text-2xl font-bold text-primary mb-6">Profile Settings</h2>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Account Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <p className="text-gray-900">{userProfile.firstName} {userProfile.lastName}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <p className="text-gray-900">{userProfile.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <p className="text-gray-900">{userProfile.phone || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4 text-red-600">Danger Zone</h3>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm text-red-700 mb-4">
+                    Once you delete your account, there is no going back. Please be certain.
+                  </p>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    Delete Weave Account
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         );
       
@@ -156,6 +219,13 @@ export default function UserSettingsPage() {
       >
         {renderContent()}
       </SettingsLayout>
+      
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        loading={deleteLoading}
+      />
     </MainLayout>
   );
 } 

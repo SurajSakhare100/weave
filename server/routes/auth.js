@@ -8,7 +8,8 @@ import {
   updateUserProfile,
   registerVendor,
   loginVendor,
-  logoutVendor
+  logoutVendor,
+  deleteAccount
 } from '../controllers/authController.js';
 import { protect, vendorAuth } from '../middleware/auth.js';
 import { validateUserRegistration, validateUserLogin, validateVendorRegistration, validateVendorLogin } from '../middleware/validation.js';
@@ -24,5 +25,8 @@ router
 router.post('/vendor/register', validateVendorRegistration, registerVendor);
 router.post('/vendor/login', validateVendorLogin, loginVendor);
 router.post('/vendor/logout', vendorAuth, logoutVendor);
+
+// Delete account route
+router.delete('/account', protect, deleteAccount);
 
 export default router; 

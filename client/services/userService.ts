@@ -80,4 +80,9 @@ export async function deleteUser(id: string) {
 export async function getUserStats() {
   const res = await api.get('/users/stats');
   return res.data;
+}
+
+export async function deleteAccount() {
+  const res = await api.delete('/auth/account');
+  return res.data;
 } 
