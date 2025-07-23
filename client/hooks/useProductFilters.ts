@@ -49,11 +49,11 @@ const useProductFilters = (): UseProductFiltersReturn => {
   });
 
   const [openFilters, setOpenFilters] = useState<{ [key: string]: boolean }>({ 
-    category: true, 
-    availability: true, 
-    size: true, 
-    price: true, 
-    color: true 
+    category: false, 
+    availability: false, 
+    size: false, 
+    price: false, 
+    color: false 
   });
 
   const updateQuery = useCallback((newFilters: typeof filters) => {
