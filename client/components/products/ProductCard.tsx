@@ -73,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-<div className="p-4  rounded-2xl inline-flex flex-col justify-start items-center gap-5 transition-shadow duration-300 group w-full">
+<div className="p-4 rounded-2xl inline-flex flex-col justify-start items-center gap-5 transition-shadow duration-300 group w-full">
   <Link href={`/products/${product._id}`} className="w-full">
     {/* Product Image Container */}
     <div className="relative aspect-[4/3] w-full bg-[#faf5f2] rounded-xl overflow-hidden">

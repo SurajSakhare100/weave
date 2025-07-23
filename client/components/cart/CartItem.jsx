@@ -10,13 +10,13 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
 
   return (
     <div className={`flex items-center rounded-2xl border-2 border-[#FFF6EF] gap-8 overflow-hidden ${isUpdating ? 'opacity-50' : ''}`}>
-      <div className="flex-shrink-0 flex items-center justify-center bg-[#FFF6EF] h-full p-4" >
+      <div className="flex-shrink-0 flex items-center aspect-square justify-center bg-[#FFF6EF] h-full p-4" >
         <Image 
           src={productImage} 
           alt={productName} 
           width={120} 
           height={120} 
-          className="rounded-md object-cover"
+          className=" rounded-md object-contain"
         />
       </div>
       <div className="flex items-center justify-between gap-4 p-4 w-full">
