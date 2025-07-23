@@ -4,14 +4,14 @@ import { Star } from 'lucide-react';
 const testimonials = [
   {
     name: 'User Name',
-    image: 'https://placehold.co/291x314',
+    image: './landing/testimonial_1.png',
     rating: 5,
     text: `Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
       when an unknown printer took a galley of type and scrambled it to make a type specimen book.`,
   },
   {
     name: 'User Name',
-    image: 'https://placehold.co/291x314',
+    image: './landing/testimonial.png',
     rating: 5,
     text: `Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
       when an unknown printer took a galley of type and scrambled it to make a type specimen book.`,
