@@ -210,7 +210,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
     const skip = (page - 1) * limit;
 
     const orders = await Order.find({ user: req.user._id })
-      .populate('orderItems.productId', 'name price files')
+      .populate('orderItems.productId', 'name price files images')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit);

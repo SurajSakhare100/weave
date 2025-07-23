@@ -32,12 +32,12 @@ interface AddressCardProps {
   submitting?: boolean;
 }
 
-const AddressCard: React.FC<AddressCardProps> = ({ 
-  address, 
+const AddressCard: React.FC<AddressCardProps> = ({
+  address,
   isSelected = false,
   onSelect,
-  onEdit, 
-  onDelete, 
+  onEdit,
+  onDelete,
   onSetDefault,
   showActions = false,
   handleContinue,
@@ -46,21 +46,19 @@ const AddressCard: React.FC<AddressCardProps> = ({
   const addressId = address._id || address.id;
 
   return (
-          <div className={`rounded-xl  p-6 transition-all duration-200 ${
-        isSelected 
-          ? 'bg-bg-tertiary' 
-          : 'bg-white '
+    <div className={`rounded-xl  p-6 transition-all duration-200 ${isSelected
+        ? 'bg-bg-tertiary'
+        : 'bg-white '
       }`}>
       <div className="flex items-start space-x-4">
         {/* Radio Button */}
         <div className="flex-shrink-0 mt-1">
           <button
             onClick={onSelect}
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-              isSelected 
-                ? 'border-primary ' 
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                ? 'border-primary '
                 : 'border-primary '
-            }`}
+              }`}
             aria-label={`Select ${address.firstName} ${address.lastName}'s address`}
           >
             {isSelected && (
