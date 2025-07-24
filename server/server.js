@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
-import { initializeScheduler } from './utils/scheduler.js';
+import { initializeScheduler, triggerScheduler } from './utils/scheduler.js';
 
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
@@ -78,6 +78,38 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Scheduler health check endpoint
+app.get('/health/scheduler', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Scheduler health check',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    scheduler: 'active'
+  });
+});
+
+// Manual trigger endpoint for testing scheduler (only in development)
+if (process.env.NODE_ENV === 'development') {
+  app.post('/api/test/scheduler', async (req, res) => {
+    try {
+      await triggerScheduler();
+      res.status(200).json({
+        status: 'success',
+        message: 'Scheduler triggered manually',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Manual scheduler trigger failed:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to trigger scheduler',
+        error: error.message
+      });
+    }
+  });
+}
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -100,7 +132,11 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  initializeScheduler();
+  
+  // Initialize scheduler after server is ready
+  initializeScheduler().catch(error => {
+    console.error('Failed to initialize scheduler:', error);
+  });
 });
 
 process.on('SIGTERM', () => {

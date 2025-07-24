@@ -7,18 +7,15 @@ import Product from '../models/Product.js';
 const checkAndPublishScheduledProducts = async () => {
   try {
     const now = new Date();
-    const currentTime = now.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    const currentDate = now.toISOString().split('T')[0];
+    console.log(`[Scheduler] Checking for scheduled products at ${now.toISOString()}`);
 
     // Find all scheduled products that are pending
     const scheduledProducts = await Product.find({
       isScheduled: true,
       scheduleStatus: 'pending'
     });
+
+    console.log(`[Scheduler] Found ${scheduledProducts.length} scheduled products to check`);
 
     const productsToPublish = [];
 
@@ -29,6 +26,7 @@ const checkAndPublishScheduledProducts = async () => {
         const scheduledTime = product.scheduledPublishTime;
         
         if (!scheduledDate || !scheduledTime) {
+          console.log(`[Scheduler] Product ${product._id} missing date or time, skipping`);
           continue;
         }
 
@@ -62,19 +60,25 @@ const checkAndPublishScheduledProducts = async () => {
         }
 
         if (isNaN(scheduledDateTime.getTime())) {
+          console.log(`[Scheduler] Product ${product._id} has invalid datetime, skipping`);
           continue;
         }
+
+        console.log(`[Scheduler] Product ${product._id} scheduled for ${scheduledDateTime.toISOString()}, current time: ${now.toISOString()}`);
 
         // Check if the scheduled time has passed
         if (scheduledDateTime <= now) {
           productsToPublish.push(product);
+          console.log(`[Scheduler] Product ${product._id} ready to publish`);
         }
       } catch (error) {
-        // Silent error handling for individual products
+        console.error(`[Scheduler] Error processing product ${product._id}:`, error);
       }
     }
 
     if (productsToPublish.length > 0) {
+      console.log(`[Scheduler] Publishing ${productsToPublish.length} products`);
+      
       // Update products to published status
       const result = await Product.updateMany(
         {
@@ -89,6 +93,10 @@ const checkAndPublishScheduledProducts = async () => {
           available: 'true'
         }
       );
+      
+      console.log(`[Scheduler] Successfully published ${result.modifiedCount} products`);
+    } else {
+      console.log('[Scheduler] No products ready to publish');
     }
   } catch (error) {
     console.error('[Scheduler] Error in scheduled product publishing:', error);
@@ -98,20 +106,51 @@ const checkAndPublishScheduledProducts = async () => {
 /**
  * Initialize the scheduler
  */
-export const initializeScheduler = () => {
-  // Run every minute to check for products to publish
-  const task = cron.schedule('* * * * *', () => {
+export const initializeScheduler = async () => {
+  try {
+    console.log('[Scheduler] Initializing scheduler...');
+    
+    // Check if database is connected
+    const mongoose = await import('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      console.log('[Scheduler] Database not connected, waiting...');
+      // Wait for database connection
+      mongoose.connection.once('connected', () => {
+        console.log('[Scheduler] Database connected, starting scheduler...');
+        startScheduler();
+      });
+      return;
+    }
+    
+    startScheduler();
+    
+  } catch (error) {
+    console.error('[Scheduler] Failed to initialize scheduler:', error);
+  }
+};
+
+const startScheduler = () => {
+  try {
+    // Run every minute to check for products to publish
+    const task = cron.schedule('* * * * *', async () => {
+      console.log('[Scheduler] Running scheduled check at:', new Date().toISOString());
+      await checkAndPublishScheduledProducts();
+    }, {
+      scheduled: true,
+      timezone: "UTC"
+    });
+
+    // Start the task
+    task.start();
+    console.log('[Scheduler] Cron job started successfully');
+
+    // Run an initial check
+    console.log('[Scheduler] Running initial check...');
     checkAndPublishScheduledProducts();
-  }, {
-    scheduled: true,
-    timezone: "UTC"
-  });
-
-  // Start the task
-  task.start();
-
-  // Run an initial check
-  checkAndPublishScheduledProducts();
+    
+  } catch (error) {
+    console.error('[Scheduler] Failed to start scheduler:', error);
+  }
 };
 
 /**
