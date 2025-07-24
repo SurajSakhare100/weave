@@ -64,6 +64,15 @@ export interface DraftProduct {
   lastEdited?: string;
 }
 
+export interface ScheduledProduct extends Product {
+  scheduledDate: string;
+  lastEdited: string;
+  isScheduled: boolean;
+  scheduledPublishDate: string;
+  scheduledPublishTime: string;
+  scheduleStatus: 'pending' | 'published' | 'cancelled';
+}
+
 export interface ProductManagementState {
   products: ReleasedProduct[];
   loading: boolean;

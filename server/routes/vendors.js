@@ -18,7 +18,12 @@ import {
   getVendorDraftProducts,
   unpublishVendorProducts,
   deleteVendorProducts,
-  publishVendorProducts
+  publishVendorProducts,
+  getVendorScheduledProducts,
+  scheduleVendorProducts,
+  rescheduleVendorProducts,
+  cancelScheduledProducts,
+  publishScheduledProducts
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -33,6 +38,7 @@ import {
 import { protect, admin, vendorAuth } from '../middleware/auth.js';
 import { handleMultipleUpload } from '../middleware/upload.js';
 
+
 const router = express.Router();
 
 router.get('/profile', vendorAuth, getVendorProfile);
@@ -46,6 +52,15 @@ router.get('/products/released', vendorAuth, validatePagination, getVendorReleas
 
 // New route for draft products
 router.get('/products/drafts', vendorAuth, validatePagination, getVendorDraftProducts);
+
+// New routes for scheduled products
+router.get('/products/scheduled', vendorAuth, validatePagination, getVendorScheduledProducts);
+router.post('/products/schedule', vendorAuth, scheduleVendorProducts);
+router.put('/products/reschedule', vendorAuth, rescheduleVendorProducts);
+router.post('/products/cancel-schedule', vendorAuth, cancelScheduledProducts);
+router.post('/products/publish-scheduled', vendorAuth, publishScheduledProducts);
+
+
 
 // Bulk operations for products
 router.post('/products/unpublish', vendorAuth, unpublishVendorProducts);

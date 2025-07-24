@@ -5,9 +5,7 @@ import Order from '../models/Order.js';
 import Review from '../models/Review.js';
 import { createVendorProduct } from '../helpers/vendorHelpers.js';
 
-// @desc    Get vendor profile
-// @route   GET /api/vendors/profile
-// @access  Private (Vendor)
+
 export const getVendorProfile = asyncHandler(async (req, res) => {
   try {
     const vendor = await Vendor.findById(req.vendor._id).select('-password');
@@ -26,9 +24,7 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update vendor profile
-// @route   PUT /api/vendors/profile
-// @access  Private (Vendor)
+
 export const updateVendorProfile = asyncHandler(async (req, res) => {
   const vendor = await Vendor.findById(req.vendor._id);
 
@@ -73,9 +69,7 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get vendor dashboard
-// @route   GET /api/vendors/dashboard
-// @access  Private (Vendor)
+
 export const getVendorDashboard = asyncHandler(async (req, res) => {
   const vendorId = req.vendor._id;
 
@@ -156,9 +150,7 @@ export const getVendorDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get all vendors (Admin)
-// @route   GET /api/vendors
-// @access  Private/Admin
+
 export const getVendors = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
@@ -199,9 +191,7 @@ export const getVendors = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get vendor by ID (Admin)
-// @route   GET /api/vendors/:id
-// @access  Private/Admin
+
 export const getVendorById = asyncHandler(async (req, res) => {
   const vendor = await Vendor.findById(req.params.id).select('-password');
 
@@ -216,9 +206,7 @@ export const getVendorById = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update vendor (Admin)
-// @route   PUT /api/vendors/:id
-// @access  Private/Admin
+
 export const updateVendor = asyncHandler(async (req, res) => {
   const vendor = await Vendor.findById(req.params.id);
 
@@ -264,9 +252,7 @@ export const updateVendor = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Delete vendor (Admin)
-// @route   DELETE /api/vendors/:id
-// @access  Private/Admin
+
 export const deleteVendor = asyncHandler(async (req, res) => {
   const vendor = await Vendor.findById(req.params.id);
 
@@ -290,9 +276,7 @@ export const deleteVendor = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get vendor products (Admin)
-// @route   GET /api/vendors/:id/products
-// @access  Private/Admin
+
 export const getVendorProducts = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -318,9 +302,7 @@ export const getVendorProducts = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get vendor orders (Admin)
-// @route   GET /api/vendors/:id/orders
-// @access  Private/Admin
+
 export const getVendorOrders = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -353,9 +335,7 @@ export const getVendorOrders = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get vendor statistics (Admin)
-// @route   GET /api/vendors/stats
-// @access  Private/Admin
+
 export const getVendorStats = asyncHandler(async (req, res) => {
   const { period = '30' } = req.query;
   const days = parseInt(period);
@@ -1081,6 +1061,348 @@ export const publishVendorProducts = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: `${result.modifiedCount} products published successfully`,
+    data: {
+      modifiedCount: result.modifiedCount
+    }
+  });
+}); 
+
+// @desc    Get vendor scheduled products
+// @route   GET /api/vendors/products/scheduled
+// @access  Private (Vendor)
+export const getVendorScheduledProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const search = req.query.search || '';
+
+  // Build filter
+  const filter = {
+    vendorId,
+    isScheduled: true,
+    scheduleStatus: 'pending'
+  };
+
+  if (search) {
+    filter.name = { $regex: search, $options: 'i' };
+  }
+
+  // Get total count
+  const total = await Product.countDocuments(filter);
+
+  // Get scheduled products
+  const products = await Product.find(filter)
+    .sort({ scheduledPublishDate: 1, scheduledPublishTime: 1 })
+    .skip(skip)
+    .limit(limit);
+
+  // Format products with Cloudinary images
+  const formattedProducts = products.map((product) => {
+    // Get primary image from Cloudinary images array
+    let primaryImageUrl = '/products/product.png'; // fallback
+    let allImages = [];
+    
+    if (product.images && product.images.length > 0) {
+      // Use Cloudinary images
+      allImages = product.images.map(img => img.url);
+      const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+      primaryImageUrl = primaryImage.url;
+    } else if (product.files && product.files.length > 0) {
+      // Fallback to legacy files field
+      allImages = product.files;
+      primaryImageUrl = product.files[0];
+    }
+
+    // Format scheduled date
+    const scheduledDate = product.scheduledPublishDate ? 
+      new Date(product.scheduledPublishDate).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      }) : '';
+
+    // Format last edited date
+    const lastEdited = product.updatedAt ? 
+      new Date(product.updatedAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }) : '3D Product';
+
+    return {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      mrp: product.mrp,
+      status: product.status,
+      files: allImages,
+      primaryImage: primaryImageUrl,
+      available: product.available,
+      stock: product.stock,
+      colors: product.colors,
+      totalReviews: product.totalReviews || 0,
+      averageRating: product.averageRating || 0,
+      discount: product.discount,
+      vendorId: product.vendorId,
+      vendor: product.vendor,
+      description: product.description,
+      pickup_location: product.pickup_location,
+      return: product.return,
+      cancellation: product.cancellation,
+      category: product.category,
+      variant: product.variant,
+      variantDetails: product.variantDetails,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      __v: product.__v,
+      slug: product.slug,
+      lastEdited: lastEdited,
+      isScheduled: product.isScheduled,
+      scheduledPublishDate: product.scheduledPublishDate,
+      scheduledPublishTime: product.scheduledPublishTime,
+      scheduleStatus: product.scheduleStatus,
+      scheduledDate: scheduledDate
+    };
+  });
+
+  res.json({
+    success: true,
+    data: {
+      products: formattedProducts,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Schedule products for publishing
+// @route   POST /api/vendors/products/schedule
+// @access  Private (Vendor)
+export const scheduleVendorProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds, scheduledDate, scheduledTime } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  if (!scheduledDate || !scheduledTime) {
+    res.status(400);
+    throw new Error('Scheduled date and time are required');
+  }
+
+  // Validate that scheduled date is in the future
+  const scheduledDateTime = new Date(`${scheduledDate} ${scheduledTime}`);
+  const now = new Date();
+  
+  if (scheduledDateTime <= now) {
+    res.status(400);
+    throw new Error('Scheduled date and time must be in the future');
+  }
+
+  // Verify all products belong to the vendor
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found or do not belong to you');
+  }
+
+  // Update products to scheduled status
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId
+    },
+    {
+      isScheduled: true,
+      scheduledPublishDate: scheduledDate,
+      scheduledPublishTime: scheduledTime,
+      scheduleStatus: 'pending',
+      status: 'scheduled'
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} products scheduled successfully`,
+    data: {
+      modifiedCount: result.modifiedCount,
+      scheduledDate,
+      scheduledTime
+    }
+  });
+});
+
+// @desc    Reschedule products
+// @route   PUT /api/vendors/products/reschedule
+// @access  Private (Vendor)
+export const rescheduleVendorProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds, scheduledDate, scheduledTime } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  if (!scheduledDate || !scheduledTime) {
+    res.status(400);
+    throw new Error('Scheduled date and time are required');
+  }
+
+  // Validate that scheduled date is in the future
+  const scheduledDateTime = new Date(`${scheduledDate} ${scheduledTime}`);
+  const now = new Date();
+  
+  if (scheduledDateTime <= now) {
+    res.status(400);
+    throw new Error('Scheduled date and time must be in the future');
+  }
+
+  // Verify all products belong to the vendor and are scheduled
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId,
+    isScheduled: true,
+    scheduleStatus: 'pending'
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found, do not belong to you, or are not scheduled');
+  }
+
+  // Update products with new schedule
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId,
+      isScheduled: true,
+      scheduleStatus: 'pending'
+    },
+    {
+      scheduledPublishDate: scheduledDate,
+      scheduledPublishTime: scheduledTime
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} products rescheduled successfully`,
+    data: {
+      modifiedCount: result.modifiedCount,
+      scheduledDate,
+      scheduledTime
+    }
+  });
+});
+
+// @desc    Cancel scheduled products
+// @route   POST /api/vendors/products/cancel-schedule
+// @access  Private (Vendor)
+export const cancelScheduledProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  // Verify all products belong to the vendor and are scheduled
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId,
+    isScheduled: true,
+    scheduleStatus: 'pending'
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found, do not belong to you, or are not scheduled');
+  }
+
+  // Update products to cancel scheduling
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId,
+      isScheduled: true,
+      scheduleStatus: 'pending'
+    },
+    {
+      isScheduled: false,
+      scheduledPublishDate: null,
+      scheduledPublishTime: null,
+      scheduleStatus: 'cancelled',
+      status: 'draft'
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} scheduled products cancelled successfully`,
+    data: {
+      modifiedCount: result.modifiedCount
+    }
+  });
+});
+
+// @desc    Publish scheduled products immediately
+// @route   POST /api/vendors/products/publish-scheduled
+// @access  Private (Vendor)
+export const publishScheduledProducts = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productIds } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    res.status(400);
+    throw new Error('Product IDs are required');
+  }
+
+  // Verify all products belong to the vendor and are scheduled
+  const products = await Product.find({
+    _id: { $in: productIds },
+    vendorId,
+    isScheduled: true,
+    scheduleStatus: 'pending'
+  });
+
+  if (products.length !== productIds.length) {
+    res.status(400);
+    throw new Error('Some products not found, do not belong to you, or are not scheduled');
+  }
+
+  // Update products to published status
+  const result = await Product.updateMany(
+    {
+      _id: { $in: productIds },
+      vendorId,
+      isScheduled: true,
+      scheduleStatus: 'pending'
+    },
+    {
+      isScheduled: false,
+      scheduledPublishDate: null,
+      scheduledPublishTime: null,
+      scheduleStatus: 'published',
+      status: 'active',
+      available: 'true'
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `${result.modifiedCount} scheduled products published successfully`,
     data: {
       modifiedCount: result.modifiedCount
     }

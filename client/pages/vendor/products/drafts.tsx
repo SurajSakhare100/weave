@@ -134,7 +134,7 @@ export default function VendorDraftsPage() {
     setSearchQuery(query);
   };
 
-  if (loading ) {
+  if (loading) {
     return (
       <VendorLayout>
         <div className="flex items-center justify-center h-64">
@@ -144,88 +144,48 @@ export default function VendorDraftsPage() {
     );
   }
 
-  if (error && products.length === 0) {
-    return (  
-      <VendorLayout>
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-[#3475A6]">Drafts</h1>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button 
-                variant="vendorPrimary"
-                onClick={() => loadProducts()}
-              >
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
-      </VendorLayout>
-    );
-  }
-
   return (
     <VendorLayout>
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#3475A6]">Drafts</h1>
-        </div>
+      <div className="p-6 bg-[#f4f8fb] min-h-screen">
+        <ProductHeader
+          title="Drafts"
+          subtitle="Products"
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
 
-        {/* Products Section */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <ProductHeader
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
-
-          {/* Products Display */}
-          <div className="p-6">
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#3475A6]"></div>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">You don&apos;t have any draft products.</p>
-                <p className="text-gray-400 mt-2">Create a new product to get started.</p>
-              </div>
-            ) : (
-              <>
-                {viewMode === 'list' ? (
-                  <DraftsListView
-                    products={products}
-                    selectedProducts={selectedProducts}
-                    onProductSelect={handleProductSelect}
-                    onSelectAll={handleSelectAll}
-                    showContextMenu={showContextMenu}
-                    setShowContextMenu={setShowContextMenu}
-                  />
-                ) : (
-                  <DraftsGridView
-                    products={products}
-                    selectedProducts={selectedProducts}
-                    onProductSelect={handleProductSelect}
-                    showContextMenu={showContextMenu}
-                    setShowContextMenu={setShowContextMenu}
-                  />
-                )}
-              </>
-            )}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-800">{error}</p>
           </div>
+        )}
 
-          {/* Action Bar */}
-          <DraftsActionBar
-            selectedCount={selectedProducts.length}
-            onDelete={handleDelete}
-            onPublish={handlePublish}
+        {viewMode === 'list' ? (
+          <DraftsListView
+            products={products}
+            selectedProducts={selectedProducts}
+            onProductSelect={handleProductSelect}
+            onSelectAll={handleSelectAll}
+            showContextMenu={showContextMenu}
+            setShowContextMenu={setShowContextMenu}
           />
-        </div>
+        ) : (
+          <DraftsGridView
+            products={products}
+            selectedProducts={selectedProducts}
+            onProductSelect={handleProductSelect}
+            showContextMenu={showContextMenu}
+            setShowContextMenu={setShowContextMenu}
+          />
+        )}
+
+        <DraftsActionBar
+          selectedCount={selectedProducts.length}
+          onPublish={handlePublish}
+          onDelete={handleDelete}
+        />
       </div>
     </VendorLayout>
   );

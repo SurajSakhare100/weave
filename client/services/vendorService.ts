@@ -272,6 +272,46 @@ export async function publishVendorProducts(productIds: string[]) {
   return res.data;
 }
 
+// Scheduled Products API functions
+export async function getVendorScheduledProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  const res = await api.get('/vendors/products/scheduled', { params });
+  return res.data;
+}
+
+export async function scheduleVendorProducts(data: {
+  productIds: string[];
+  scheduledDate: string;
+  scheduledTime: string;
+}) {
+  const res = await api.post('/vendors/products/schedule', data);
+  return res.data;
+}
+
+export async function rescheduleVendorProducts(data: {
+  productIds: string[];
+  scheduledDate: string;
+  scheduledTime: string;
+}) {
+  const res = await api.put('/vendors/products/reschedule', data);
+  return res.data;
+}
+
+export async function cancelScheduledProducts(productIds: string[]) {
+  const res = await api.post('/vendors/products/cancel-schedule', { productIds });
+  return res.data;
+}
+
+export async function publishScheduledProducts(productIds: string[]) {
+  const res = await api.post('/vendors/products/publish-scheduled', { productIds });
+  return res.data;
+}
+
+
+
 export async function deleteVendorProducts(productIds: string[]) {
   const res = await api.delete('/vendors/products/bulk', { data: { productIds } });
   return res.data;

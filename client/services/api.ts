@@ -40,16 +40,6 @@ api.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          if (typeof window !== 'undefined') {
-            Cookies.remove('userToken');
-            Cookies.remove('vendorToken');
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/vendor/') && currentPath !== '/vendor/login') {
-              window.location.href = '/vendor/login';
-            } else if (!currentPath.includes('/vendor/') && currentPath !== '/login') {
-              window.location.href = '/login';
-            }
-          }
           break;
         case 403:
           break;

@@ -138,3 +138,17 @@ ecosystem.config.js
 # Backup files
 *.bak
 *.backup 
+
+/seed.js
+
+# MongoDB files
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
+*.log.*.*.*.*.*
+
+seed.js
+
+/seed.js

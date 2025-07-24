@@ -141,7 +141,7 @@ const ProductSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'draft'],
+        enum: ['active', 'inactive', 'draft', 'scheduled'],
         default: 'active',
     },
     currVariantSize: String,
@@ -153,6 +153,25 @@ const ProductSchema = new mongoose.Schema({
         materials: { type: String },
     },
     tags: [String],
+    
+    // Scheduling fields
+    isScheduled: {
+        type: Boolean,
+        default: false,
+    },
+    scheduledPublishDate: {
+        type: Date,
+        default: null,
+    },
+    scheduledPublishTime: {
+        type: String,
+        default: null,
+    },
+    scheduleStatus: {
+        type: String,
+        enum: ['pending', 'published', 'cancelled'],
+        default: 'pending',
+    },
 }, { timestamps: true });
 
 // Indexes for better query performance
@@ -162,6 +181,9 @@ ProductSchema.index({ vendorId: 1 });
 ProductSchema.index({ available: 1 });
 ProductSchema.index({ colors: 1 });
 ProductSchema.index({ status: 1 });
+ProductSchema.index({ isScheduled: 1 });
+ProductSchema.index({ scheduledPublishDate: 1 });
+ProductSchema.index({ scheduleStatus: 1 });
 
 // Virtual for primary image
 ProductSchema.virtual('primaryImage').get(function() {

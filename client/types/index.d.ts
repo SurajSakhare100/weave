@@ -34,7 +34,7 @@ export interface Product {
     colors: string[];
     totalReviews: number;
     averageRating: number;
-    status: 'active' | 'inactive' | 'draft';
+    status: 'active' | 'inactive' | 'draft' | 'scheduled';
     currVariantSize?: string
     createdAt: string
     updatedAt: string
@@ -50,6 +50,12 @@ export interface Product {
     salePrice?: number;
     sizes?: string[];
     tags?: string[];
+    // Scheduling fields
+    isScheduled?: boolean;
+    scheduledPublishDate?: string;
+    scheduledPublishTime?: string;
+    scheduleStatus?: 'pending' | 'published' | 'cancelled';
+    scheduledDate?: string; // Formatted date for display
   }
 
 // Add this above Product interface
