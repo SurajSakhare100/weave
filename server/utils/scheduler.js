@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
 /**
@@ -111,7 +112,6 @@ export const initializeScheduler = async () => {
     console.log('[Scheduler] Initializing scheduler...');
     
     // Check if database is connected
-    const mongoose = await import('mongoose');
     if (mongoose.connection.readyState !== 1) {
       console.log('[Scheduler] Database not connected, waiting...');
       // Wait for database connection
