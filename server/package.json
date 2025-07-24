@@ -9,9 +9,7 @@
     "dev": "nodemon server.js",
     "build": "echo 'No build step required for Node.js'",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:server": "node test-server.js",
-    "test:cloudinary": "node test-cloudinary.js",
+    "test:watch": "jest --watch"
 
   },
   "dependencies": {
