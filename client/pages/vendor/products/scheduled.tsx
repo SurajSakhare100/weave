@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { toast } from 'react-hot-toast';
+import { isVendorAuthenticated } from '@/utils/vendorAuth';
 import { 
   Calendar, 
   Clock, 
@@ -44,8 +45,6 @@ interface PaginationData {
 
 export default function VendorScheduledPage() {
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.vendor);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [scheduledProducts, setScheduledProducts] = useState<ScheduledProduct[]>([]);
   const [draftProducts, setDraftProducts] = useState<DraftProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,13 +66,13 @@ export default function VendorScheduledPage() {
   const [reschedulingLoading, setReschedulingLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Check authentication
+    if (!isVendorAuthenticated()) {
       router.push('/vendor/login');
       return;
     }
-    setIsInitialized(true);
     loadProducts();
-  }, [isAuthenticated, router]);
+  }, [router]);
 
   // Update time remaining every minute for scheduled products
   useEffect(() => {
@@ -439,9 +438,7 @@ export default function VendorScheduledPage() {
     }))
   ];
 
-  if (!isInitialized) {
-    return null;
-  }
+
 
   if (loading) {
     return (
