@@ -7,8 +7,12 @@ import Product from '../models/Product.js';
  */
 const checkAndPublishScheduledProducts = async () => {
   try {
+    // Get current time in Indian Standard Time (IST)
     const now = new Date();
-    console.log(`[Scheduler] Checking for scheduled products at ${now.toISOString()}`);
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istTime = new Date(now.getTime() + istOffset);
+    
+    console.log(`[Scheduler] Checking for scheduled products at ${istTime.toISOString()} (IST)`);
 
     // Find all scheduled products that are pending
     const scheduledProducts = await Product.find({
@@ -31,15 +35,16 @@ const checkAndPublishScheduledProducts = async () => {
           continue;
         }
 
-        // Create scheduled datetime
+        // Create scheduled datetime in IST
         let scheduledDateTime;
         
         // Convert scheduledDate to string if it's a Date object
         const dateStr = scheduledDate instanceof Date ? scheduledDate.toISOString().split('T')[0] : String(scheduledDate);
         
         if (dateStr.includes('T')) {
-          // ISO format
-          scheduledDateTime = new Date(scheduledDate);
+          // ISO format - convert to IST
+          const utcDate = new Date(scheduledDate);
+          scheduledDateTime = new Date(utcDate.getTime() + istOffset);
         } else {
           // YYYY-MM-DD format, need to parse time
           let timeStr = scheduledTime.trim();
@@ -57,7 +62,12 @@ const checkAndPublishScheduledProducts = async () => {
             timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           }
           
-          scheduledDateTime = new Date(`${dateStr}T${timeStr}:00`);
+          // Create date in IST
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const [hour, minute] = timeStr.split(':').map(Number);
+          
+          // Create date in local timezone (assuming server is in IST or similar)
+          scheduledDateTime = new Date(year, month - 1, day, hour, minute, 0);
         }
 
         if (isNaN(scheduledDateTime.getTime())) {
@@ -65,10 +75,10 @@ const checkAndPublishScheduledProducts = async () => {
           continue;
         }
 
-        console.log(`[Scheduler] Product ${product._id} scheduled for ${scheduledDateTime.toISOString()}, current time: ${now.toISOString()}`);
+        console.log(`[Scheduler] Product ${product._id} scheduled for ${scheduledDateTime.toISOString()} (IST), current time: ${istTime.toISOString()} (IST)`);
 
-        // Check if the scheduled time has passed
-        if (scheduledDateTime <= now) {
+        // Check if the scheduled time has passed (compare in IST)
+        if (scheduledDateTime <= istTime) {
           productsToPublish.push(product);
           console.log(`[Scheduler] Product ${product._id} ready to publish`);
         }
@@ -133,16 +143,19 @@ const startScheduler = () => {
   try {
     // Run every minute to check for products to publish
     const task = cron.schedule('* * * * *', async () => {
-      console.log('[Scheduler] Running scheduled check at:', new Date().toISOString());
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istTime = new Date(now.getTime() + istOffset);
+      console.log('[Scheduler] Running scheduled check at:', istTime.toISOString(), '(IST)');
       await checkAndPublishScheduledProducts();
     }, {
       scheduled: true,
-      timezone: "UTC"
+      timezone: "Asia/Kolkata" // Indian Standard Time
     });
 
     // Start the task
     task.start();
-    console.log('[Scheduler] Cron job started successfully');
+    console.log('[Scheduler] Cron job started successfully with IST timezone');
 
     // Run an initial check
     console.log('[Scheduler] Running initial check...');

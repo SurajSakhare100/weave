@@ -1196,11 +1196,15 @@ export const scheduleVendorProducts = asyncHandler(async (req, res) => {
     throw new Error('Scheduled date and time are required');
   }
 
-  // Validate that scheduled date is in the future
+  // Validate that scheduled date is in the future (using IST)
   const scheduledDateTime = new Date(`${scheduledDate} ${scheduledTime}`);
   const now = new Date();
   
-  if (scheduledDateTime <= now) {
+  // Convert to IST for comparison
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+  const istNow = new Date(now.getTime() + istOffset);
+  
+  if (scheduledDateTime <= istNow) {
     res.status(400);
     throw new Error('Scheduled date and time must be in the future');
   }
@@ -1259,11 +1263,15 @@ export const rescheduleVendorProducts = asyncHandler(async (req, res) => {
     throw new Error('Scheduled date and time are required');
   }
 
-  // Validate that scheduled date is in the future
+  // Validate that scheduled date is in the future (using IST)
   const scheduledDateTime = new Date(`${scheduledDate} ${scheduledTime}`);
   const now = new Date();
   
-  if (scheduledDateTime <= now) {
+  // Convert to IST for comparison
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+  const istNow = new Date(now.getTime() + istOffset);
+  
+  if (scheduledDateTime <= istNow) {
     res.status(400);
     throw new Error('Scheduled date and time must be in the future');
   }

@@ -363,7 +363,7 @@ export default function VendorScheduledPage() {
     }
   };
 
-  // Calculate time remaining until publication
+  // Calculate time remaining until publication (using IST)
   const getTimeRemaining = (date: string, time: string) => {
     if (!date || !time) return null;
     try {
@@ -371,8 +371,10 @@ export default function VendorScheduledPage() {
       let scheduledDateTime: Date;
       
       if (date.includes('T')) {
-        // ISO format
-        scheduledDateTime = new Date(date);
+        // ISO format - convert to IST
+        const utcDate = new Date(date);
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        scheduledDateTime = new Date(utcDate.getTime() + istOffset);
       } else {
         // YYYY-MM-DD format, need to parse time
         let timeStr = time.trim();
@@ -390,15 +392,22 @@ export default function VendorScheduledPage() {
           timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         }
         
-        scheduledDateTime = new Date(`${date}T${timeStr}:00`);
+        // Create date in IST
+        const [year, month, day] = date.split('-').map(Number);
+        const [hour, minute] = timeStr.split(':').map(Number);
+        scheduledDateTime = new Date(year, month - 1, day, hour, minute, 0);
       }
       
       if (isNaN(scheduledDateTime.getTime())) {
         return null;
       }
       
+      // Get current time in IST
       const now = new Date();
-      const diff = scheduledDateTime.getTime() - now.getTime();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istNow = new Date(now.getTime() + istOffset);
+      
+      const diff = scheduledDateTime.getTime() - istNow.getTime();
       
       if (diff <= 0) return 'Due now';
       
