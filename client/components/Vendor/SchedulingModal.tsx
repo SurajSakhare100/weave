@@ -58,6 +58,19 @@ export default function SchedulingModal({
 
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return '';
+    
+    // Handle YYYY-MM-DD format without timezone conversion
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // month is 0-indexed
+      return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    
+    // Fallback for other formats
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', {
       year: 'numeric',
@@ -96,6 +109,17 @@ export default function SchedulingModal({
 
   const isSelected = (date: Date) => {
     if (!scheduledDate) return false;
+    
+    // Handle YYYY-MM-DD format comparison
+    if (scheduledDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      return dateString === scheduledDate;
+    }
+    
+    // Fallback for other formats
     return date.toDateString() === new Date(scheduledDate).toDateString();
   };
 
@@ -107,7 +131,11 @@ export default function SchedulingModal({
 
   const handleDateSelect = (date: Date) => {
     if (isPastDate(date)) return;
-    setScheduledDate(date.toISOString().split('T')[0]);
+    // Format date as YYYY-MM-DD without timezone conversion
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    setScheduledDate(`${year}-${month}-${day}`);
     setShowCalendar(false);
   };
 
