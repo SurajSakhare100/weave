@@ -11,7 +11,8 @@ import {
   getOrderStats,
   getVendorOrders,
   getVendorOrderById,
-  updateVendorOrderStatus
+  updateVendorOrderStatus,
+  getVendorOrderStats
 } from '../controllers/orderController.js';
 import {
   validateOrder,
@@ -22,15 +23,16 @@ import { protect, admin, vendorAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', protect, createOrder);
-router.get('/myorders', protect, validatePagination, getMyOrders);
-router.get('/:id', protect, validateId, getOrderById);
-router.put('/:id/pay', protect, validateId, updateOrderToPaid);
-router.put('/:id/cancel', protect, validateId, cancelOrder);
+// router.post('/', protect, createOrder);
+// router.get('/myorders', protect, validatePagination, getMyOrders);
+// router.get('/:id', protect, validateId, getOrderById);
+// router.put('/:id/pay', protect, validateId, updateOrderToPaid);
+// router.put('/:id/cancel', protect, validateId, cancelOrder);
 
 router.get('/vendor', vendorAuth, validatePagination, getVendorOrders);
 router.get('/vendor/:id', vendorAuth, validateId, getVendorOrderById);
 router.put('/vendor/:id/status', vendorAuth, validateId, updateVendorOrderStatus);
+router.get('/vendor/stats', vendorAuth, getVendorOrderStats);
 
 router.get('/', admin, validatePagination, getOrders);
 router.put('/:id/deliver', admin, validateId, updateOrderToDelivered);

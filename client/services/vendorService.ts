@@ -171,6 +171,8 @@ export async function getVendorOrderById(id: string) {
   return res.data;
 }
 
+
+
 export async function updateOrderStatus(id: string, status: string) {
   const res = await api.put(`/orders/vendor/${id}/status`, { status });
   return res.data;

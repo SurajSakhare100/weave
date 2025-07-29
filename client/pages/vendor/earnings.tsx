@@ -15,7 +15,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import VendorLayout from '@/components/Vendor/VendorLayout';
-import { getVendorEarnings, getMockVendorEarnings } from '@/services/vendorService';
+import { getVendorEarnings } from '@/services/vendorService';
 
 interface EarningsData {
   totalEarnings: number;
@@ -60,9 +60,8 @@ const VendorEarnings: React.FC = () => {
       const response = await getVendorEarnings();
       setEarningsData(response.data);
     } catch {
-      // Use mock data as fallback for development
-      const mockResponse = getMockVendorEarnings();
-      setEarningsData(mockResponse.data);
+      // Handle error
+      console.error('Error fetching earnings data');
     } finally {
       setLoading(false);
     }

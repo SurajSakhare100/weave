@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 function getAuthToken(url: string): string | undefined {
-  if (url.includes('/vendors')) {
+  if (url.includes('/vendors') || url.includes('/orders/vendor')) {
     return Cookies.get('vendorToken');
   }
   if (url.includes('/users')) {

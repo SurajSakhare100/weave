@@ -12,7 +12,6 @@ const checkAndPublishScheduledProducts = async () => {
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
     const istTime = new Date(now.getTime() + istOffset);
     
-    console.log(`[Scheduler] Checking for scheduled products at ${istTime.toISOString()} (IST)`);
 
     // Find all scheduled products that are pending
     const scheduledProducts = await Product.find({
@@ -20,7 +19,6 @@ const checkAndPublishScheduledProducts = async () => {
       scheduleStatus: 'pending'
     });
 
-    console.log(`[Scheduler] Found ${scheduledProducts.length} scheduled products to check`);
 
     const productsToPublish = [];
 
@@ -71,16 +69,13 @@ const checkAndPublishScheduledProducts = async () => {
         }
 
         if (isNaN(scheduledDateTime.getTime())) {
-          console.log(`[Scheduler] Product ${product._id} has invalid datetime, skipping`);
           continue;
         }
 
-        console.log(`[Scheduler] Product ${product._id} scheduled for ${scheduledDateTime.toISOString()} (IST), current time: ${istTime.toISOString()} (IST)`);
 
         // Check if the scheduled time has passed (compare in IST)
         if (scheduledDateTime <= istTime) {
           productsToPublish.push(product);
-          console.log(`[Scheduler] Product ${product._id} ready to publish`);
         }
       } catch (error) {
         console.error(`[Scheduler] Error processing product ${product._id}:`, error);
@@ -88,7 +83,6 @@ const checkAndPublishScheduledProducts = async () => {
     }
 
     if (productsToPublish.length > 0) {
-      console.log(`[Scheduler] Publishing ${productsToPublish.length} products`);
       
       // Update products to published status
       const result = await Product.updateMany(
@@ -105,10 +99,7 @@ const checkAndPublishScheduledProducts = async () => {
         }
       );
       
-      console.log(`[Scheduler] Successfully published ${result.modifiedCount} products`);
-    } else {
-      console.log('[Scheduler] No products ready to publish');
-    }
+    } 
   } catch (error) {
     console.error('[Scheduler] Error in scheduled product publishing:', error);
   }
@@ -119,14 +110,11 @@ const checkAndPublishScheduledProducts = async () => {
  */
 export const initializeScheduler = async () => {
   try {
-    console.log('[Scheduler] Initializing scheduler...');
     
     // Check if database is connected
     if (mongoose.connection.readyState !== 1) {
-      console.log('[Scheduler] Database not connected, waiting...');
       // Wait for database connection
       mongoose.connection.once('connected', () => {
-        console.log('[Scheduler] Database connected, starting scheduler...');
         startScheduler();
       });
       return;
@@ -146,7 +134,6 @@ const startScheduler = () => {
       const now = new Date();
       const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
       const istTime = new Date(now.getTime() + istOffset);
-      console.log('[Scheduler] Running scheduled check at:', istTime.toISOString(), '(IST)');
       await checkAndPublishScheduledProducts();
     }, {
       scheduled: true,
@@ -155,10 +142,8 @@ const startScheduler = () => {
 
     // Start the task
     task.start();
-    console.log('[Scheduler] Cron job started successfully with IST timezone');
 
     // Run an initial check
-    console.log('[Scheduler] Running initial check...');
     checkAndPublishScheduledProducts();
     
   } catch (error) {
@@ -166,9 +151,6 @@ const startScheduler = () => {
   }
 };
 
-/**
- * Manually trigger the scheduler (for testing)
- */
 export const triggerScheduler = async () => {
   await checkAndPublishScheduledProducts();
 }; 

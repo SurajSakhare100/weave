@@ -7,7 +7,12 @@ const OrderItemSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     mrp: { type: Number, required: true },
     variantSize: String,
-    image: String
+    image: String,
+    status: {
+        type: String,
+        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        default: 'pending'
+    }
 }, { _id: false });
 
 const OrderSchema = new mongoose.Schema({
@@ -37,7 +42,13 @@ const OrderSchema = new mongoose.Schema({
         status: String,
         update_time: String,
         email_address: String
-    }
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        default: 'pending'
+    },
+    cancelledAt: Date
 }, {
     timestamps: true
 });
