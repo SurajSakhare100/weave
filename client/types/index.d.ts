@@ -77,13 +77,20 @@ export interface ProductImage {
 
 // Product with reviews interface
 export interface ProductWithReviews extends Product {
+  vendorId: {
+    _id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
   reviews: Array<{
     isVerified: boolean
     _id: string;
     userId: {
       email: string
       _id: string;
-      name: string;
+      firstName: string;
+      lastName: string;
     };
     stars: 'one' | 'two' | 'three' | 'four' | 'five';
     title: string;
@@ -91,9 +98,10 @@ export interface ProductWithReviews extends Product {
     createdAt: string;
     responses?: Array<{
       _id: string;
-      userId: {
+      userId?: {
         _id: string;
-        name: string;
+        firstName: string;
+        lastName: string;
       };
       content: string;
       isVendorResponse: boolean;

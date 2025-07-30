@@ -19,8 +19,7 @@ import MainLayout from '@/components/layout/MainLayout'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import ReviewForm from '@/components/reviews/ReviewForm';
-import ReviewList from '@/components/reviews/ReviewList';
-import ReviewSummary from '@/components/reviews/ReviewSummary';
+import ReviewSection from '@/components/reviews/ReviewSection';
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -35,7 +34,7 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [showReviewForm, setShowReviewForm] = useState(false)
 
-  const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
+  const { wishlist, isAuthenticated, user } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
 
   const loadProduct = useCallback(async () => {
@@ -284,15 +283,8 @@ export default function ProductDetailPage() {
 
               {/* Price Section */}
               <div className="flex items-center flex-wrap gap-3 mt-2">
-                {product.discount > 0 && (
-                  <div className="justify-start text-[#B04848] text-3xl font-normal leading-loose">
-                    -{product.discount}%
-                  </div>
-                )}
+               
                 <div className="justify-start text-primary text-3xl font-semibold leading-7">₹{product.price}</div>
-                {product.discount > 0 && (
-                  <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-semibold">Limited Deal</span>
-                )}
                 {product.mrp > product.price && (
                   <>
                     <span className="text-sm text-gray-400 line-through">M.R.P: ₹{product.mrp}</span>
@@ -301,6 +293,10 @@ export default function ProductDetailPage() {
                     </span>
                   </>
                 )}
+                {product.discount > 0 && (
+                  <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-semibold">Limited Deal</span>
+                )}
+                
               </div>
 
               {/* Shipping Note */}
@@ -308,7 +304,7 @@ export default function ProductDetailPage() {
                 Note: We offer worldwide shipping for all orders.
               </p>
               <p className="text-sm text-gray-600">
-                Delivery expected within the next 3–4 business days
+                Delivery expected within the next 3-4 business days
               </p>
 
               {/* Buttons */}
@@ -397,7 +393,7 @@ export default function ProductDetailPage() {
             {/* Review Form Modal */}
             {showReviewForm && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                   <ReviewForm
                     productId={id as string}
                     onReviewSubmitted={() => {
@@ -410,87 +406,43 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Review Call-to-Action */}
-            <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-6 mb-8 border border-pink-100">
-              <div className="flex flex-col md:flex-row items-center justify-between">
-                <div className="text-center md:text-left mb-4 md:mb-0">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Share Your Experience
-                  </h3>
-                  <p className="text-gray-600">
-                    Help other customers by sharing your thoughts about this product
-                  </p>
-                </div>
-                {isAuthenticated ? (
-                  <button
-                    onClick={() => setShowReviewForm(true)}
-                    className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-                  >
-                    <Star className="h-5 w-5" />
-                    <span>Write a Review</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => router.push(`/login?redirect=/products/${id}`)}
-                    className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-                  >
-                    <Star className="h-5 w-5" />
-                    <span>Login to Review</span>
-                  </button>
-                )}
-              </div>
-            </div>
+           
 
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Customer Reviews</h2>
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setShowReviewForm(true)}
-                  className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors flex items-center space-x-2 font-medium shadow-md hover:shadow-lg"
-                >
-                  <Star className="h-5 w-5" />
-                  <span>Write a Review</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => router.push(`/login?redirect=/products/${id}`)}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 font-medium"
-                >
-                  <Star className="h-5 w-5" />
-                  <span>Login to Review</span>
-                </button>
-              )}
-            </div>
-
-            {/* Review Summary */}
-            <ReviewSummary
-              totalReviews={product.totalReviews}
+            {/* Review Section */}
+            <ReviewSection
+              reviews={
+                (product.reviews || []).map((review: any) => ({
+                  productId: product._id,
+                  ...review,
+                }))
+              }
               averageRating={product.averageRating}
+              totalReviews={product.totalReviews}
               ratingDistribution={
                 product.ratingDistribution 
-                  ? product.ratingDistribution.reduce((acc: { [key: number]: number }, item: { _id: string; count: number }) => {
-                      acc[parseInt(item._id)] = item.count;
+                  ? product.ratingDistribution.reduce((acc: { [key: string]: number }, item: { _id: string; count: number }) => {
+                      acc[item._id] = item.count;
                       return acc;
                     }, {})
                   : {}
               }
+              isAuthenticated={isAuthenticated}
+              vendorName={product.vendorId?.name}
+              onWriteReview={() => setShowReviewForm(true)}
+              onLogin={() => router.push(`/login?redirect=/products/${id}`)}
+              onResponse={() => {
+                window.location.reload();
+              }}
+              onEdit={(reviewId, updatedReview) => {
+                console.log('Edit review:', reviewId, updatedReview);
+                // TODO: Implement actual edit review API call
+                toast.success('Review updated successfully!');
+                window.location.reload(); 
+              }}
+              onDelete={(reviewId) => {
+                window.location.reload();
+              }}
             />
-
-            {/* Review List */}
-            <div className="mt-8">
-              <ReviewList
-                reviews={product.reviews || []}
-                onResponse={() => {
-                  window.location.reload();
-                }}
-                onEdit={() => {
-                  window.location.reload();
-                }}
-                onDelete={() => {
-                  window.location.reload();
-                }}
-              />
-            </div>
           </div>
         </div>
       </div>

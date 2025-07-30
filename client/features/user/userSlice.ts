@@ -5,7 +5,8 @@ interface UserState {
   email: string | null
   user: {
     _id?: string
-    name?: string
+    firstName?: string
+    lastName?: string
     email?: string
     avatar?: string
   } | null

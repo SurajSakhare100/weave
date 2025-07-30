@@ -33,7 +33,6 @@ const initialState: CartState = {
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
   try {
     const data = await getCart()
-    // The server returns { result: [], amount: {} }
     return data.result || []
   } catch (err: any) {
     return rejectWithValue('Could not load cart')
@@ -66,7 +65,6 @@ export const updateCartQuantity = createAsyncThunk('cart/updateCartQuantity', as
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not update cart')
     }
-    // Always refetch cart after update
     const data = await getCart()
     if (data.success === false) {
       return rejectWithValue(data.message || 'Could not load cart')

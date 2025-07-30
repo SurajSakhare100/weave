@@ -483,7 +483,7 @@ const VendorReviews = () => {
                         <div className="flex items-start space-x-4">
                           <div className="w-12 h-12 bg-[#f4f8fb] rounded-full flex items-center justify-center">
                             <span className="text-[#5A9BD8] font-semibold">
-                              {review.userId.name?.charAt(0)?.toUpperCase() || 'U'}
+                              {review?.userId?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </span>
                           </div>
                           <div className="flex-1">

@@ -212,8 +212,8 @@ export const getProductById = asyncHandler(async (req, res) => {
       proId: id, 
       isActive: true 
     })
-      .populate('userId', 'name email')
-      .populate('responses.userId', 'name email')
+      .populate('userId', 'firstName lastName email')
+      .populate('responses.userId', 'firstName lastName email')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -902,9 +902,6 @@ export const searchProducts = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Create a product review
-// @route   POST /api/products/:id/reviews
-// @access  Private (User)
 export const createProductReview = asyncHandler(async (req, res) => {
   try {
     const { stars, title, review } = req.body;
@@ -957,9 +954,6 @@ export const createProductReview = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get reviews for a product
-// @route   GET /api/products/:id/reviews
-// @access  Public
 export const getProductReviews = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -975,11 +969,12 @@ export const getProductReviews = asyncHandler(async (req, res) => {
       proId: req.params.id, 
       isActive: true 
     })
-          .populate('userId', 'name email')
+    .populate('userId', 'firstName lastName email')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
-
+    
+    
     const total = await Review.countDocuments({ 
       proId: req.params.id, 
       isActive: true 
@@ -1018,9 +1013,6 @@ export const getProductReviews = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update user's review
-// @route   PUT /api/products/:id/reviews/:reviewId
-// @access  Private (User - own review only)
 export const updateProductReview = asyncHandler(async (req, res) => {
   try {
     const { stars, title, review } = req.body;
