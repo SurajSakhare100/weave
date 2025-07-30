@@ -1,4 +1,4 @@
-import { getVendorToken, setupVendorAuthHeader } from './vendorAuth';
+import { getVendorToken } from './vendorAuth';
 import { debugAuth } from './debugAuth';
 
 /**
@@ -12,7 +12,7 @@ export const initializeVendorAuth = () => {
   
   const token = getVendorToken();
   if (token) {
-    setupVendorAuthHeader(token);
+    // Token is automatically handled by the API interceptor now
     return { isAuthenticated: true, token };
   } else {
     return { isAuthenticated: false, token: null };

@@ -171,7 +171,6 @@ export default function VendorReleasedProductsPage() {
   return (
     <VendorLayout>
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#3475A6]">Released</h1>
         </div>

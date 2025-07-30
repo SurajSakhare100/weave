@@ -304,35 +304,170 @@ export const getVendorProducts = asyncHandler(async (req, res) => {
 
 
 export const getVendorOrders = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  try {
+    const vendorId = req.vendor._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  const vendorProducts = await Product.find({ vendorId: req.params.id }).distinct('_id');
+    // Get vendor's product IDs
+    const vendorProducts = await Product.find({ vendorId }).distinct('_id');
 
-  const orders = await Order.find({
-    'orderItems.productId': { $in: vendorProducts }
-  })
-    .populate('orderItems.productId', 'name price')
-    .populate('user', 'name email')
-    .sort('-createdAt')
-    .skip(skip)
-    .limit(limit);
+    // Find orders containing vendor's products
+    const orders = await Order.find({
+      'orderItems.productId': { $in: vendorProducts }
+    })
+      .populate('orderItems.productId', 'name price images')
+      .populate('user', 'name email')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
 
-  const total = await Order.countDocuments({
-    'orderItems.productId': { $in: vendorProducts }
-  });
+    const total = await Order.countDocuments({
+      'orderItems.productId': { $in: vendorProducts }
+    });
 
-  res.json({
-    success: true,
-    data: orders,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    res.json({
+      success: true,
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get vendor orders error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Get vendor order by ID
+// @route   GET /api/vendors/orders/:id
+// @access  Private (Vendor)
+export const getVendorOrderById = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const orderId = req.params.id;
+
+    // Get vendor's product IDs
+    const vendorProducts = await Product.find({ vendorId }).distinct('_id');
+
+    // Find order and ensure it contains vendor's products
+    const order = await Order.findOne({
+      _id: orderId,
+      'orderItems.productId': { $in: vendorProducts }
+    })
+      .populate('orderItems.productId', 'name price images')
+      .populate('user', 'name email phone');
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found or does not belong to you');
     }
-  });
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Get vendor order by ID error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Update vendor order
+// @route   PUT /api/vendors/orders/:id
+// @access  Private (Vendor)
+export const updateVendorOrder = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const orderId = req.params.id;
+    const updateData = req.body;
+
+    // Get vendor's product IDs
+    const vendorProducts = await Product.find({ vendorId }).distinct('_id');
+
+    // Find order and ensure it contains vendor's products
+    const order = await Order.findOne({
+      _id: orderId,
+      'orderItems.productId': { $in: vendorProducts }
+    });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found or does not belong to you');
+    }
+
+    // Update allowed fields
+    const allowedFields = ['status', 'shippingAddress', 'notes'];
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        order[field] = updateData[field];
+      }
+    });
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Update vendor order error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Update order status
+// @route   PUT /api/vendors/orders/:id/status
+// @access  Private (Vendor)
+export const updateOrderStatus = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    if (!status) {
+      res.status(400);
+      throw new Error('Status is required');
+    }
+
+    // Get vendor's product IDs
+    const vendorProducts = await Product.find({ vendorId }).distinct('_id');
+
+    // Find order and ensure it contains vendor's products
+    const order = await Order.findOne({
+      _id: orderId,
+      'orderItems.productId': { $in: vendorProducts }
+    });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found or does not belong to you');
+    }
+
+    // Update status
+    order.status = status;
+    
+    // Update timestamps based on status
+    if (status === 'shipped') {
+      order.shippedAt = new Date();
+    } else if (status === 'delivered') {
+      order.deliveredAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 
@@ -1414,5 +1549,53 @@ export const publishScheduledProducts = asyncHandler(async (req, res) => {
     data: {
       modifiedCount: result.modifiedCount
     }
+  });
+}); 
+
+// @desc    Update a vendor's product
+// @route   PUT /api/vendors/products/:id
+// @access  Private (Vendor)
+export const updateVendorProduct = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const productId = req.params.id;
+
+  // Find the product and ensure it belongs to the vendor
+  const product = await Product.findOne({ _id: productId, vendorId });
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found or does not belong to you');
+  }
+
+  // Update fields from req.body
+  const updatableFields = [
+    'name', 'description', 'price', 'mrp', 'stock', 'available', 'colors', 'discount',
+    'pickup_location', 'return', 'cancellation', 'category', 'variant', 'variantDetails',
+    'status', 'isScheduled', 'scheduledPublishDate', 'scheduledPublishTime', 'scheduleStatus'
+  ];
+  updatableFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      product[field] = req.body[field];
+    }
+  });
+
+  // Handle file uploads (images)
+  if (req.files && req.files.length > 0) {
+    // Assume files are already uploaded and URLs are available in req.files
+    // You may need to adjust this depending on your upload middleware
+    const newImages = req.files.map(file => ({ url: file.path || file.location || file.url, is_primary: false }));
+    // Optionally, merge with existing images or replace
+    product.images = [...(product.images || []), ...newImages];
+  }
+
+  // Optionally, handle setting a primary image
+  if (req.body.primaryImageIndex !== undefined && product.images && product.images.length > 0) {
+    product.images.forEach((img, idx) => { img.is_primary = idx === Number(req.body.primaryImageIndex); });
+  }
+
+  await product.save();
+
+  res.json({
+    success: true,
+    data: product
   });
 }); 

@@ -7,14 +7,26 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Cookie names for different user types
+const USER_TOKEN_KEY = 'userToken';
+const VENDOR_TOKEN_KEY = 'vendorToken';
+const ADMIN_TOKEN_KEY = 'adminToken';
+
 function getAuthToken(url: string): string | undefined {
-  if (url.includes('/vendors') || url.includes('/orders/vendor')) {
-    return Cookies.get('vendorToken');
+  // Determine which token to use based on the URL path
+  if (url.includes('/vendors') || url.includes('/vendor') || url.includes('/orders/vendor')) {
+    return Cookies.get(VENDOR_TOKEN_KEY);
   }
-  if (url.includes('/users')) {
-    return Cookies.get('userToken');
+  if (url.includes('/admin') || url.includes('/admins')) {
+    return Cookies.get(ADMIN_TOKEN_KEY);
   }
-  return Cookies.get('userToken') || Cookies.get('vendorToken');
+  if (url.includes('/users') || url.includes('/auth/profile') || url.includes('/cart') || url.includes('/orders') || url.includes('/wishlist')) {
+    return Cookies.get(USER_TOKEN_KEY);
+  }
+  
+  // For general routes, try to get the most appropriate token
+  // Priority: user > vendor > admin
+  return Cookies.get(USER_TOKEN_KEY) || Cookies.get(VENDOR_TOKEN_KEY) || Cookies.get(ADMIN_TOKEN_KEY);
 }
 
 api.interceptors.request.use(
@@ -37,36 +49,27 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          break;
-        case 403:
-          break;
-        case 404:
-          break;
-        case 500:
-          break;
-        default:
-          break;
-      }
-    } else if (error.request) {
-      return Promise.resolve({
-        data: { 
-          success: false, 
-          message: 'Server is currently unavailable. Please try again later.',
-          error: 'NETWORK_ERROR'
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      // Clear all tokens on authentication failure
+      if (typeof window !== 'undefined') {
+        Cookies.remove(USER_TOKEN_KEY);
+        Cookies.remove(VENDOR_TOKEN_KEY);
+        Cookies.remove(ADMIN_TOKEN_KEY);
+        
+        // Redirect to appropriate login page based on current route
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/vendor')) {
+          window.location.href = '/vendor/login';
+        } else if (currentPath.startsWith('/admin')) {
+          window.location.href = '/admin/login';
+        } else {
+          window.location.href = '/login';
         }
-      });
+      }
     }
     
-    return Promise.resolve({
-      data: { 
-        success: false, 
-        message: error.response?.data?.message || 'Something went wrong. Please try again.',
-        error: 'API_ERROR'
-      }
-    });
+    return Promise.reject(error);
   }
 );
 

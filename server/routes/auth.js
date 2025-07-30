@@ -9,24 +9,32 @@ import {
   registerVendor,
   loginVendor,
   logoutVendor,
+  loginAdmin,
+  logoutAdmin,
   deleteAccount
 } from '../controllers/authController.js';
-import { protect, vendorAuth } from '../middleware/auth.js';
+import { protectUser, protectVendor, protectAdmin } from '../middleware/auth.js';
 import { validateUserRegistration, validateUserLogin, validateVendorRegistration, validateVendorLogin } from '../middleware/validation.js';
 
+// User routes
 router.post('/register', validateUserRegistration, registerUser);
 router.post('/login', validateUserLogin, loginUser);
 router.post('/logout', logoutUser);
 router
   .route('/profile')
-  .get(protect, getUserProfile)
-  .put(protect, updateUserProfile);
+  .get(protectUser, getUserProfile)
+  .put(protectUser, updateUserProfile);
 
+// Vendor routes
 router.post('/vendor/register', validateVendorRegistration, registerVendor);
 router.post('/vendor/login', validateVendorLogin, loginVendor);
-router.post('/vendor/logout', vendorAuth, logoutVendor);
+router.post('/vendor/logout', protectVendor, logoutVendor);
+
+// Admin routes
+router.post('/admin/login', loginAdmin);
+router.post('/admin/logout', protectAdmin, logoutAdmin);
 
 // Delete account route
-router.delete('/account', protect, deleteAccount);
+router.delete('/account', protectUser, deleteAccount);
 
 export default router; 

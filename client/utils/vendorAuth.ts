@@ -7,6 +7,9 @@ const VENDOR_TOKEN_KEY = 'vendorToken';
 // Token Management
 export const setVendorToken = (token: string) => {
   Cookies.set(VENDOR_TOKEN_KEY, token, { expires: 7, sameSite: 'Lax' });
+  // Clear other tokens to prevent conflicts
+  Cookies.remove('userToken');
+  Cookies.remove('adminToken');
 };
 
 export const getVendorToken = (): string | null => {
@@ -15,56 +18,23 @@ export const getVendorToken = (): string | null => {
 
 export const removeVendorToken = () => {
   Cookies.remove(VENDOR_TOKEN_KEY);
-  clearVendorAuthHeader();
 };
 
-// Authentication Check
-export const isVendorAuthenticated = (): boolean => {
-  const token = getVendorToken();
-  return !!token;
-};
-
-// Logout
-export const vendorLogout = () => {
-  removeVendorToken();
-};
-
-// API Token Setup
+// Setup vendor auth header for API calls
 export const setupVendorAuthHeader = (token: string) => {
-  try {
-    // Import the api instance instead of global axios
-    const api = require('@/services/api').default;
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } catch (error) {
-    console.error('Error setting up vendor auth header:', error);
+  if (typeof window !== 'undefined') {
+    // This will be handled by the API interceptor
+    setVendorToken(token);
   }
 };
 
-// Clear API headers
-export const clearVendorAuthHeader = () => {
-  try {
-    // Import the api instance instead of global axios
-    const api = require('@/services/api').default;
-    delete api.defaults.headers.common['Authorization'];
-  } catch (error) {
-    console.error('Error clearing vendor auth header:', error);
-  }
+// Check if vendor is authenticated
+export const isVendorAuthenticated = (): boolean => {
+  return !!getVendorToken();
 };
 
-// Initialize auth from cookie
-export const initializeVendorAuth = () => {
+// Get vendor token for API calls
+export const getVendorAuthHeader = (): string | null => {
   const token = getVendorToken();
-  if (token) {
-    setupVendorAuthHeader(token);
-  }
-  return { token };
-};
-
-// Check if vendor is authenticated and redirect if not
-export const requireVendorAuth = (router: any) => {
-  if (!isVendorAuthenticated()) {
-    router.push('/vendor/login');
-    return false;
-  }
-  return true;
+  return token ? `Bearer ${token}` : null;
 }; 

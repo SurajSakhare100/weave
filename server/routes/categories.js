@@ -18,7 +18,7 @@ import {
   validateId,
   validateSearch
 } from '../middleware/validation.js';
-import { protect, admin } from '../middleware/auth.js';
+import { protectAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -30,11 +30,11 @@ router.get('/search', validateSearch, searchCategories);
 router.get('/slug/:slug', getCategoryBySlug);
 router.get('/:id', validateId, getCategoryById);
 
-router.post('/', protect, admin, validateCategory, createCategory);
-router.put('/:id', protect, admin, validateId, validateCategory, updateCategory);
-router.delete('/:id', protect, admin, validateId, deleteCategory);
+router.post('/', protectAdmin, validateCategory, createCategory);
+router.put('/:id', protectAdmin, validateId, validateCategory, updateCategory);
+router.delete('/:id', protectAdmin, validateId, deleteCategory);
 
-router.post('/:id/main-sub', protect, admin, validateId, addMainSubCategory);
-router.post('/:id/sub', protect, admin, validateId, addSubCategory);
+router.post('/:id/main-sub', protectAdmin, validateId, addMainSubCategory);
+router.post('/:id/sub', protectAdmin, validateId, addSubCategory);
 
 export default router; 

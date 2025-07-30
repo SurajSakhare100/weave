@@ -83,9 +83,10 @@ const createOrder = asyncHandler(async (req, res) => {
     }
 
     // Calculate tax and shipping
-    calculatedTaxPrice = (calculatedItemsPrice - discountAmount) * 0.18; // 18% GST
-    calculatedShippingPrice = calculatedItemsPrice > 500 ? 0 : 50; // Free shipping above 500
-    calculatedTotalPrice = calculatedItemsPrice - discountAmount + calculatedTaxPrice + calculatedShippingPrice;
+    // calculatedTaxPrice = (calculatedItemsPrice - discountAmount); // 18% GST
+    // calculatedTaxPrice = (calculatedItemsPrice - discountAmount) * 0.18; // 18% GST
+    // calculatedShippingPrice = calculatedItemsPrice > 500 ? 0 : 50; // Free shipping above 500
+    calculatedTotalPrice = calculatedItemsPrice - discountAmount ;
 
     const order = new Order({
       orderItems,

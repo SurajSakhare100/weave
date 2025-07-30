@@ -82,7 +82,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
 }) => {
   const items = order.orderItems || order.items || [];
   return (
-    <div className="rounded-xl bg-vendor-primary-lighter border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-150">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-150">
       <div className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Left: Order Info */}
         <div className="flex-1 min-w-0">
@@ -289,7 +289,7 @@ export default function VendorOrdersPage() {
 
   return (
     <VendorLayout>
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-[#f4f8fb] min-h-screen">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">

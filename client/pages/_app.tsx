@@ -9,6 +9,7 @@ import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
 import { initializeVendorAuth } from '../utils/vendorAuthInit';
+import { checkTokenFormat } from '../utils/clearOldTokens';
 import { Toaster } from 'sonner';
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { useRouter } from 'next/router';
@@ -19,6 +20,9 @@ function UserHydrator() {
 
   useEffect(() => {
     const hydrate = async () => {
+      // Check and clear old tokens first
+      checkTokenFormat();
+      
       initializeVendorAuth();
       
       const token = getUserToken();

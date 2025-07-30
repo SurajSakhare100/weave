@@ -4,13 +4,10 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setDashboard, setLoading, setError } from '../../features/vendor/vendorSlice';
-import { getVendorDashboard } from '../../services/vendorService';
-import { initializeVendorAuth } from '../../utils/vendorAuth';
+import { getVendorToken } from '../../utils/vendorAuth';
 
 import Image from 'next/image';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
-
-
 
 // Mock data for charts and widgets
 const customerGrowthData = [
@@ -58,8 +55,9 @@ export default function VendorDashboard() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Check authentication
-    if (!initializeVendorAuth()) {
+    // Check authentication using the new approach
+    const token = getVendorToken();
+    if (!token) {
       router.push('/vendor/login');
       return;
     }
@@ -68,8 +66,14 @@ export default function VendorDashboard() {
     const loadDashboard = async () => {
       try {
         dispatch(setLoading(true));
-        const data = await getVendorDashboard();
-        dispatch(setDashboard(data?.data || {}));
+        // For now, we'll use mock data since getVendorDashboard doesn't exist
+        // You can replace this with actual API call when the endpoint is available
+        const mockData = {
+          totalCustomers: 68192,
+          newCustomers: 291,
+          salesGrowth: 37.8
+        };
+        dispatch(setDashboard(mockData));
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string } } };
         const errorMessage = err.response?.data?.message || 'Failed to load dashboard';
@@ -92,27 +96,6 @@ export default function VendorDashboard() {
       </VendorLayout>
     );
   }
-
-  // if (!profile) {
-  //   return (
-  //     <VendorLayout>
-  //       <div className="min-h-screen bg-[#faf5f2] flex items-center justify-center">
-  //         <div className="text-center">
-  //           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-  //           <p className="text-gray-600">Please log in to access your dashboard.</p>
-  //           <button
-  //             onClick={() => router.push('/vendor/login')}
-  //             className="mt-4 bg-pink-500 text-white px-6 py-2 rounded-lg hover:bg-pink-600 transition-colors"
-  //           >
-  //             Go to Login
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </VendorLayout>
-  //   );
-  // }
-
-  // Safe access to dashboard data with fallbacks
 
   return (
     <VendorLayout>

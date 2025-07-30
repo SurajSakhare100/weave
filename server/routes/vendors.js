@@ -9,6 +9,9 @@ import {
   deleteVendor,
   getVendorProducts,
   getVendorOrders,
+  getVendorOrderById,
+  updateVendorOrder,
+  updateOrderStatus,
   getVendorStats,
   createVendorProductController,
   getVendorReviews,
@@ -23,7 +26,8 @@ import {
   scheduleVendorProducts,
   rescheduleVendorProducts,
   cancelScheduledProducts,
-  publishScheduledProducts
+  publishScheduledProducts,
+  updateVendorProduct
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -35,51 +39,53 @@ import {
   validatePagination,
   validateSearch
 } from '../middleware/validation.js';
-import { protect, admin, vendorAuth } from '../middleware/auth.js';
+import { protectVendor, protectAdmin } from '../middleware/auth.js';
 import { handleMultipleUpload } from '../middleware/upload.js';
-
 
 const router = express.Router();
 
-router.get('/profile', vendorAuth, getVendorProfile);
-router.put('/profile', vendorAuth, updateVendorProfile);
-router.get('/dashboard', vendorAuth, getVendorDashboard);
-router.get('/earnings', vendorAuth, getVendorEarnings);
-router.post('/products', vendorAuth, handleMultipleUpload, createVendorProductController);
+// Admin routes (require admin authentication) - Put these FIRST to avoid conflicts
+router.get('/admin/list', protectAdmin, validatePagination, validateSearch, getVendors);
+router.get('/admin/stats', protectAdmin, getVendorStats);
+router.get('/admin/:id', protectAdmin, validateId, getVendorById);
+router.put('/admin/:id', protectAdmin, validateId, updateVendor);
+router.delete('/admin/:id', protectAdmin, validateId, deleteVendor);
+router.get('/admin/:id/products', protectAdmin, validateId, validatePagination, getVendorProducts);
+router.get('/admin/:id/orders', protectAdmin, validateId, validatePagination, getVendorOrders);
 
-// New route for released products
-router.get('/products/released', vendorAuth, validatePagination, getVendorReleasedProducts);
+// Vendor routes (require vendor authentication)
+router.get('/profile', protectVendor, getVendorProfile);
+router.put('/profile', protectVendor, updateVendorProfile);
+router.get('/dashboard', protectVendor, getVendorDashboard);
+router.get('/earnings', protectVendor, getVendorEarnings);
 
-// New route for draft products
-router.get('/products/drafts', vendorAuth, validatePagination, getVendorDraftProducts);
-
-// New routes for scheduled products
-router.get('/products/scheduled', vendorAuth, validatePagination, getVendorScheduledProducts);
-router.post('/products/schedule', vendorAuth, scheduleVendorProducts);
-router.put('/products/reschedule', vendorAuth, rescheduleVendorProducts);
-router.post('/products/cancel-schedule', vendorAuth, cancelScheduledProducts);
-router.post('/products/publish-scheduled', vendorAuth, publishScheduledProducts);
-
-
+// Vendor product routes
+router.post('/products', protectVendor, handleMultipleUpload, createVendorProductController);
+router.put('/products/:id', protectVendor, handleMultipleUpload, updateVendorProduct);
+router.get('/products/released', protectVendor, validatePagination, getVendorReleasedProducts);
+router.get('/products/drafts', protectVendor, validatePagination, getVendorDraftProducts);
+router.get('/products/scheduled', protectVendor, validatePagination, getVendorScheduledProducts);
+router.post('/products/schedule', protectVendor, scheduleVendorProducts);
+router.put('/products/reschedule', protectVendor, rescheduleVendorProducts);
+router.post('/products/cancel-schedule', protectVendor, cancelScheduledProducts);
+router.post('/products/publish-scheduled', protectVendor, publishScheduledProducts);
 
 // Bulk operations for products
-router.post('/products/unpublish', vendorAuth, unpublishVendorProducts);
-router.post('/products/publish', vendorAuth, publishVendorProducts);
-router.delete('/products/bulk', vendorAuth, deleteVendorProducts);
+router.post('/products/unpublish', protectVendor, unpublishVendorProducts);
+router.post('/products/publish', protectVendor, publishVendorProducts);
+router.delete('/products/bulk', protectVendor, deleteVendorProducts);
 
-router.get('/reviews', vendorAuth, validatePagination, getVendorReviews);
-router.get('/reviews/analytics', vendorAuth, getVendorReviewAnalytics);
+// Vendor review routes
+router.get('/reviews', protectVendor, validatePagination, getVendorReviews);
+router.get('/reviews/analytics', protectVendor, getVendorReviewAnalytics);
+router.post('/reviews/:reviewId/responses', protectVendor, addVendorReviewResponse);
+router.put('/reviews/:reviewId/responses/:responseId', protectVendor, updateVendorReviewResponse);
+router.delete('/reviews/:reviewId/responses/:responseId', protectVendor, deleteVendorReviewResponse);
 
-router.post('/reviews/:reviewId/responses', vendorAuth, addVendorReviewResponse);
-router.put('/reviews/:reviewId/responses/:responseId', vendorAuth, updateVendorReviewResponse);
-router.delete('/reviews/:reviewId/responses/:responseId', vendorAuth, deleteVendorReviewResponse);
-
-router.get('/', protect, admin, validatePagination, validateSearch, getVendors);
-router.get('/stats', protect, admin, getVendorStats);
-router.get('/:id', protect, admin, validateId, getVendorById);
-router.put('/:id', protect, admin, validateId, updateVendor);
-router.delete('/:id', protect, admin, validateId, deleteVendor);
-router.get('/:id/products', protect, admin, validateId, validatePagination, getVendorProducts);
-router.get('/:id/orders', protect, admin, validateId, validatePagination, getVendorOrders);
+// Vendor order routes
+router.get('/orders', protectVendor, validatePagination, getVendorOrders);
+router.get('/orders/:id', protectVendor, validateId, getVendorOrderById);
+router.put('/orders/:id', protectVendor, validateId, updateVendorOrder);
+router.put('/orders/:id/status', protectVendor, validateId, updateOrderStatus);
 
 export default router; 

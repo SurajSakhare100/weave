@@ -19,24 +19,27 @@ import {
   validateId,
   validatePagination
 } from '../middleware/validation.js';
-import { protect, admin, vendorAuth } from '../middleware/auth.js';
+import { protectUser, protectAdmin, protectVendor } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// router.post('/', protect, createOrder);
-// router.get('/myorders', protect, validatePagination, getMyOrders);
-// router.get('/:id', protect, validateId, getOrderById);
-// router.put('/:id/pay', protect, validateId, updateOrderToPaid);
-// router.put('/:id/cancel', protect, validateId, cancelOrder);
+// User routes
+router.post('/', protectUser, createOrder);
+router.get('/myorders', protectUser, validatePagination, getMyOrders);
+router.get('/:id', protectUser, validateId, getOrderById);
+router.put('/:id/pay', protectUser, validateId, updateOrderToPaid);
+router.put('/:id/cancel', protectUser, validateId, cancelOrder);
 
-router.get('/vendor', vendorAuth, validatePagination, getVendorOrders);
-router.get('/vendor/:id', vendorAuth, validateId, getVendorOrderById);
-router.put('/vendor/:id/status', vendorAuth, validateId, updateVendorOrderStatus);
-router.get('/vendor/stats', vendorAuth, getVendorOrderStats);
+// Vendor routes
+router.get('/vendor', protectVendor, validatePagination, getVendorOrders);
+router.get('/vendor/:id', protectVendor, validateId, getVendorOrderById);
+router.put('/vendor/:id/status', protectVendor, validateId, updateVendorOrderStatus);
+router.get('/vendor/stats', protectVendor, getVendorOrderStats);
 
-router.get('/', admin, validatePagination, getOrders);
-router.put('/:id/deliver', admin, validateId, updateOrderToDelivered);
-router.put('/:id/status', admin, validateId, updateOrderStatus);
-router.get('/stats', admin, getOrderStats);
+// Admin routes
+router.get('/', protectAdmin, validatePagination, getOrders);
+router.put('/:id/deliver', protectAdmin, validateId, updateOrderToDelivered);
+router.put('/:id/status', protectAdmin, validateId, updateOrderStatus);
+router.get('/stats', protectAdmin, getOrderStats);
 
 export default router; 

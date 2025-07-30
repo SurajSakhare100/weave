@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/features/vendor/vendorSlice';
-import { vendorLogout } from '@/utils/vendorAuth';
+import { vendorLogout } from '@/services/vendorService';
 import {
   LayoutDashboard,
   Package,
@@ -18,8 +18,7 @@ import {
   DollarSign,
   Percent,
   LogOut,
-  Menu,
-  Star
+  PackageCheck
 } from 'lucide-react';
 
 interface SidebarSection {
@@ -43,7 +42,6 @@ const sidebarSections: SidebarSection[] = [
     label: 'Product',
     icon: Package,
     children: [
-      { label: 'Analytics', icon: BarChart2, href: '/vendor/products/analytics' },
       { label: 'Drafts', icon: FileText, href: '/vendor/products/drafts' },
       { label: 'Released', icon: Send, href: '/vendor/products/released' },
       { label: 'Reviews', icon: MessageCircle, href: '/vendor/products/reviews' },
@@ -52,22 +50,24 @@ const sidebarSections: SidebarSection[] = [
   },
   
   {
-    label: 'Customers',
-    icon: Users,
+    label: 'Orders',
+    icon: PackageCheck,
     children: [
-      { label: 'Customer Insights', icon: Users, href: '/vendor/customers/insights' },
-      { label: 'Segments', icon: Users, href: '/vendor/customers/segments' },
+      { label: 'All Orders', icon: PackageCheck, href: '/vendor/orders' },
+      // { label: 'Pending', icon: PackageCheck, href: '/vendor/orders/pending' },
+      // { label: 'Delivered', icon: PackageCheck, href: '/vendor/orders/delivered' },
+      // { label: 'Cancelled', icon: PackageCheck, href: '/vendor/orders/cancelled' },
     ],
   },
-  {
-    label: 'Store',
-    icon: Store,
-    children: [
-      { label: 'Settings', icon: Settings, href: '/vendor/store/settings' },
-      { label: 'Payments', icon: CreditCard, href: '/vendor/store/payments' },
-      { label: 'Statements', icon: FileText, href: '/vendor/store/statements' },
-    ],
-  },
+  // {
+  //   label: 'Store',
+  //   icon: Store,
+  //   children: [
+  //     { label: 'Settings', icon: Settings, href: '/vendor/store/settings' },
+  //     { label: 'Payments', icon: CreditCard, href: '/vendor/store/payments' },
+  //     { label: 'Statements', icon: FileText, href: '/vendor/store/statements' },
+  //   ],
+  // },
   {
     label: 'Revenue',
     icon: DollarSign,

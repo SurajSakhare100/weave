@@ -1,14 +1,15 @@
-import { setupVendorAuthHeader } from '@/utils/vendorAuth';
+import { setVendorToken } from '@/utils/vendorAuth';
 import api from './api';
 import Cookies from 'js-cookie';
 
-// Vendor Authentication
+// ============================================================================
+// VENDOR AUTHENTICATION
+// ============================================================================
+
 export async function vendorLogin(credentials: { email: string; password: string }) {
   const res = await api.post('/auth/vendor/login', credentials);
   
-  // Ensure token is properly stored
   if (res.data.token) {
-    const { setVendorToken } = await import('@/utils/vendorAuth');
     setVendorToken(res.data.token);
   }
   
@@ -28,242 +29,103 @@ export async function vendorRegister(vendorData: {
   bankBranchNumber?: string;
 }) {
   const res = await api.post('/auth/vendor/register', vendorData);
+  
+  if (res.data.token) {
+    setVendorToken(res.data.token);
+  }
+  
   return res.data;
 }
 
 export async function vendorLogout() {
   try {
-    // Try to call logout endpoint if we have a token
-    const token = Cookies.get('vendorToken');
-    if (token) {
-      await api.post('/auth/vendor/logout');
-    }
+    await api.post('/auth/vendor/logout');
   } catch (error) {
-    // Logout endpoint failed, continuing with local cleanup
-  } finally {
-    // Always clean up local storage
-    const { removeVendorToken } = await import('@/utils/vendorAuth');
-    removeVendorToken();
+    // Ignore errors on logout
   }
   
-  return { success: true };
+  Cookies.remove('vendorToken');
+  return { success: true, message: 'Vendor logged out successfully' };
 }
 
-// Vendor Profile Management
+// ============================================================================
+// VENDOR PROFILE & DASHBOARD
+// ============================================================================
+
 export async function getVendorProfile() {
   const res = await api.get('/vendors/profile');
   return res.data;
 }
 
-export async function updateVendorProfile(data: {
-  name?: string;
-  email?: string;
-  number?: string;
-  bankAccOwner?: string;
-  bankName?: string;
-  bankAccNumber?: string;
-  bankIFSC?: string;
-  bankBranchName?: string;
-  bankBranchNumber?: string;
-}) {
-  const res = await api.put('/vendors/profile', data);
+export async function updateVendorProfile(profileData: any) {
+  const res = await api.put('/vendors/profile', profileData);
   return res.data;
 }
 
-// Vendor Dashboard
 export async function getVendorDashboard() {
   const res = await api.get('/vendors/dashboard');
   return res.data;
 }
 
-// Vendor Earnings Analytics
-export async function getVendorEarnings() {
-  const res = await api.get('/vendors/earnings');
+export async function getVendorEarnings(params?: any) {
+  const res = await api.get('/vendors/earnings', { params });
   return res.data;
 }
 
-// Mock data for development/testing
-export const getMockVendorEarnings = () => {
-  return {
-    success: true,
-    data: {
-      totalEarnings: 128000,
-      balance: 512.64,
-      totalSalesValue: 64000,
-      monthlySales: [
-        { month: 'Jan 2024', totalSales: 8200000, customerCost: 120 },
-        { month: 'Mar 2024', totalSales: 8400000, customerCost: 90 },
-        { month: 'May 2024', totalSales: 8300000, customerCost: 110 },
-        { month: 'Jul 2024', totalSales: 8500000, customerCost: 85 },
-        { month: 'Sept 2024', totalSales: 8800000, customerCost: 75 },
-        { month: 'Nov 2024', totalSales: 8600000, customerCost: 95 }
-      ],
-      topCountries: [
-        { country: 'United States', total: 9827.31 },
-        { country: 'Germany', total: 4750.17 },
-        { country: 'Netherlands', total: 1019.00 },
-        { country: 'United Kingdom', total: 19.00 },
-        { country: 'Italy', total: 827.01 },
-        { country: 'Vietnam', total: 7750.88 }
-      ],
-      earningsTable: [
-        { date: '2024-08-15T00:00:00.000Z', status: 'Pending', productSalesCount: 68192, earnings: 3250.13 },
-        { date: '2024-03-05T00:00:00.000Z', status: 'Paid', productSalesCount: 21, earnings: 4189.09 },
-        { date: '2024-01-31T00:00:00.000Z', status: 'Paid', productSalesCount: 6, earnings: 19.00 },
-        { date: '2024-11-10T00:00:00.000Z', status: 'Pending', productSalesCount: 849, earnings: 4750.17 },
-        { date: '2024-06-23T00:00:00.000Z', status: 'Pending', productSalesCount: 6241, earnings: 2000.47 },
-        { date: '2024-02-04T00:00:00.000Z', status: 'Paid', productSalesCount: 33, earnings: 1092.10 },
-        { date: '2024-04-11T00:00:00.000Z', status: 'Pending', productSalesCount: 1368, earnings: 7750.88 }
-      ]
-    }
-  };
-};
+// ============================================================================
+// VENDOR PRODUCTS - CORE OPERATIONS
+// ============================================================================
 
-// Vendor Product Management
-export async function createProduct(productData: FormData) {
-  const res = await api.post('/products', productData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+export async function createVendorProduct(productData: any) {
+  const res = await api.post('/vendors/products', productData);
   return res.data;
 }
 
-export async function updateProduct(id: string, productData: FormData) {
-  const res = await api.put(`/products/${id}`, productData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+export async function updateVendorProduct(productId: string, productData: any) {
+  const res = await api.put(`/vendors/products/${productId}`, productData);
   return res.data;
 }
 
-export async function deleteProduct(id: string) {
-  const res = await api.delete(`/products/${id}`);
+export async function deleteVendorProduct(productId: string) {
+  const res = await api.delete(`/vendors/products/${productId}`);
   return res.data;
 }
 
-export async function getVendorProducts(params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  category?: string;
-}) {
-  const res = await api.get('/products', { 
-    params: { ...params, vendorOnly: true } 
-  });
-  return res.data;
-}
+// ============================================================================
+// VENDOR PRODUCTS - STATUS-BASED LISTS
+// ============================================================================
 
-// Vendor Order Management
-export async function getVendorOrders(params?: {
-  page?: number;
-  limit?: number;
-  status?: string;
-  search?: string;
-}) {
-  const res = await api.get('/orders/vendor', { params });
-  return res.data;
-}
-
-export async function getVendorOrderById(id: string) {
-  const res = await api.get(`/orders/vendor/${id}`);
-  return res.data;
-}
-
-
-
-export async function updateOrderStatus(id: string, status: string) {
-  const res = await api.put(`/orders/vendor/${id}/status`, { status });
-  return res.data;
-}
-
-// Admin functions (for admin panel)
-export async function getVendors(params?: any) {
-  const res = await api.get('/vendors', { params });
-  return res.data;
-}
-
-export async function getVendorById(id: string) {
-  const res = await api.get(`/vendors/${id}`);
-  return res.data;
-}
-
-export async function updateVendor(id: string, data: any) {
-  const res = await api.put(`/vendors/${id}`, data);
-  return res.data;
-}
-
-export async function deleteVendor(id: string) {
-  const res = await api.delete(`/vendors/${id}`);
-  return res.data;
-}
-
-export async function getVendorStats() {
-  const res = await api.get('/vendors/stats');
-  return res.data;
-}
-
-export async function getVendorProductsAdmin(id: string, params?: any) {
-  const res = await api.get(`/vendors/${id}/products`, { params });
-  return res.data;
-}
-
-export async function getVendorOrdersAdmin(id: string, params?: any) {
-  const res = await api.get(`/vendors/${id}/orders`, { params });
-  return res.data;
-} 
-
-// Add Product
-export const addVendorProduct = async (formData: FormData) => {
-  return api.post('/products', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-};
-
-// Edit Product
-export const editVendorProduct = async (id: string, formData: FormData) => {
-  return api.put(`/products/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-};
-
-// Delete Product
-export const deleteVendorProduct = async (id:string) => {
-  return api.delete(`/products/${id}`);
-}; 
-
-// Vendor Released Products
 export async function getVendorReleasedProducts(params?: {
   page?: number;
   limit?: number;
   search?: string;
 }) {
-  const queryParams = new URLSearchParams();
-  if (params?.page) queryParams.append('page', params.page.toString());
-  if (params?.limit) queryParams.append('limit', params.limit.toString());
-  if (params?.search) queryParams.append('search', params.search);
-
-  const res = await api.get(`/vendors/products/released?${queryParams}`);
+  const res = await api.get('/vendors/products/released', { params });
   return res.data;
 }
 
-// Vendor Draft Products
 export async function getVendorDraftProducts(params?: {
   page?: number;
   limit?: number;
   search?: string;
 }) {
-  const queryParams = new URLSearchParams();
-  if (params?.page) queryParams.append('page', params.page.toString());
-  if (params?.limit) queryParams.append('limit', params.limit.toString());
-  if (params?.search) queryParams.append('search', params.search);
-
-  const res = await api.get(`/vendors/products/drafts?${queryParams}`);
+  const res = await api.get('/vendors/products/drafts', { params });
   return res.data;
 }
 
-// Bulk product operations
+export async function getVendorScheduledProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  const res = await api.get('/vendors/products/scheduled', { params });
+  return res.data;
+}
+
+// ============================================================================
+// VENDOR PRODUCTS - BULK OPERATIONS
+// ============================================================================
+
 export async function unpublishVendorProducts(productIds: string[]) {
   const res = await api.post('/vendors/products/unpublish', { productIds });
   return res.data;
@@ -274,15 +136,14 @@ export async function publishVendorProducts(productIds: string[]) {
   return res.data;
 }
 
-// Scheduled Products API functions
-export async function getVendorScheduledProducts(params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}) {
-  const res = await api.get('/vendors/products/scheduled', { params });
+export async function deleteVendorProducts(productIds: string[]) {
+  const res = await api.delete('/vendors/products/bulk', { data: { productIds } });
   return res.data;
 }
+
+// ============================================================================
+// VENDOR PRODUCTS - SCHEDULING
+// ============================================================================
 
 export async function scheduleVendorProducts(data: {
   productIds: string[];
@@ -312,9 +173,73 @@ export async function publishScheduledProducts(productIds: string[]) {
   return res.data;
 }
 
+// ============================================================================
+// VENDOR REVIEWS
+// ============================================================================
 
+export async function getVendorReviews(params?: any) {
+  const res = await api.get('/vendors/reviews', { params });
+  return res.data;
+}
 
-export async function deleteVendorProducts(productIds: string[]) {
-  const res = await api.delete('/vendors/products/bulk', { data: { productIds } });
+export async function getVendorReviewAnalytics(params?: any) {
+  const res = await api.get('/vendors/reviews/analytics', { params });
+  return res.data;
+}
+
+export async function addVendorReviewResponse(reviewId: string, responseData: any) {
+  const res = await api.post(`/vendors/reviews/${reviewId}/responses`, responseData);
+  return res.data;
+}
+
+export async function updateVendorReviewResponse(reviewId: string, responseId: string, responseData: any) {
+  const res = await api.put(`/vendors/reviews/${reviewId}/responses/${responseId}`, responseData);
+  return res.data;
+}
+
+export async function deleteVendorReviewResponse(reviewId: string, responseId: string) {
+  const res = await api.delete(`/vendors/reviews/${reviewId}/responses/${responseId}`);
+  return res.data;
+}
+
+// ============================================================================
+// LEGACY COMPATIBILITY ALIASES
+// ============================================================================
+
+// Product operations
+export const addVendorProduct = createVendorProduct;
+export const editVendorProduct = updateVendorProduct;
+export const createProduct = createVendorProduct;
+export const updateProduct = updateVendorProduct;
+export const deleteProduct = deleteVendorProduct;
+
+// Review operations
+export const respondToReview = addVendorReviewResponse;
+
+// Analytics
+export const getVendorAnalytics = getVendorReviewAnalytics;
+
+// ============================================================================
+// MISSING ROUTES - TO BE IMPLEMENTED
+// ============================================================================
+
+// These routes don't exist in the backend yet, but are commonly needed
+export async function getVendorOrders(params?: any) {
+  const res = await api.get('/vendors/orders', { params });
+  return res.data;
+}
+
+export async function getVendorOrderById(orderId: string) {
+  const res = await api.get(`/vendors/orders/${orderId}`);
+  return res.data;
+}
+
+export async function updateVendorOrder(orderId: string, orderData: any) {
+  const res = await api.put(`/vendors/orders/${orderId}`, orderData);
+  return res.data;
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+  const res = await api.put(`/vendors/orders/${orderId}/status`, { status });
   return res.data;
 } 

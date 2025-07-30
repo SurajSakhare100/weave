@@ -27,7 +27,7 @@ import {
   validateSearch,
   validatePriceRange
 } from '../middleware/validation.js';
-import { protect, vendorAuth, optionalVendorAuth } from '../middleware/auth.js';
+import { protectUser, protectVendor, optionalVendorAuth } from '../middleware/auth.js';
 import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -39,32 +39,36 @@ router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', validateId, getProductById);
 router.get('/:id/similar', validateId, getSimilarProducts);
 
+// Review routes
 router.get('/:id/reviews', validateId, getProductReviews);
-router.post('/:id/reviews', protect, validateId, createProductReview);
-router.put('/:id/reviews/:reviewId', protect, validateId, updateProductReview);
-router.delete('/:id/reviews/:reviewId', protect, validateId, deleteProductReview);
+router.post('/:id/reviews', protectUser, validateId, createProductReview);
+router.put('/:id/reviews/:reviewId', protectUser, validateId, updateProductReview);
+router.delete('/:id/reviews/:reviewId', protectUser, validateId, deleteProductReview);
 
-router.post('/:id/reviews/:reviewId/responses', protect, validateId, addReviewResponse);
-router.put('/:id/reviews/:reviewId/responses/:responseId', protect, validateId, updateReviewResponse);
-router.delete('/:id/reviews/:reviewId/responses/:responseId', protect, validateId, deleteReviewResponse);
+// Review response routes
+router.post('/:id/reviews/:reviewId/responses', protectUser, validateId, addReviewResponse);
+router.put('/:id/reviews/:reviewId/responses/:responseId', protectUser, validateId, updateReviewResponse);
+router.delete('/:id/reviews/:reviewId/responses/:responseId', protectUser, validateId, deleteReviewResponse);
 
+// Vendor routes
 router.post('/', 
-  vendorAuth, 
+  protectVendor, 
   handleMultipleUpload,
   processUploadedFiles,
   createProduct
 );
 
 router.put('/:id', 
-  vendorAuth, 
+  protectVendor, 
   validateId,
   handleMultipleUpload,
   processUploadedFiles,
   updateProduct
 );
 
+
 router.delete('/:id', 
-  vendorAuth, 
+  protectVendor, 
   validateId, 
   deleteProduct
 );

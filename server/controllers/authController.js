@@ -3,21 +3,13 @@ import Cart from '../models/Cart.js';
 import Order from '../models/Order.js';
 import Wishlist from '../models/Wishlist.js';
 import Review from '../models/Review.js';
-import generateToken from '../utils/generateToken.js';
+import generateToken, { generateUserToken, generateVendorToken, generateAdminToken } from '../utils/generateToken.js';
 import asyncHandler from 'express-async-handler';
 import { sendEmail } from '../utils/emailService.js';
 import crypto from 'crypto';
 import Vendor from '../models/Vendor.js';
 import jwt from 'jsonwebtoken';
-
-// Generate JWT token
-// const generateToken = (userId, userType = 'user') => {
-//   return jwt.sign(
-//     { userId, userType },
-//     process.env.JWT_SECRET,
-//     { expiresIn: '7d' }
-//   );
-// };
+import Admin from '../models/Admin.js'; // Added missing import for Admin
 
 // Generate refresh token
 const generateRefreshToken = (userId, userType = 'user') => {
@@ -28,7 +20,6 @@ const generateRefreshToken = (userId, userType = 'user') => {
   );
 };
 
-
 const loginUser = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -37,9 +28,11 @@ const loginUser = asyncHandler(async (req, res) => {
     if (user && (await user.comparePassword(password))) {
       res.json({
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        token: generateToken(user._id),
+        token: generateUserToken(user._id),
+        userType: 'user'
       });
     } else {
       res.status(401);
@@ -50,10 +43,9 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { firstName, lastName, email, password, number } = req.body;
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -61,14 +53,16 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error('User already exists');
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ firstName, lastName, email, password, number });
 
     if (user) {
       res.status(201).json({
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        token: generateToken(user._id),
+        token: generateUserToken(user._id),
+        userType: 'user'
       });
     } else {
       res.status(400);
@@ -94,8 +88,10 @@ const getUserProfile = asyncHandler(async (req, res) => {
   if (user) {
     res.json({
       _id: user._id,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
+      number: user.number,
     });
   } else {
     res.status(404);
@@ -110,17 +106,22 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
-    user.name = req.body.name || user.name;
+    user.firstName = req.body.firstName || user.firstName;
+    user.lastName = req.body.lastName || user.lastName;
     user.email = req.body.email || user.email;
+    user.number = req.body.number || user.number;
     if (req.body.password) {
       user.password = req.body.password;
     }
     const updatedUser = await user.save();
     res.json({
       _id: updatedUser._id,
-      name: updatedUser.name,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
       email: updatedUser.email,
-      token: generateToken(updatedUser._id),
+      number: updatedUser.number,
+      token: generateUserToken(updatedUser._id),
+      userType: 'user'
     });
   } else {
     res.status(404);
@@ -133,12 +134,13 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 // @access  Public
 const loginVendor = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const vendor = await Vendor.findOne({ email });
+  const vendor = await Vendor.findOne({ email }).select('+password');
 
   if (vendor && (await vendor.comparePassword(password))) {
     res.json({
       success: true,
-      token: generateToken(vendor._id, 'vendor'),
+      token: generateVendorToken(vendor._id),
+      userType: 'vendor',
       vendor: {
         _id: vendor._id,
         name: vendor.name,
@@ -201,7 +203,8 @@ const registerVendor = asyncHandler(async (req, res) => {
   if (vendor) {
     res.status(201).json({
       success: true,
-      token: generateToken(vendor._id, 'vendor'),
+      token: generateVendorToken(vendor._id),
+      userType: 'vendor',
       vendor: {
         _id: vendor._id,
         name: vendor.name,
@@ -230,6 +233,41 @@ const logoutVendor = (req, res) => {
   res.status(200).json({ 
     success: true,
     message: 'Vendor logged out successfully' 
+  });
+};
+
+// @desc    Admin login
+// @route   POST /api/auth/admin/login
+// @access  Public
+const loginAdmin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const admin = await Admin.findOne({ email }).select('+password');
+
+  if (admin && (await admin.comparePassword(password))) {
+    res.json({
+      success: true,
+      token: generateAdminToken(admin._id),
+      userType: 'admin',
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        isActive: admin.isActive
+      }
+    });
+  } else {
+    res.status(401);
+    throw new Error('Invalid email or password');
+  }
+});
+
+// @desc    Admin logout
+// @route   POST /api/auth/admin/logout
+// @access  Private
+const logoutAdmin = (req, res) => {
+  res.status(200).json({ 
+    success: true,
+    message: 'Admin logged out successfully' 
   });
 };
 
@@ -391,12 +429,29 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate new access token
-    const newAccessToken = generateToken(decoded.userId, decoded.userType);
+    // Generate new access token based on user type
+    let newAccessToken;
+    switch (decoded.userType) {
+      case 'user':
+        newAccessToken = generateUserToken(decoded.userId);
+        break;
+      case 'vendor':
+        newAccessToken = generateVendorToken(decoded.userId);
+        break;
+      case 'admin':
+        newAccessToken = generateAdminToken(decoded.userId);
+        break;
+      default:
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid user type'
+        });
+    }
 
     res.json({
       success: true,
-      token: newAccessToken
+      token: newAccessToken,
+      userType: decoded.userType
     });
   } catch (error) {
     return res.status(401).json({
@@ -452,7 +507,7 @@ const updateProfile = async (req, res) => {
   // Update fields
   if (firstName) user.firstName = firstName;
   if (lastName) user.lastName = lastName;
-  if (phone) user.phone = phone;
+  if (phone) user.number = phone;
   if (addresses) user.addresses = addresses;
   if (preferences) user.preferences = { ...user.preferences, ...preferences };
 
@@ -462,7 +517,13 @@ const updateProfile = async (req, res) => {
     success: true,
     message: 'Profile updated successfully',
     data: {
-      user: user.getPublicProfile()
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        number: user.number
+      }
     }
   });
 };
@@ -521,6 +582,8 @@ export {
   registerVendor,
   loginVendor,
   logoutVendor,
+  loginAdmin,
+  logoutAdmin,
   forgotPassword,
   resetPassword,
   verifyEmail,

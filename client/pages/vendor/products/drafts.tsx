@@ -143,13 +143,31 @@ export default function VendorDraftsPage() {
       </VendorLayout>
     );
   }
+  if (products.length === 0) {
+    return (
+      <VendorLayout>
+        <div className="flex items-center justify-center h-64 flex-col gap-4">
+          <h1 className="text-2xl font-bold text-[#3475A6]">no drafts found</h1>
+          <Button 
+                variant="vendorPrimary"
+                onClick={() => loadProducts()}
+              >
+                Try Again
+              </Button>
+        </div>
+      </VendorLayout>
+    );
+  }
 
   return (
     <VendorLayout>
       <div className="p-6 bg-[#f4f8fb] min-h-screen">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-[#3475A6]">Drafts</h1>
+        </div>
         <ProductHeader
-          title="Drafts"
-          subtitle="Products"
+          // title="Drafts"
+          // subtitle="Products"
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           viewMode={viewMode}

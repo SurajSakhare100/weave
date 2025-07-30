@@ -20,34 +20,36 @@ import {
   validatePagination,
   validateSearch
 } from '../middleware/validation.js';
-import { protect, admin } from '../middleware/auth.js';
+import { protectUser, protectAdmin } from '../middleware/auth.js';
 import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '../controllers/cartController.js';
 
 const router = express.Router();
 
-router.use(protect);
+// User routes (require user authentication)
+router.get('/profile', protectUser, getUserProfile);
+router.put('/profile', protectUser, updateUserProfile);
+router.get('/dashboard', protectUser, getUserDashboard);
 
-router.get('/profile', getUserProfile);
-router.put('/profile', updateUserProfile);
-router.get('/dashboard', getUserDashboard);
+// User address routes
+router.get('/addresses', protectUser, getUserAddresses);
+router.post('/addresses', protectUser, addUserAddress);
+router.put('/addresses/:addressId', protectUser, updateUserAddress);
+router.delete('/addresses/:addressId', protectUser, deleteUserAddress);
+router.put('/addresses/:addressId/default', protectUser, setDefaultAddress);
 
-router.get('/addresses', getUserAddresses);
-router.post('/addresses', addUserAddress);
-router.put('/addresses/:addressId', updateUserAddress);
-router.delete('/addresses/:addressId', deleteUserAddress);
-router.put('/addresses/:addressId/default', setDefaultAddress);
+// User cart routes
+router.get('/cart', protectUser, getCart);
+router.post('/cart', protectUser, addToCart);
+router.put('/cart/:itemId', protectUser, updateCartItem);
+router.delete('/cart/:itemId', protectUser, removeFromCart);
+router.delete('/cart', protectUser, clearCart);
 
-router.get('/cart', getCart);
-router.post('/cart', addToCart);
-router.put('/cart/:itemId', updateCartItem);
-router.delete('/cart/:itemId', removeFromCart);
-router.delete('/cart', clearCart);
-
-router.get('/', admin, validatePagination, validateSearch, getUsers);
-router.get('/stats', admin, getUserStats);
-router.get('/:id', admin, validateId, getUserById);
-router.put('/:id', admin, validateId, updateUser);
-router.delete('/:id', admin, validateId, deleteUser);
-router.get('/:id/orders', admin, validateId, validatePagination, getUserOrders);
+// Admin routes (require admin authentication)
+router.get('/', protectAdmin, validatePagination, validateSearch, getUsers);
+router.get('/stats', protectAdmin, getUserStats);
+router.get('/:id', protectAdmin, validateId, getUserById);
+router.put('/:id', protectAdmin, validateId, updateUser);
+router.delete('/:id', protectAdmin, validateId, deleteUser);
+router.get('/:id/orders', protectAdmin, validateId, validatePagination, getUserOrders);
 
 export default router; 
