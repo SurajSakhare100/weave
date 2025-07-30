@@ -65,8 +65,12 @@ export default function ProductDetailPage() {
       // Load similar products
       try {
         const similarResponse = await getSimilarProducts(id as string)
+        console.log('Similar products response:', similarResponse)
         if (similarResponse.success && similarResponse.data) {
           setSimilarProducts(similarResponse.data)
+          console.log('Similar products loaded:', similarResponse.data.length)
+        } else {
+          console.log('No similar products found or response failed:', similarResponse)
         }
       } catch (similarError) {
         console.error('Failed to load similar products:', similarError)
@@ -367,15 +371,23 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Similar Products */}
-          {similarProducts.length > 0 && (
+          {similarProducts.length > 0 ? (
             <div className="mt-16">
               <h2 className="text-xl font-bold mb-4">Similar Products</h2>
-              <div className="flex gap-6 overflow-x-auto pb-2">
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-x-auto pb-2">
                 {similarProducts.map((item) => (
-                  <div key={item._id} className="min-w-[250px] max-w-[250px]">
+                  <div key={item._id} className="">
                     <ProductCard product={item} />
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-16">
+              <h2 className="text-xl font-bold mb-4">Similar Products</h2>
+              <div className="text-center py-8 text-gray-500">
+                <p>No similar products found at the moment.</p>
+                <p className="text-sm mt-2">Check back later for more products in this category.</p>
               </div>
             </div>
           )}

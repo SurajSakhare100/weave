@@ -21,7 +21,7 @@ export default function LoginPage() {
     setError('');
     try {
       const data = await loginService({ email, password });
-      dispatch(loginAction({ email: data.email, password:data.password}));
+      dispatch(loginAction({ email: data.email, user:data.user}));
       toast.success('Login successful!');
       const redirectUrl = router.query.redirect as string || '/';
       router.push(redirectUrl);

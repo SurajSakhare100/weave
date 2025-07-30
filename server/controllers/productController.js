@@ -710,27 +710,25 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
       });
     }
 
-    // Find similar products based on category, tags, and other attributes
-    const similarProducts = await Product.find({
-     _id: { $ne: currentProduct._id.toString() }, 
-      available: true,
-      status: 'active',
-      $or: [
-        { category: currentProduct.category },
-        { categorySlug: currentProduct.categorySlug },
-        { tags: { $in: currentProduct.tags || [] } },
-        { vendorId: currentProduct.vendorId } // Same vendor products
-      ]
+
+
+    let similarProducts=await Product.find({
+      _id:{$ne: new mongoose.Types.ObjectId(id)},
+      status:'active',
+      available:true,
+      $or:[
+          {category: currentProduct.category},
+          {categorySlug: currentProduct.categorySlug},
+          {tags: {$in: currentProduct.tags}},
+          {vendorId: currentProduct.vendorId}
+          ]
+      
     })
     .populate('vendorId', 'name email phone')
-    .sort({ 
-      category: currentProduct.category === '$category' ? 1 : -1,
-      averageRating: -1,
-      createdAt: -1 
-    })
+    .sort({price:-1,averageRating: -1, createdAt: -1})
     .limit(parseInt(limit))
-    .lean();
-
+    .lean()
+    ;
     res.json({
       success: true,
       data: similarProducts
