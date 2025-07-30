@@ -5,6 +5,9 @@ import Review from '../models/Review.js';
 import { uploadMultipleImages, deleteMultipleImages } from '../utils/imageUpload.js';
 import mongoose from 'mongoose';
 
+// @desc    Get all products with filtering and pagination
+// @route   GET /api/products
+// @access  Public
 export const getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -27,37 +30,68 @@ export const getProducts = asyncHandler(async (req, res) => {
     // Build filter object
     const filter = {};
 
+    // Status filter - default to active products
     if (status) {
       filter.status = status;
     } else {
       filter.status = 'active';
     }
 
+    // Search filter
     if (search) {
-      filter.name = { $regex: search, $options: 'i' };
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
     }
 
+    // Category filter
     if (category) {
       filter.categorySlug = { $regex: category, $options: 'i' };
     }
 
+    // Vendor filter
     if (vendor) {
       filter.vendorId = vendor;
     }
 
-    // Collect $or conditions for size and color
+    // Vendor-only filter
+    if (vendorOnly === 'true') {
+      if (!req.vendor) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Unauthorized: Vendor authentication required.' 
+        });
+      }
+      filter.vendor = true;
+      filter.vendorId = req.vendor._id;
+    }
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseFloat(minPrice);
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Size and color filters
     let orConditions = [];
+    
     // Size filter (multi-select support, top-level and variant)
     if (size) {
       const sizeArray = size.split(',').map(s => s.trim()).filter(Boolean);
       if (sizeArray.length > 1) {
         orConditions.push({ 'variantDetails.size': { $in: sizeArray } });
         orConditions.push({ size: { $in: sizeArray } });
+        orConditions.push({ sizes: { $in: sizeArray } });
       } else {
         orConditions.push({ 'variantDetails.size': sizeArray[0] });
         orConditions.push({ size: sizeArray[0] });
+        orConditions.push({ sizes: sizeArray[0] });
       }
     }
+    
     // Color filter
     if (colors) {
       const colorArray = colors.split(',').map(c => c.trim()).filter(Boolean);
@@ -69,34 +103,20 @@ export const getProducts = asyncHandler(async (req, res) => {
         orConditions.push({ 'variantDetails.color': colorArray[0] });
       }
     }
+    
     if (orConditions.length > 0) {
       filter.$or = orConditions;
     }
 
-    // Filter for vendor products only
-    if (vendorOnly === 'true') {
-      if (!req.vendor) {
-        return res.status(401).json({ success: false, message: 'Unauthorized: Vendor authentication required.' });
-      }
-      filter.vendor = true;
-      filter.vendorId = req.vendor._id;
-    }
-
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = parseFloat(minPrice);
-      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
-    }
-
     // Availability filter
     if (req.query.availability === 'true') {
-      filter.available = 'true';
+      filter.available = true;
       filter.$or = [
         { stock: { $gt: 0 } },
         { variantDetails: { $elemMatch: { stock: { $gt: 0 } } } }
       ];
     } else if (req.query.availability === 'false') {
-      filter.available = 'false';
+      filter.available = false;
       filter.$or = [
         { stock: { $lte: 0 } },
         { variantDetails: { $elemMatch: { stock: { $lte: 0 } } } }
@@ -105,26 +125,40 @@ export const getProducts = asyncHandler(async (req, res) => {
 
     // Sorting
     let sortOption = {};
-    if (sort === 'price') {
-      sortOption = { price: 1 };
-    } else if (sort === '-price') {
-      sortOption = { price: -1 };
-    } else if (sort === 'createdAt') {
-      sortOption = { createdAt: 1 };
-    } else if (sort === '-createdAt') {
-      sortOption = { createdAt: -1 };
-    } else if (sort === 'discount') {
-      sortOption = { discount: -1 };
-    } else {
-      sortOption = { createdAt: -1 };
+    switch (sort) {
+      case 'price':
+        sortOption = { price: 1 };
+        break;
+      case '-price':
+        sortOption = { price: -1 };
+        break;
+      case 'createdAt':
+        sortOption = { createdAt: 1 };
+        break;
+      case '-createdAt':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'discount':
+        sortOption = { discount: -1 };
+        break;
+      case 'rating':
+        sortOption = { averageRating: -1 };
+        break;
+      case '-rating':
+        sortOption = { averageRating: 1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
     }
 
-    // Execute query
+    // Execute query with proper population
     const products = await Product.find(filter)
-      .populate('vendorId', 'name email')
+      .populate('vendorId', 'name email phone')
       .sort(sortOption)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
     const total = await Product.countDocuments(filter);
 
     res.json({
@@ -138,28 +172,39 @@ export const getProducts = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Get products error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch products',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
-
-// Get product by ID with reviews and rating distribution
+// @desc    Get product by ID with reviews and rating distribution
+// @route   GET /api/products/:id
+// @access  Public
 export const getProductById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format'
+      });
+    }
+
     const product = await Product.findById(id)
       .populate('vendorId', 'name email phone')
-      .populate({
-        path: 'reviews',
-        populate: {
-          path: 'userId',
-          select: 'name'
-        }
-      });
+      .lean();
 
     if (!product) {
-      res.status(404);
-      throw new Error('Product not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
     }
 
     // Get reviews for this product
@@ -167,73 +212,124 @@ export const getProductById = asyncHandler(async (req, res) => {
       proId: id, 
       isActive: true 
     })
-      .populate('userId', 'name')
-      .populate('responses.userId', 'name')
-      .sort({ createdAt: -1 });
+      .populate('userId', 'name email')
+      .populate('responses.userId', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
 
     // Calculate average rating and total reviews
-    const totalReviews = reviews.length;
-    const averageRating = totalReviews > 0 
-      ? reviews.reduce((sum, review) => {
-          const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
-          return sum + starToNumber[review.stars];
-        }, 0) / totalReviews
-      : 0;
+    let averageRating = 0;
+    let totalReviews = 0;
+    let ratingDistribution = [];
 
-    // Get rating distribution
-    const ratingDistribution = await Review.aggregate([
-      { $match: { proId: new mongoose.Types.ObjectId(id), isActive: true } },
-      { $group: { _id: '$stars', count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]);
+    if (reviews && reviews.length > 0) {
+      totalReviews = reviews.length;
+      
+      const ratingSum = reviews.reduce((sum, review) => {
+        const starValue = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 }[review.stars] || 0;
+        return sum + starValue;
+      }, 0);
+      
+      averageRating = Math.round((ratingSum / totalReviews) * 10) / 10;
+      
+      // Calculate rating distribution
+      const distribution = { 'one': 0, 'two': 0, 'three': 0, 'four': 0, 'five': 0 };
+      reviews.forEach(review => {
+        distribution[review.stars]++;
+      });
+      
+      ratingDistribution = Object.entries(distribution).map(([stars, count]) => ({
+        _id: stars,
+        count
+      }));
+    }
 
-    // Update product with review data
-    product.totalReviews = totalReviews;
-    product.averageRating = averageRating;
-    product.ratingDistribution = ratingDistribution;
+    // Add availableSizes virtual
+    const availableSizes = product.sizes && product.sizes.length > 0 
+      ? product.sizes 
+      : (product.size ? [product.size] : []);
+
+    const productWithReviews = {
+      ...product,
+      reviews,
+      averageRating,
+      totalReviews,
+      ratingDistribution,
+      availableSizes
+    };
 
     res.json({
       success: true,
-      data: product,
-      reviews,
-      totalReviews,
-      averageRating,
-      ratingDistribution
+      data: productWithReviews
     });
   } catch (error) {
-    console.error('Error getting product:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-
-export const getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug })
-    .populate('vendorId', 'name email phone')
-    .populate({
-      path: 'reviews',
-      populate: {
-        path: 'userId',
-        select: 'name'
-      }
+    console.error('Get product by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
   }
-
-  res.json({
-    success: true,
-    data: product
-  });
 });
 
-export const createProduct = asyncHandler(async (req, res) => {
-  if (!req.vendor) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Vendor authentication required.' });
-  }
+// @desc    Get product by slug
+// @route   GET /api/products/slug/:slug
+// @access  Public
+export const getProductBySlug = asyncHandler(async (req, res) => {
   try {
+    const { slug } = req.params;
+    
+    if (!slug) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product slug is required'
+      });
+    }
+
+    const product = await Product.findOne({ slug: slug.toLowerCase() })
+      .populate('vendorId', 'name email phone')
+      .populate({
+        path: 'reviews',
+        populate: {
+          path: 'userId',
+          select: 'name'
+        }
+      })
+      .lean();
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Get product by slug error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch product',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// @desc    Create a new product
+// @route   POST /api/products
+// @access  Private (Vendor)
+export const createProduct = asyncHandler(async (req, res) => {
+  try {
+    if (!req.vendor) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized: Vendor authentication required.' 
+      });
+    }
+
     const {
       name,
       price,
@@ -241,6 +337,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       discount,
       category,
       description,
+      srtDescription,
       seoDescription,
       seoKeyword,
       seoTitle,
@@ -254,22 +351,43 @@ export const createProduct = asyncHandler(async (req, res) => {
       status,
       keyFeatures,
       productDetails,
-      tags
+      tags,
+      offers,
+      salePrice,
+      sizes
     } = req.body;
 
     // Strong server-side validation
     const errors = [];
-    if (!name || typeof name !== 'string' || !name.trim()) errors.push('Product name is required.');
-    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) errors.push('Valid price is required.');
-    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) errors.push('Valid MRP is required.');
-    if (!category || typeof category !== 'string' || !category.trim()) errors.push('Category is required.');
-    if (!req.files || req.files.length === 0) errors.push('At least one image is required.');
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      errors.push('Product name is required.');
+    }
+    if (name && name.length > 100) {
+      errors.push('Product name cannot exceed 100 characters.');
+    }
+    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) {
+      errors.push('Valid price is required.');
+    }
+    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) {
+      errors.push('Valid MRP is required.');
+    }
+    if (!category || typeof category !== 'string' || !category.trim()) {
+      errors.push('Category is required.');
+    }
+    if (!req.files || req.files.length === 0) {
+      errors.push('At least one image is required.');
+    }
     if (errors.length > 0) {
-      return res.status(400).json({ success: false, message: errors.join(' ') });
+      return res.status(400).json({ 
+        success: false, 
+        message: errors.join(' ') 
+      });
     }
 
     // Generate slug from name
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     // Get category slug
     const categoryDoc = await Category.findOne({ name: category });
@@ -278,11 +396,11 @@ export const createProduct = asyncHandler(async (req, res) => {
     if (categoryDoc) {
       categorySlug = categoryDoc.slug;
     } else if (category === 'General') {
-      // Use default slug for General category
       categorySlug = 'general';
     } else {
-      // Generate slug from category name if not found
-      categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      categorySlug = category.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
     }
 
     // Handle image uploads to Cloudinary
@@ -317,33 +435,42 @@ export const createProduct = asyncHandler(async (req, res) => {
       }
     }
 
+    // Calculate discount if not provided
+    let calculatedDiscount = discount;
+    if (!calculatedDiscount && mrp && price && mrp > price) {
+      calculatedDiscount = Math.round(((mrp - price) / mrp) * 100);
+    }
+
     const product = await Product.create({
-      name,
+      name: name.trim(),
       slug,
-      price,
-      mrp,
-      discount,
+      price: Number(price),
+      mrp: Number(mrp),
+      discount: calculatedDiscount,
       vendorId: req.vendor._id,
       vendor: true,
-      category,
+      category: category.trim(),
       categorySlug,
-      description,
-      seoDescription,
-      seoKeyword,
-      seoTitle,
-      pickup_location,
-      return: returnPolicy,
-      cancellation,
-      variant,
-      variantDetails: variant ? variantDetails : [],
-      stock,
-      colors,
-      status,
+      description: description?.trim(),
+      srtDescription: srtDescription?.trim(),
+      seoDescription: seoDescription?.trim(),
+      seoKeyword: seoKeyword?.trim(),
+      seoTitle: seoTitle?.trim(),
+      pickup_location: pickup_location?.trim(),
+      return: returnPolicy !== undefined ? returnPolicy : true,
+      cancellation: cancellation !== undefined ? cancellation : true,
+      variant: variant || false,
+      variantDetails: variant ? (variantDetails || []) : [],
+      stock: Number(stock) || 0,
+      colors: Array.isArray(colors) ? colors : [],
+      status: status || 'active',
       images,
-      files: [], // Keep for backward compatibility
-      keyFeatures,
-      productDetails,
-      tags
+      keyFeatures: Array.isArray(keyFeatures) ? keyFeatures.filter(f => f.trim()) : [],
+      productDetails: productDetails || {},
+      tags: Array.isArray(tags) ? tags.filter(t => t.trim()) : [],
+      offers: offers || false,
+      salePrice: salePrice ? Number(salePrice) : undefined,
+      sizes: Array.isArray(sizes) ? sizes : []
     });
 
     res.status(201).json({
@@ -359,30 +486,56 @@ export const createProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
+// @desc    Update a product
+// @route   PUT /api/products/:id
+// @access  Private (Vendor)
 export const updateProduct = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format'
+      });
+    }
+
+    const product = await Product.findById(id);
 
     if (!product) {
-      res.status(404);
-      throw new Error('Product not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
     }
 
     // Check if vendor owns this product
     if (product.vendorId.toString() !== req.vendor._id.toString()) {
-      res.status(403);
-      throw new Error('Not authorized to update this product');
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this product'
+      });
     }
 
     // Strong server-side validation for update
     const errors = [];
-    const { colors, mrp, price } = req.body;
-    console.log(req)
+    const { colors, mrp, price, name } = req.body;
+    
+    if (name && (typeof name !== 'string' || !name.trim())) {
+      errors.push('Product name must be a valid string.');
+    }
+    if (name && name.length > 100) {
+      errors.push('Product name cannot exceed 100 characters.');
+    }
+    if (mrp !== undefined && (isNaN(Number(mrp)) || Number(mrp) < 0)) {
+      errors.push('Valid MRP is required.');
+    }
+    if (price !== undefined && (isNaN(Number(price)) || Number(price) < 0)) {
+      errors.push('Valid price is required.');
+    }
+
+    // Handle existing images
     let images = product.images || [];
-    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) errors.push('Valid MRP is required.');
-    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) errors.push('Valid price is required.');
-    // Check for at least one image (existing or new)
     if (req.body.existingImages) {
       try {
         const existingImages = JSON.parse(req.body.existingImages);
@@ -392,32 +545,24 @@ export const updateProduct = asyncHandler(async (req, res) => {
         images = [];
       }
     }
-    if (req.files && req.files.length > 0) {
-      // Will add new images below
-    }
+
+    // Check for at least one image (existing or new)
     if ((!images || images.length === 0) && (!req.files || req.files.length === 0)) {
       errors.push('At least one image is required.');
     }
+
     if (errors.length > 0) {
-      return res.status(400).json({ success: false, message: errors.join(' ') });
+      return res.status(400).json({ 
+        success: false, 
+        message: errors.join(' ') 
+      });
     }
 
+    // Process colors array
     if (colors) {
       req.body.colors = Array.isArray(colors) ? colors : [colors];
     }
 
-    // Handle image updates
-    // Handle existing images if provided
-    if (req.body.existingImages) {
-      try {
-        const existingImages = JSON.parse(req.body.existingImages);
-        images = existingImages;
-      } catch (error) {
-        console.error('Error parsing existingImages:', error);
-        images = [];
-      }
-    }
-    
     // Handle new image uploads
     if (req.files && req.files.length > 0) {
       try {
@@ -451,9 +596,19 @@ export const updateProduct = asyncHandler(async (req, res) => {
       }
     }
 
+    // Calculate discount if price or MRP changed
+    let updateData = { ...req.body, images };
+    if ((req.body.price !== undefined || req.body.mrp !== undefined) && !req.body.discount) {
+      const newPrice = req.body.price !== undefined ? Number(req.body.price) : product.price;
+      const newMrp = req.body.mrp !== undefined ? Number(req.body.mrp) : product.mrp;
+      if (newMrp > newPrice) {
+        updateData.discount = Math.round(((newMrp - newPrice) / newMrp) * 100);
+      }
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, images },
+      id,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -470,22 +625,35 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete product
+// @desc    Delete a product
 // @route   DELETE /api/products/:id
 // @access  Private (Vendor)
 export const deleteProduct = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format'
+      });
+    }
+
+    const product = await Product.findById(id);
 
     if (!product) {
-      res.status(404);
-      throw new Error('Product not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
     }
 
     // Check if vendor owns this product
     if (product.vendorId.toString() !== req.vendor._id.toString()) {
-      res.status(403);
-      throw new Error('Not authorized to delete this product');
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this product'
+      });
     }
 
     // Delete images from Cloudinary
@@ -501,7 +669,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
       }
     }
 
-    await Product.findByIdAndDelete(req.params.id);
+    await Product.findByIdAndDelete(id);
 
     res.json({
       success: true,
@@ -520,162 +688,269 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 // @route   GET /api/products/:id/similar
 // @access  Public
 export const getSimilarProducts = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  try {
+    const { id } = req.params;
+    const { limit = 8 } = req.query;
 
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format'
+      });
+    }
+
+    // Get the current product to find similar ones
+    const currentProduct = await Product.findById(id).lean();
+    
+    if (!currentProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Find similar products based on category, tags, and other attributes
+    const similarProducts = await Product.find({
+     _id: { $ne: currentProduct._id.toString() }, 
+      available: true,
+      status: 'active',
+      $or: [
+        { category: currentProduct.category },
+        { categorySlug: currentProduct.categorySlug },
+        { tags: { $in: currentProduct.tags || [] } },
+        { vendorId: currentProduct.vendorId } // Same vendor products
+      ]
+    })
+    .populate('vendorId', 'name email phone')
+    .sort({ 
+      category: currentProduct.category === '$category' ? 1 : -1,
+      averageRating: -1,
+      createdAt: -1 
+    })
+    .limit(parseInt(limit))
+    .lean();
+
+    res.json({
+      success: true,
+      data: similarProducts
+    });
+  } catch (error) {
+    console.error('Get similar products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch similar products',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  const similarProducts = await Product.find({
-    categorySlug: product.categorySlug,
-    _id: { $ne: product._id },
-    available: 'true'
-  })
-    .limit(8)
-    .populate('vendorId', 'name');
-
-  res.json({
-    success: true,
-    data: similarProducts
-  });
 });
 
 // @desc    Get products by category
 // @route   GET /api/products/category/:categorySlug
 // @access  Public
 export const getProductsByCategory = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 12;
-  const skip = (page - 1) * limit;
+  try {
+    const { categorySlug } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
 
-  const { minPrice, maxPrice, sort = '-createdAt' } = req.query;
+    const { minPrice, maxPrice, sort = '-createdAt' } = req.query;
 
-  const filter = {
-    categorySlug: req.params.categorySlug,
-    available: 'true'
-  };
+    const filter = {
+      categorySlug: categorySlug.toLowerCase(),
+      available: true,
+      status: 'active'
+    };
 
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = parseFloat(minPrice);
-    if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
-  }
-
-  const products = await Product.find(filter)
-    .populate('vendorId', 'name')
-    .sort(sort)
-    .skip(skip)
-    .limit(limit);
-
-  const total = await Product.countDocuments(filter);
-
-  res.json({
-    success: true,
-    data: products,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseFloat(minPrice);
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
     }
-  });
+
+    // Sorting
+    let sortOption = {};
+    switch (sort) {
+      case 'price':
+        sortOption = { price: 1 };
+        break;
+      case '-price':
+        sortOption = { price: -1 };
+        break;
+      case 'createdAt':
+        sortOption = { createdAt: 1 };
+        break;
+      case '-createdAt':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'rating':
+        sortOption = { averageRating: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    const products = await Product.find(filter)
+      .populate('vendorId', 'name')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Product.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get products by category error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch products by category',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
 // @desc    Search products
 // @route   GET /api/products/search
 // @access  Public
 export const searchProducts = asyncHandler(async (req, res) => {
-  const { q, category, minPrice, maxPrice, sort = '-createdAt' } = req.query;
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 12;
-  const skip = (page - 1) * limit;
+  try {
+    const { q, category, minPrice, maxPrice, sort = '-createdAt' } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
 
-  const filter = { available: 'true' };
+    const filter = { 
+      available: true,
+      status: 'active'
+    };
 
-  if (q) {
-    filter.name = { $regex: q, $options: 'i' };
-  }
-
-  if (category) {
-    filter.categorySlug = { $regex: category, $options: 'i' };
-  }
-
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = parseFloat(minPrice);
-    if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
-  }
-
-  const products = await Product.find(filter)
-    .populate('vendorId', 'name')
-    .sort(sort)
-    .skip(skip)
-    .limit(limit);
-
-  const total = await Product.countDocuments(filter);
-
-  res.json({
-    success: true,
-    data: products,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { tags: { $in: [new RegExp(q, 'i')] } }
+      ];
     }
-  });
+
+    if (category) {
+      filter.categorySlug = { $regex: category, $options: 'i' };
+    }
+
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseFloat(minPrice);
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Sorting
+    let sortOption = {};
+    switch (sort) {
+      case 'price':
+        sortOption = { price: 1 };
+        break;
+      case '-price':
+        sortOption = { price: -1 };
+        break;
+      case 'createdAt':
+        sortOption = { createdAt: 1 };
+        break;
+      case '-createdAt':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'rating':
+        sortOption = { averageRating: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    const products = await Product.find(filter)
+      .populate('vendorId', 'name')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Product.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Search products error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to search products',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
-// @desc    Create a new review
+// @desc    Create a product review
 // @route   POST /api/products/:id/reviews
 // @access  Private (User)
 export const createProductReview = asyncHandler(async (req, res) => {
   try {
     const { stars, title, review } = req.body;
-  const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
 
-  if (!product) {
+    if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
-  }
+    }
 
     // Check if user already reviewed this product
-  const alreadyReviewed = await Review.findOne({ 
-    userId: req.user._id, 
+    const alreadyReviewed = await Review.findOne({ 
+      userId: req.user._id, 
       proId: product._id 
-  });
+    });
 
-  if (alreadyReviewed) {
+    if (alreadyReviewed) {
       return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
-  }
+    }
 
     // Create the review
     const newReview = await Review.create({
-    userId: req.user._id,
+      userId: req.user._id,
       proId: product._id,
       stars,
       title,
       review
-  });
+    });
 
-  // Update product with new review
-    product.reviews.push(newReview._id);
-    product.totalReviews = product.reviews.length;
-  
-  // Recalculate average rating
+    // Update product with new review count and average rating
     const allReviews = await Review.find({ proId: product._id, isActive: true });
     const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
     const totalRating = allReviews.reduce((acc, item) => starToNumber[item.stars] + acc, 0);
-    product.averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
+    
+    product.totalReviews = allReviews.length;
+    product.averageRating = allReviews.length > 0 ? Math.round((totalRating / allReviews.length) * 10) / 10 : 0;
 
     await product.save();
 
     // Populate user info for response
-    await newReview.populate('userId', 'name');
+          await newReview.populate('userId', 'name email');
 
-  res.status(201).json({
-    success: true,
-    message: 'Review added successfully',
+    res.status(201).json({
+      success: true,
+      message: 'Review added successfully',
       data: newReview
     });
   } catch (error) {
@@ -702,7 +977,7 @@ export const getProductReviews = asyncHandler(async (req, res) => {
       proId: req.params.id, 
       isActive: true 
     })
-    .populate('userId', 'name')
+          .populate('userId', 'name email')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -770,13 +1045,19 @@ export const updateProductReview = asyncHandler(async (req, res) => {
 
     // Recalculate product average rating
     const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
     const allReviews = await Review.find({ proId: product._id, isActive: true });
     const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
     const totalRating = allReviews.reduce((acc, item) => starToNumber[item.stars] + acc, 0);
-    product.averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
+    
+    product.totalReviews = allReviews.length;
+    product.averageRating = allReviews.length > 0 ? Math.round((totalRating / allReviews.length) * 10) / 10 : 0;
     await product.save();
 
-    await reviewDoc.populate('userId', 'name');
+          await reviewDoc.populate('userId', 'name email');
 
     res.json({
       success: true,
@@ -811,11 +1092,16 @@ export const deleteProductReview = asyncHandler(async (req, res) => {
 
     // Recalculate product average rating
     const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
     const allReviews = await Review.find({ proId: product._id, isActive: true });
     const starToNumber = { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5 };
     const totalRating = allReviews.reduce((acc, item) => starToNumber[item.stars] + acc, 0);
-    product.averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
+    
     product.totalReviews = allReviews.length;
+    product.averageRating = allReviews.length > 0 ? Math.round((totalRating / allReviews.length) * 10) / 10 : 0;
     await product.save();
 
     res.json({
@@ -855,7 +1141,7 @@ export const addReviewResponse = asyncHandler(async (req, res) => {
     await review.save();
 
     // Populate user info for response
-    await review.populate('responses.userId', 'name');
+    await review.populate('responses.userId', 'name email');
 
     res.status(201).json({
       success: true,
@@ -893,7 +1179,7 @@ export const updateReviewResponse = asyncHandler(async (req, res) => {
     response.content = content;
     await review.save();
 
-    await review.populate('responses.userId', 'name');
+    await review.populate('responses.userId', 'name email');
 
     res.json({
       success: true,

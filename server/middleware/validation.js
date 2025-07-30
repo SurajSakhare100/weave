@@ -67,43 +67,76 @@ const validateProduct = [
     .withMessage('Category is required'),
   body('description')
     .optional()
-    .trim()
     .isLength({ max: 1000 })
-    .withMessage('Description must be less than 1000 characters'),
+    .withMessage('Description cannot exceed 1000 characters'),
+  body('srtDescription')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Short description cannot exceed 200 characters'),
   body('keyFeatures')
     .optional()
-    .isArray({ max: 4 })
-    .withMessage('Key features must be an array with up to 4 items'),
+    .isArray()
+    .withMessage('Key features must be an array'),
   body('keyFeatures.*')
     .optional()
-    .isString()
     .isLength({ max: 100 })
-    .withMessage('Each key feature must be a string up to 100 characters'),
+    .withMessage('Each key feature cannot exceed 100 characters'),
   body('productDetails')
     .optional()
     .isObject()
     .withMessage('Product details must be an object'),
   body('productDetails.weight')
     .optional()
-    .isString(),
+    .isLength({ max: 50 })
+    .withMessage('Weight cannot exceed 50 characters'),
   body('productDetails.dimensions')
     .optional()
-    .isString(),
+    .isLength({ max: 50 })
+    .withMessage('Dimensions cannot exceed 50 characters'),
   body('productDetails.capacity')
     .optional()
-    .isString(),
+    .isLength({ max: 50 })
+    .withMessage('Capacity cannot exceed 50 characters'),
   body('productDetails.materials')
     .optional()
-    .isString(),
+    .isLength({ max: 100 })
+    .withMessage('Materials cannot exceed 100 characters'),
   body('tags')
     .optional()
-    .isArray({ max: 10 })
-    .withMessage('Tags must be an array with up to 10 items'),
+    .isArray()
+    .withMessage('Tags must be an array'),
   body('tags.*')
     .optional()
-    .isString()
     .isLength({ max: 30 })
-    .withMessage('Each tag must be a string up to 30 characters'),
+    .withMessage('Each tag cannot exceed 30 characters'),
+  body('sizes')
+    .optional()
+    .isArray()
+    .withMessage('Sizes must be an array'),
+  body('sizes.*')
+    .optional()
+    .isIn(['XS', 'S', 'M', 'L', 'XL', 'XXL'])
+    .withMessage('Invalid size value'),
+  body('colors')
+    .optional()
+    .isArray()
+    .withMessage('Colors must be an array'),
+  body('colors.*')
+    .optional()
+    .isLength({ max: 20 })
+    .withMessage('Each color cannot exceed 20 characters'),
+  body('offers')
+    .optional()
+    .isBoolean()
+    .withMessage('Offers must be a boolean'),
+  body('salePrice')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Sale price must be a positive number'),
+  body('stock')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Stock must be a non-negative integer'),
   handleValidationErrors
 ];
 

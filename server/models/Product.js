@@ -5,12 +5,14 @@ const ProductSchema = new mongoose.Schema({
         type: String, 
         required: true,
         trim: true,
+        maxlength: [100, 'Product name cannot exceed 100 characters']
     },
     slug: {
         type: String,
         required: true,
         unique: true,
         trim: true,
+        lowercase: true
     },
     price: {
         type: Number,
@@ -26,6 +28,7 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         default: 0,
         min: [0, 'Discount cannot be negative'],
+        max: [100, 'Discount cannot exceed 100%']
     },
     vendorId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -37,44 +40,60 @@ const ProductSchema = new mongoose.Schema({
         default: false,
     },
     available: { 
-        type: String, 
-        default: 'true',
-        enum: ['true', 'false'],
+        type: Boolean, 
+        default: true,
     },
+    
+    // Single size for simple products
     size: {
         type: String,
         default: 'M',
         enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
     },
+    // Multiple sizes for products with size variants
+    sizes: [{
+        type: String,
+        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+    }],
     category: {
         type: String,
         required: true,
+        trim: true
     },
     categorySlug: {
         type: String,
-        // required: true,
+        required: true,
+        trim: true
     },
     srtDescription: {
         type: String,
         trim: true,
+        maxlength: [200, 'Short description cannot exceed 200 characters']
     },
     description: {
         type: String,
         trim: true,
+        maxlength: [1000, 'Description cannot exceed 1000 characters']
     },
     seoDescription: {
         type: String,
         trim: true,
+        maxlength: [160, 'SEO description cannot exceed 160 characters']
     },
     seoKeyword: {
         type: String,
         trim: true,
+        maxlength: [200, 'SEO keywords cannot exceed 200 characters']
     },
     seoTitle: {
         type: String,
         trim: true,
+        maxlength: [60, 'SEO title cannot exceed 60 characters']
     },
-    pickup_location: String,
+    pickup_location: {
+        type: String,
+        trim: true
+    },
     return: {
         type: Boolean,
         default: true,
@@ -83,10 +102,8 @@ const ProductSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
-    uni_id_1: String,
-    uni_id_2: String,
     
-    // Cloudinary Images
+    // Cloudinary Images - Single source of truth
     images: [{
         url: {
             type: String,
@@ -108,9 +125,6 @@ const ProductSchema = new mongoose.Schema({
         }
     }],
     
-    // Legacy files field for backward compatibility
-    files: [String],
-    
     variant: {
         type: Boolean,
         default: false,
@@ -130,14 +144,18 @@ const ProductSchema = new mongoose.Schema({
     stock: {
         type: Number,
         default: 0,
+        min: [0, 'Stock cannot be negative']
     },
     totalReviews: {
         type: Number,
         default: 0,
+        min: [0, 'Total reviews cannot be negative']
     },
     averageRating: {
         type: Number,
         default: 0,
+        min: [0, 'Average rating cannot be negative'],
+        max: [5, 'Average rating cannot exceed 5']
     },
     status: {
         type: String,
@@ -145,14 +163,43 @@ const ProductSchema = new mongoose.Schema({
         default: 'active',
     },
     currVariantSize: String,
-    keyFeatures: [String],
+    keyFeatures: [{
+        type: String,
+        maxlength: [100, 'Key feature cannot exceed 100 characters']
+    }],
     productDetails: {
-        weight: { type: String },
-        dimensions: { type: String },
-        capacity: { type: String },
-        materials: { type: String },
+        weight: { 
+            type: String,
+            trim: true
+        },
+        dimensions: { 
+            type: String,
+            trim: true
+        },
+        capacity: { 
+            type: String,
+            trim: true
+        },
+        materials: { 
+            type: String,
+            trim: true
+        },
     },
-    tags: [String],
+    tags: [{
+        type: String,
+        trim: true,
+        maxlength: [30, 'Tag cannot exceed 30 characters']
+    }],
+    
+    // Pricing and offers
+    offers: {
+        type: Boolean,
+        default: false
+    },
+    salePrice: {
+        type: Number,
+        min: [0, 'Sale price cannot be negative']
+    },
     
     // Scheduling fields
     isScheduled: {
@@ -172,7 +219,11 @@ const ProductSchema = new mongoose.Schema({
         enum: ['pending', 'published', 'cancelled'],
         default: 'pending',
     },
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
 
 // Indexes for better query performance
 ProductSchema.index({ name: 1 });
@@ -184,6 +235,10 @@ ProductSchema.index({ status: 1 });
 ProductSchema.index({ isScheduled: 1 });
 ProductSchema.index({ scheduledPublishDate: 1 });
 ProductSchema.index({ scheduleStatus: 1 });
+ProductSchema.index({ slug: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ tags: 1 });
+ProductSchema.index({ sizes: 1 });
 
 // Virtual for primary image
 ProductSchema.virtual('primaryImage').get(function() {
@@ -204,9 +259,80 @@ ProductSchema.virtual('thumbnail').get(function() {
     return null;
 });
 
-// Ensure virtuals are serialized
-ProductSchema.set('toJSON', { virtuals: true });
-ProductSchema.set('toObject', { virtuals: true });
+// Virtual for discount percentage
+ProductSchema.virtual('discountPercentage').get(function() {
+    if (this.mrp && this.price && this.mrp > this.price) {
+        return Math.round(((this.mrp - this.price) / this.mrp) * 100);
+    }
+    return 0;
+});
+
+// Virtual for available sizes
+ProductSchema.virtual('availableSizes').get(function() {
+    if (this.sizes && this.sizes.length > 0) {
+        return this.sizes;
+    }
+    if (this.size) {
+        return [this.size];
+    }
+    return [];
+});
+
+// Pre-save middleware to generate slug if not provided
+ProductSchema.pre('save', function(next) {
+    if (!this.slug && this.name) {
+        this.slug = this.name.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+    }
+    
+    // Generate categorySlug if not provided
+    if (!this.categorySlug && this.category) {
+        this.categorySlug = this.category.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+    }
+    
+    // Calculate discount if not set
+    if (this.mrp && this.price && !this.discount) {
+        this.discount = Math.round(((this.mrp - this.price) / this.mrp) * 100);
+    }
+    
+    // Normalize sizes array
+    if (this.sizes && this.sizes.length > 0) {
+        // Remove duplicates and normalize
+        this.sizes = [...new Set(this.sizes.map(size => size.trim()))];
+    }
+    
+    next();
+});
+
+// Method to check if product is in stock
+ProductSchema.methods.isInStock = function() {
+    if (this.variant && this.variantDetails && this.variantDetails.length > 0) {
+        return this.variantDetails.some(variant => variant.stock > 0);
+    }
+    return this.stock > 0;
+};
+
+// Method to get available variants
+ProductSchema.methods.getAvailableVariants = function() {
+    if (this.variant && this.variantDetails) {
+        return this.variantDetails.filter(variant => variant.stock > 0);
+    }
+    return [];
+};
+
+// Method to get available sizes
+ProductSchema.methods.getAvailableSizes = function() {
+    if (this.sizes && this.sizes.length > 0) {
+        return this.sizes;
+    }
+    if (this.size) {
+        return [this.size];
+    }
+    return [];
+};
 
 const Product = mongoose.model('Product', ProductSchema);
 

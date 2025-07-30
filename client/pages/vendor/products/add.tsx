@@ -15,7 +15,7 @@ interface Category {
 }
 
 const SIZE_OPTIONS = [
-  'Extra small', 'Small', 'Medium', 'Large', 'Extra Large'
+  'XS', 'S', 'M', 'L', 'XL', 'XXL'
 ];
 const COLOR_OPTIONS = [
   'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'

@@ -12,11 +12,12 @@ interface Product {
   name: string;
   price: number;
   mrp?: number;
-  available: string;
+  available: boolean; // Changed from string to boolean
   stock?: number;
   variant?: boolean;
   variantDetails?: Array<{ stock: number }>;
   colors?: string[];
+  sizes?: string[]; // Added sizes field
   currVariantSize?: string;
   images?: Array<{ url: string; is_primary?: boolean }>;
   averageRating?: number;
@@ -38,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (product.available === 'true') {
+    if (product.available) {
       dispatch(addCartItem({
         product,
         quantity: 1,
@@ -180,10 +181,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             onClick={handleAddToCart}
             className="w-full px-4 py-3 border border-[#EE346C] rounded-md text-[#EE346C] bg-white font-semibold hover:bg-[#fef2f2] transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={stock === 0}
+            disabled={!product.available}
           >
             <ShoppingCart className="h-5 w-5" />
-            <span>{stock > 0 ? 'Add to cart' : 'Out of Stock'}</span>
+            <span>{product.available ? 'Add to cart' : 'Out of Stock'}</span>
           </button>
         </div>
       </div>

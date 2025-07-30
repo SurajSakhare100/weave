@@ -5,12 +5,20 @@ import Image from 'next/image';
 import { editVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
 import { Upload, Info, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface Category {
   _id: string;
   name: string;
   slug: string;
 }
+
+const SIZE_OPTIONS = [
+  'XS', 'S', 'M', 'L', 'XL', 'XXL'
+];
+const COLOR_OPTIONS = [
+  'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'
+];
 
 export default function VendorEditProductPage() {
   const router = useRouter();
@@ -313,7 +321,7 @@ export default function VendorEditProductPage() {
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">Size <Info className="h-4 w-4 text-gray-400" /></label>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {['Extra small', 'Small', 'Medium', 'Large', 'Extra Large'].map(size => (
+                  {SIZE_OPTIONS.map(size => (
                     <label key={size} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={sizes.includes(size)} onChange={() => handleSizeToggle(size)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
                       {size}
@@ -324,7 +332,7 @@ export default function VendorEditProductPage() {
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">Color <Info className="h-4 w-4 text-gray-400" /></label>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {['Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'].map(color => (
+                  {COLOR_OPTIONS.map(color => (
                     <label key={color} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={colors.includes(color)} onChange={() => handleColorToggle(color)} className="form-checkbox h-5 w-5 text-[#5A9BD8]" />
                       {color}

@@ -8,9 +8,9 @@ export interface Product {
     discount: number
     vendorId: string
     vendor: boolean
-    available: string
+    available: boolean // Changed from string to boolean
     category: string
-    categorySlug?: string
+    categorySlug: string // Made required
     srtDescription?: string
     description?: string
     seoDescription?: string
@@ -19,9 +19,7 @@ export interface Product {
     pickup_location?: string
     return: boolean
     cancellation: boolean
-    uni_id_1?: string
-    uni_id_2?: string
-    files: string[]
+    images: ProductImage[] // Single source of truth for images
     variant: boolean
     variantDetails: Array<{
       size: string
@@ -38,7 +36,6 @@ export interface Product {
     currVariantSize?: string
     createdAt: string
     updatedAt: string
-    images: ProductImage[]
     productDetails?: {
       weight?: string;
       dimensions?: string;
@@ -48,7 +45,9 @@ export interface Product {
     keyFeatures?: string[];
     offers?: boolean;
     salePrice?: number;
-    sizes?: string[];
+    // Size fields
+    size?: string; // Single size for simple products
+    sizes?: string[]; // Multiple sizes for products with size variants
     tags?: string[];
     // Scheduling fields
     isScheduled?: boolean;
@@ -56,10 +55,15 @@ export interface Product {
     scheduledPublishTime?: string;
     scheduleStatus?: 'pending' | 'published' | 'cancelled';
     scheduledDate?: string; // Formatted date for display
-  }
+    // Virtual fields
+    primaryImage?: string;
+    thumbnail?: string;
+    discountPercentage?: number;
+    availableSizes?: string[]; // Virtual field for available sizes
+}
 
-// Add this above Product interface
-declare interface ProductImage {
+// Product image interface
+export interface ProductImage {
   url: string;
   public_id: string;
   is_primary?: boolean;
@@ -69,4 +73,35 @@ declare interface ProductImage {
   bytes?: number;
   thumbnail_url?: string;
   small_thumbnail_url?: string;
+}
+
+// Product with reviews interface
+export interface ProductWithReviews extends Product {
+  reviews: Array<{
+    isVerified: boolean
+    _id: string;
+    userId: {
+      email: string
+      _id: string;
+      name: string;
+    };
+    stars: 'one' | 'two' | 'three' | 'four' | 'five';
+    title: string;
+    review: string;
+    createdAt: string;
+    responses?: Array<{
+      _id: string;
+      userId: {
+        _id: string;
+        name: string;
+      };
+      content: string;
+      isVendorResponse: boolean;
+      createdAt: string;
+    }>;
+  }>;
+  ratingDistribution?: Array<{
+    _id: string;
+    count: number;
+  }>;
 }
