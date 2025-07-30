@@ -45,7 +45,7 @@ const createOrder = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error(`Product not found: ${item.productId}`);
       }
-      if (product.available !== 'true') {
+      if (product.available !== true) {
         res.status(400);
         throw new Error(`Product not available: ${product.name}`);
       }
