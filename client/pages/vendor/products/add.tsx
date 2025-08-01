@@ -113,7 +113,12 @@ export default function VendorAddProductPage() {
       formData.append('salePrice', salePrice);
       formData.append('productDetails', JSON.stringify(productDetails));
       keyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f));
-      sizes.forEach(size => formData.append('sizes', size));
+      // Ensure at least one size is selected
+      if (sizes.length === 0) {
+        formData.append('sizes', 'M'); // Default size
+      } else {
+        sizes.forEach(size => formData.append('sizes', size));
+      }
       colors.forEach(color => formData.append('colors', color));
       tags.forEach(tag => formData.append('tags', tag));
       images.forEach(img => formData.append('images', img));

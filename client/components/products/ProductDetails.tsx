@@ -1,9 +1,10 @@
 import React from 'react';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCartItem } from '@/features/cart/cartSlice';
+import { addCartItem, fetchCart } from '@/features/cart/cartSlice';
 import { addToWishlist, removeFromWishlist } from '@/features/user/userSlice';
 import { AppDispatch, RootState } from '@/store/store';
+import { toast } from 'sonner';
 
 interface ProductDetailsProps {
   product: {
@@ -26,18 +27,48 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
   const isInWishlist = wishlist.includes(product._id);
 
   const handleAddToCart = () => {
+    if (!product || !product._id) {
+      toast.error('Product not available');
+      return;
+    }
+
+    if (!product.stock || product.stock === 0) {
+      toast.error('Product is out of stock');
+      return;
+    }
+
+    // Determine the size to use - prioritize product sizes, then default to 'M'
+    let selectedSize = 'M';
+    if (product.sizes && product.sizes.length > 0) {
+      selectedSize = product.sizes[0];
+    }
+
     dispatch(addCartItem({
       product,
       quantity: 1,
-      variantSize: 'M'
-    }));
+      variantSize: selectedSize
+    })).then(() => {
+      // Refresh cart to ensure UI is updated immediately
+      dispatch(fetchCart());
+      toast.success('Added to cart successfully!');
+    }).catch((error) => {
+      console.error('Failed to add to cart:', error);
+      toast.error('Failed to add to cart');
+    });
   };
 
   const handleWishlistToggle = () => {
+    if (!product || !product._id) {
+      toast.error('Product not available');
+      return;
+    }
+
     if (isInWishlist) {
       dispatch(removeFromWishlist(product._id));
+      toast.success('Removed from wishlist');
     } else {
       dispatch(addToWishlist(product._id));
+      toast.success('Added to wishlist');
     }
   };
 

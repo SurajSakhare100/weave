@@ -1,22 +1,44 @@
 import Image from 'next/image';
 
-const SummaryItem = ({ item }) => (
-  <div className="flex items-center justify-between py-4">
-    <div className="flex items-center gap-4">
-      <div className="relative">
-        <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md object-cover border" />
-        <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {item.quantity}
-        </span>
+const SummaryItem = ({ item }) => {
+  // Get the primary image from product images or fallback to item.image
+  const getProductImage = () => {
+    if (item.item?.images && item.item.images.length > 0) {
+      const primary = item.item.images.find(img => img.is_primary);
+      return primary ? primary.url : item.item.images[0].url;
+    }
+    return item.image || '/products/product.png';
+  };
+
+  // Get the selected size, fallback to product sizes, then default to 'M'
+  const getSelectedSize = () => {
+    return item.variantSize || 
+      (item.item?.sizes && item.item.sizes.length > 0 ? item.item.sizes[0] : 'M');
+  };
+
+  // Get the product color or default
+  const getProductColor = () => {
+    return item.item?.color || 'Pink';
+  };
+
+  return (
+    <div className="flex items-center justify-between py-4">
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <Image src={getProductImage()} alt={item.name || item.item?.name} width={64} height={64} className="rounded-md object-cover border" />
+          <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {item.quantity}
+          </span>
+        </div>
+        <div>
+          <p className="font-semibold">{item.name || item.item?.name}</p>
+          <p className="text-sm text-gray-400">{getSelectedSize()} / {getProductColor()}</p>
+        </div>
       </div>
-      <div>
-        <p className="font-semibold">{item.name}</p>
-        <p className="text-sm text-gray-400">{item.size} / {item.color}</p>
-      </div>
+      <p className="font-semibold">₹ {item.price.toLocaleString('en-IN')}</p>
     </div>
-    <p className="font-semibold">₹ {item.price.toLocaleString('en-IN')}</p>
-  </div>
-);
+  );
+};
 
 const CheckoutOrderSummary = ({ items, summary }) => {
   return (

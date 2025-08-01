@@ -6,7 +6,8 @@ const OrderItemSchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     mrp: { type: Number, required: true },
-    variantSize: String,
+    sizes: { type: String, default: 'M' }, // Make sizes optional with default
+    variantSize: { type: String, default: 'M' }, // Make variantSize optional with default
     image: String,
     status: {
         type: String,

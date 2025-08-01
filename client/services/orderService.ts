@@ -11,7 +11,8 @@ export async function placeOrder(orderData: any) {
         quantity: item.quantity,
         price: item.price,
         mrp: item.mrp,
-        variantSize: item.variantSize
+        sizes: item.variantSize || 'M', // Use variantSize as sizes field
+        variantSize: item.variantSize || 'M' // Keep variantSize for backward compatibility
       })),
       shippingAddress: {
         name: orderData.shippingAddress.name,

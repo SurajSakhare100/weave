@@ -20,6 +20,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewSection from '@/components/reviews/ReviewSection';
+import { fetchCart } from '../../features/cart/cartSlice';
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -30,8 +31,8 @@ export default function ProductDetailPage() {
   const [similarProducts, setSimilarProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [quantity] = useState(1)
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [quantity, setQuantity] = useState(1)
+  const [selectedSize, setSelectedSize] = useState<string>('M') // Add size selection state
   const [showReviewForm, setShowReviewForm] = useState(false)
 
   const { wishlist, isAuthenticated, user } = useSelector((state: RootState) => state.user)
@@ -59,7 +60,7 @@ export default function ProductDetailPage() {
       }
       
       setProduct(productData)
-      setSelectedColor(productData.colors ? productData.colors[0] : null)
+      setSelectedSize(productData.sizes ? productData.sizes[0] : 'M')
       
       // Load similar products
       try {
@@ -98,18 +99,29 @@ export default function ProductDetailPage() {
   }, [id, loadProduct])
 
   const handleAddToCart = async () => {
-    if (product) {
-      try {
-        await dispatch(addCartItem({
-          product,
-          quantity,
-          variantSize: selectedColor || product.currVariantSize || ''
-        })).unwrap()
-        toast.success('Added to cart successfully!')
-      } catch (error) {
-        console.error('Failed to add to cart:', error)
-        toast.error('Failed to add to cart')
-      }
+    if (!product) {
+      toast.error('Product not available');
+      return;
+    }
+
+    if (!product._id) {
+      toast.error('Invalid product data');
+      return;
+    }
+
+    try {
+      await dispatch(addCartItem({
+        product,
+        quantity,
+        variantSize: selectedSize // Use selected size instead of selectedColor
+      })).unwrap()
+      toast.success('Added to cart successfully!')
+      
+      // Refresh cart to ensure UI is updated immediately
+      dispatch(fetchCart())
+    } catch (error: any) {
+      console.error('Failed to add to cart:', error)
+      toast.error(error.message || 'Failed to add to cart')
     }
   }
 
@@ -118,14 +130,18 @@ export default function ProductDetailPage() {
       router.push(`/login?redirect=/products/${id}`);
       return;
     }
-    if (product) {
-      if (inWishlist) {
-        dispatch(removeFromWishlist(product._id))
-        toast.success('Removed from wishlist')
-      } else {
-        dispatch(addToWishlist(product._id))
-        toast.success('Added to wishlist')
-      }
+    
+    if (!product || !product._id) {
+      toast.error('Product not available');
+      return;
+    }
+    
+    if (inWishlist) {
+      dispatch(removeFromWishlist(product._id))
+      toast.success('Removed from wishlist')
+    } else {
+      dispatch(addToWishlist(product._id))
+      toast.success('Added to wishlist')
     }
   }
 
@@ -270,12 +286,17 @@ export default function ProductDetailPage() {
                   <span className="font-semibold text-sm">Size:</span>
                   <div className="flex items-center ml-4 gap-2">
                     {product.sizes.map((size) => (
-                      <span
+                      <button
                         key={size}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm bg-white"
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-3 py-1 border rounded text-sm transition-colors ${
+                          selectedSize === size 
+                            ? 'border-pink-500 bg-pink-50 text-pink-700' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
                       >
                         {size}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 </div>

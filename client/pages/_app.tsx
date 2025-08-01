@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { getUserToken } from '../services/authService';
 import { getUserProfile } from '../services/userService';
 import { login, logout } from '../features/user/userSlice';
+import { fetchCart } from '../features/cart/cartSlice';
 import { initializeVendorAuth } from '../utils/vendorAuthInit';
 import { checkTokenFormat } from '../utils/clearOldTokens';
 import { Toaster } from 'sonner';
@@ -49,6 +50,32 @@ function UserHydrator() {
   return null;
 }
 
+function CartHydrator() {
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+
+  useEffect(() => {
+    console.log('CartHydrator - Effect triggered:', { isAuthenticated, cartItemsLength: cartItems.length });
+    
+    if (isAuthenticated && cartItems.length === 0) {
+      console.log('CartHydrator - User authenticated and cart empty, fetching cart');
+      // Fetch cart when user is authenticated and cart is empty
+      dispatch(fetchCart()).catch((error) => {
+        console.error('CartHydrator - Failed to fetch cart on app init:', error);
+      });
+    } else {
+      console.log('CartHydrator - Skipping cart fetch:', { 
+        isAuthenticated, 
+        cartItemsLength: cartItems.length,
+        reason: !isAuthenticated ? 'not authenticated' : 'cart not empty'
+      });
+    }
+  }, [dispatch, isAuthenticated, cartItems.length]);
+  
+  return null;
+}
+
 function VendorStyleManager() {
   const router = useRouter();
   
@@ -69,6 +96,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <UserHydrator />
+          <CartHydrator />
           <VendorStyleManager />
           <Toaster richColors position="top-right" />
           <Component {...pageProps} />

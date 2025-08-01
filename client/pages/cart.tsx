@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchCart, updateCartQuantity, removeCartItem, clearCartAsync } from '../features/cart/cartSlice';
@@ -34,6 +34,7 @@ const CartPage = () => {
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [debounceTimers, setDebounceTimers] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -43,33 +44,88 @@ const CartPage = () => {
     }
   }, [isAuthenticated, dispatch]);
 
-  const handleQuantityChange = async (proId: string, newQuantity: number) => {
+  // Refresh cart when user returns to the page
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isAuthenticated) {
+        dispatch(fetchCart());
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAuthenticated, dispatch]);
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      debounceTimers.forEach(timer => clearTimeout(timer));
+    };
+  }, [debounceTimers]);
+
+  const handleQuantityChange = useCallback(async (proId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     
-    setUpdatingItems(prev => new Set(prev).add(proId));
-    try {
-      await dispatch(updateCartQuantity({ proId, quantity: newQuantity })).unwrap();
-      toast.success('Quantity updated successfully');
-    } catch (error) {
-      console.error('Failed to update quantity:', error);
-      toast.error('Failed to update quantity. Please try again.');
-    } finally {
-      setUpdatingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(proId);
-        return newSet;
-      });
+    // Clear existing timer for this item
+    const existingTimer = debounceTimers.get(proId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
     }
-  };
+    
+    // Set loading state immediately
+    setUpdatingItems(prev => new Set(prev).add(proId));
+    
+    // Create new debounced timer
+    const timer = setTimeout(async () => {
+      try {
+        await dispatch(updateCartQuantity({ proId, quantity: newQuantity })).unwrap();
+        toast.success('Quantity updated successfully');
+      } catch (error: any) {
+        console.error('Failed to update quantity:', error);
+        toast.error(error.message || 'Failed to update quantity. Please try again.');
+      } finally {
+        setUpdatingItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(proId);
+          return newSet;
+        });
+        // Remove timer from map
+        setDebounceTimers(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(proId);
+          return newMap;
+        });
+      }
+    }, 500); // 500ms debounce delay
+    
+    // Store the timer
+    setDebounceTimers(prev => new Map(prev).set(proId, timer));
+  }, [dispatch, debounceTimers]);
 
   const handleRemoveItem = async (proId: string) => {
+    if (!proId) {
+      toast.error('Invalid item');
+      return;
+    }
+    
+    // Clear any pending debounce timer for this item
+    const existingTimer = debounceTimers.get(proId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      setDebounceTimers(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(proId);
+        return newMap;
+      });
+    }
+    
     setUpdatingItems(prev => new Set(prev).add(proId));
     try {
       await dispatch(removeCartItem(proId)).unwrap();
       toast.success('Item removed from cart');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to remove item:', error);
-      toast.error('Failed to remove item. Please try again.');
+      toast.error(error.message || 'Failed to remove item. Please try again.');
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -84,6 +140,10 @@ const CartPage = () => {
       return;
     }
     
+    // Clear all pending debounce timers
+    debounceTimers.forEach(timer => clearTimeout(timer));
+    setDebounceTimers(new Map());
+    
     try {
       await dispatch(clearCartAsync()).unwrap();
       toast.success('Cart cleared successfully');
@@ -93,10 +153,14 @@ const CartPage = () => {
     }
   };
 
-  // Calculate totals
-  const itemTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  // const deliveryFee = items.length > 0 ? 40 : 0;
-  // const discount = Math.round(itemTotal * 0.1); // 10% discount for demo
+  // Calculate totals with better error handling
+  const itemTotal = items.reduce((sum, item) => {
+    if (!item || typeof item.price !== 'number' || typeof item.quantity !== 'number') {
+      return sum;
+    }
+    return sum + (item.price * item.quantity);
+  }, 0);
+  
   const deliveryFee = 40;
   const discount = 0; // 10% discount for demo
   const totalAmount = Math.max(0, itemTotal + deliveryFee - discount);

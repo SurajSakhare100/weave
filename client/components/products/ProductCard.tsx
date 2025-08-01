@@ -3,9 +3,10 @@ import Image from 'next/image';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCartItem } from '@/features/cart/cartSlice';
+import { addCartItem, fetchCart } from '@/features/cart/cartSlice';
 import { addToWishlist, removeFromWishlist } from '@/features/user/userSlice';
 import { AppDispatch, RootState } from '@/store/store';
+import { toast } from 'sonner';
 
 interface Product {
   _id: string;
@@ -39,17 +40,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (product.available) {
-      dispatch(addCartItem({
-        product,
-        quantity: 1,
-        variantSize: selectedColor || product.currVariantSize || 'M'
-      }));
+    
+    if (!product || !product._id) {
+      toast.error('Product not available');
+      return;
     }
+
+    if (!product.available) {
+      toast.error('Product is not available');
+      return;
+    }
+
+    let selectedSize = 'M';
+    if (selectedColor && product.sizes && product.sizes.includes(selectedColor)) {
+      selectedSize = selectedColor;
+    } else if (product.sizes && product.sizes.length > 0) {
+      selectedSize = product.sizes[0];
+    } else if (product.currVariantSize) {
+      selectedSize = product.currVariantSize;
+    }
+
+    dispatch(addCartItem({
+      product,
+      quantity: 1,
+      variantSize: selectedSize
+    })).then(() => {
+      // Refresh cart to ensure UI is updated immediately
+      dispatch(fetchCart());
+    }).catch((error) => {
+      console.error('Failed to add to cart:', error);
+      toast.error('Failed to add to cart');
+    });
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    if (!product || !product._id) {
+      toast.error('Product not available');
+      return;
+    }
+
     if (isInWishlist) {
       dispatch(removeFromWishlist(product._id));
     } else {

@@ -44,16 +44,11 @@ const ProductSchema = new mongoose.Schema({
         default: true,
     },
     
-    // Single size for simple products
-    size: {
-        type: String,
-        default: 'M',
-        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-    },
-    // Multiple sizes for products with size variants
+    // Multiple sizes for products
     sizes: [{
         type: String,
-        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+        default: ['M']
     }],
     category: {
         type: String,
@@ -272,10 +267,7 @@ ProductSchema.virtual('availableSizes').get(function() {
     if (this.sizes && this.sizes.length > 0) {
         return this.sizes;
     }
-    if (this.size) {
-        return [this.size];
-    }
-    return [];
+    return ['M']; // Default size if no sizes are set
 });
 
 // Pre-save middleware to generate slug if not provided
@@ -299,7 +291,9 @@ ProductSchema.pre('save', function(next) {
     }
     
     // Normalize sizes array
-    if (this.sizes && this.sizes.length > 0) {
+    if (!this.sizes || this.sizes.length === 0) {
+        this.sizes = ['M']; // Default size
+    } else {
         // Remove duplicates and normalize
         this.sizes = [...new Set(this.sizes.map(size => size.trim()))];
     }
@@ -328,10 +322,7 @@ ProductSchema.methods.getAvailableSizes = function() {
     if (this.sizes && this.sizes.length > 0) {
         return this.sizes;
     }
-    if (this.size) {
-        return [this.size];
-    }
-    return [];
+    return ['M']; // Default size if no sizes are set
 };
 
 const Product = mongoose.model('Product', ProductSchema);

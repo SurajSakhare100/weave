@@ -94,42 +94,124 @@ export default {
         return true;
     },
 
-    addToCart: async ({ userId, item }) => {
-        
-        // Ensure proId is an ObjectId
-        const proId = toObjectId(item.proId);
-        if (!proId) {
-            throw new Error('Invalid product ID');
+    // Add this function to clean up any existing cart items with null proId
+    cleanupInvalidCartItems: async () => {
+        try {
+            console.log('Starting cleanup of invalid cart items...');
+            
+            // Find all carts with items that have null proId
+            const cartsWithInvalidItems = await Cart.find({
+                'items.proId': { $exists: false }
+            });
+            
+            console.log('Found carts with invalid items:', cartsWithInvalidItems.length);
+            
+            // Clean up each cart
+            for (const cart of cartsWithInvalidItems) {
+                const validItems = cart.items.filter(item => item.proId);
+                const invalidItems = cart.items.filter(item => !item.proId);
+                
+                console.log(`Cart ${cart._id}: ${invalidItems.length} invalid items found`);
+                
+                if (invalidItems.length > 0) {
+                    // Update the cart to only keep valid items
+                    await Cart.updateOne(
+                        { _id: cart._id },
+                        { $set: { items: validItems } }
+                    );
+                    console.log(`Cleaned up cart ${cart._id}`);
+                }
+            }
+            
+            console.log('Cleanup completed');
+        } catch (error) {
+            console.error('Error during cleanup:', error);
         }
-        
-        const cartItem = {
-            ...item,
-            proId: proId
-        };
-        
-        
-        // First check if item already exists in cart
-        const existingCart = await Cart.findOne({ 
-            user: userId, 
-            'items.proId': proId 
-        });
-        
-        
-        if (existingCart) {
-            // Item exists, update quantity
-            const result = await Cart.updateOne(
-                { user: userId, 'items.proId': proId },
-                { $inc: { 'items.$.quantity': item.quantity } }
-            );
-            return { found: true, updated: true };
-        } else {
-            // Item doesn't exist, add new item
-            const result = await Cart.findOneAndUpdate(
-                { user: userId },
-                { $push: { items: cartItem } },
-                { upsert: true, new: true }
-            );
-            return { found: false, added: true };
+    },
+
+    addToCart: async ({ userId, item }) => {
+        try {
+            console.log('addToCart called with:', { userId, item });
+            
+            // Check if database connection is ready
+            if (mongoose.connection.readyState !== 1) {
+                throw new Error('Database connection not ready');
+            }
+            
+            // Validate input parameters
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+            
+            if (!item || !item.proId) {
+                throw new Error('Product ID is required');
+            }
+            
+            console.log('Original proId:', item.proId, 'Type:', typeof item.proId);
+            
+            // Ensure proId is an ObjectId
+            const proId = toObjectId(item.proId);
+            console.log('Converted proId:', proId, 'Type:', typeof proId);
+            
+            if (!proId) {
+                throw new Error('Invalid product ID');
+            }
+            
+            // Verify that the product exists and is available
+            const product = await Product.findById(proId);
+            console.log('Found product:', product ? product._id : 'null');
+            
+            if (!product) {
+                throw new Error('Product not found');
+            }
+            
+            if (!product.available) {
+                throw new Error('Product is not available');
+            }
+            
+            // Ensure we have a valid size
+            const selectedSize = item.variantSize || 'M';
+            
+            const cartItem = {
+                proId: proId,
+                quantity: Math.max(1, item.quantity || 1), // Ensure quantity is at least 1
+                price: item.price,
+                mrp: item.mrp,
+                variantSize: selectedSize
+            };
+            
+            console.log('Cart item to be added:', cartItem);
+            
+            // First check if item already exists in cart
+            const existingCart = await Cart.findOne({ 
+                user: userId, 
+                'items.proId': proId 
+            });
+            
+            if (existingCart) {
+                console.log('Item exists in cart, updating quantity');
+                // Item exists, update quantity
+                const result = await Cart.updateOne(
+                    { user: userId, 'items.proId': proId },
+                    { $inc: { 'items.$.quantity': Math.max(1, item.quantity || 1) } }
+                );
+                console.log('Update result:', result);
+                return { found: true, updated: true };
+            } else {
+                console.log('Item does not exist in cart, adding new item');
+                // Item doesn't exist, add new item
+                const result = await Cart.findOneAndUpdate(
+                    { user: userId },
+                    { $push: { items: cartItem } },
+                    { upsert: true, new: true }
+                );
+                console.log('Add result:', result);
+                return { found: false, added: true };
+            }
+        } catch (error) {
+            console.error('Error in addToCart:', error);
+            console.error('Error stack:', error.stack);
+            throw error;
         }
     },
 
@@ -145,40 +227,104 @@ export default {
     },
 
     getCartItems: async (userId) => {
-        const cart = await Cart.findOne({ user: userId }).populate({
-            path: 'items.proId',
-            model: 'Product',
-            match: { available: true }
-        });
-        
-        
-        if (!cart) {
+        try {
+            console.log('getCartItems called for userId:', userId);
+            
+            // First, get the cart without populate to see all items
+            const cart = await Cart.findOne({ user: userId });
+            console.log('Found cart:', cart ? 'yes' : 'no', 'Items count:', cart?.items?.length || 0);
+            
+            if (!cart || !cart.items || cart.items.length === 0) {
+                console.log('No cart or empty cart, returning empty result');
+                return { result: [], amount: { _id: userId, totalPrice: 0, totalDiscount: 0, totalMrp: 0 } };
+            }
+
+            // Get all product IDs from cart items
+            const productIds = cart.items.map(item => item.proId);
+            console.log('Product IDs in cart:', productIds);
+            
+            // Fetch products separately to check availability
+            // Note: available is stored as string 'true'/'false', not boolean
+            const products = await Product.find({ 
+                _id: { $in: productIds }
+                // Removed available: true filter to see all products
+            });
+            
+            console.log('Found products:', products.length);
+            console.log('Product availability:', products.map(p => ({ id: p._id, name: p.name, available: p.available })));
+            
+            // Create a map of all products (not just available ones for debugging)
+            const allProducts = new Map();
+            products.forEach(product => {
+                allProducts.set(product._id.toString(), product);
+            });
+            
+            // Filter cart items to only include existing products (for now, include all)
+            const validItems = cart.items.filter(item => {
+                const productId = item.proId.toString();
+                const hasProduct = allProducts.has(productId);
+                console.log(`Item ${productId}: has product = ${hasProduct}`);
+                return hasProduct;
+            });
+            
+            console.log('Valid items after filtering:', validItems.length);
+            
+            // Clean up invalid items from the cart (items with non-existent products)
+            const invalidItems = cart.items.filter(item => {
+                const productId = item.proId.toString();
+                return !allProducts.has(productId);
+            });
+            
+            if (invalidItems.length > 0) {
+                console.log('Removing invalid items:', invalidItems.length);
+                const invalidProIds = invalidItems.map(item => item.proId);
+                await Cart.updateOne(
+                    { user: userId },
+                    { $pull: { items: { proId: { $in: invalidProIds } } } }
+                );
+            }
+            
+            // Process each item to include the product data
+            const processedResult = validItems.map(item => {
+                const productId = item.proId.toString();
+                const product = allProducts.get(productId);
+                
+                const result = {
+                    ...item.toObject(),
+                    proId: productId,
+                    item: product // This contains the product data
+                };
+                
+                console.log('Processed item:', {
+                    proId: result.proId,
+                    quantity: result.quantity,
+                    price: result.price,
+                    productName: result.item?.name,
+                    productAvailable: result.item?.available
+                });
+                
+                return result;
+            });
+            
+            const amount = processedResult.reduce((acc, item) => {
+                acc.totalPrice += item.quantity * item.price;
+                acc.totalMrp += item.quantity * item.mrp;
+                return acc;
+            }, { _id: userId, totalPrice: 0, totalMrp: 0 });
+
+            amount.totalDiscount = amount.totalMrp - amount.totalPrice;
+
+            console.log('Final result:', {
+                itemCount: processedResult.length,
+                totalPrice: amount.totalPrice,
+                totalMrp: amount.totalMrp
+            });
+
+            return { result: processedResult, amount };
+        } catch (error) {
+            console.error('Error in getCartItems:', error);
             return { result: [], amount: { _id: userId, totalPrice: 0, totalDiscount: 0, totalMrp: 0 } };
         }
-
-        const result = cart.items.filter(item => item.proId);
-        
-        const amount = result.reduce((acc, item) => {
-            acc.totalPrice += item.quantity * item.price;
-            acc.totalMrp += item.quantity * item.mrp;
-            return acc;
-        }, { _id: userId, totalPrice: 0, totalMrp: 0 });
-
-        amount.totalDiscount = amount.totalMrp - amount.totalPrice;
-
-        // Process each item to ensure proper structure
-        const processedResult = result.map(i => {
-            const itemObj = i.toObject();
-            
-            return {
-                ...itemObj,
-                proId: itemObj.proId?._id?.toString() || itemObj.proId?.toString() || itemObj.proId,
-                item: i.proId // This contains the populated product data
-            };
-        });
-
-
-        return { result: processedResult, amount };
     },
     
     addToWishlist: async ({ userId, item }) => {
@@ -188,9 +334,12 @@ export default {
             throw new Error('Invalid product ID');
         }
         
+        // Ensure we have a valid size
+        const selectedSize = item.variantSize || 'M';
+        
         return Wishlist.findOneAndUpdate(
             { user: userId },
-            { $addToSet: { items: { proId: proId, price: item.price, mrp: item.mrp, variantSize: item.variantSize } } },
+            { $addToSet: { items: { proId: proId, price: item.price, mrp: item.mrp, variantSize: selectedSize } } },
             { upsert: true, new: true }
         );
     },
@@ -219,15 +368,32 @@ export default {
         return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
     },
 
-    changeQuantityCart: ({ userId, proId, quantity }) => {
+    changeQuantityCart: async ({ userId, proId, quantity }) => {
         // Ensure proId is an ObjectId
         const objectId = toObjectId(proId);
         if (!objectId) {
             throw new Error('Invalid product ID');
         }
+        
+        // Validate quantity
+        if (quantity < 0) {
+            throw new Error('Quantity cannot be negative');
+        }
+        
+        // Check if product is still available
+        const product = await Product.findById(objectId);
+        if (!product) {
+            throw new Error('Product not found');
+        }
+        
+        if (!product.available) {
+            throw new Error('Product is no longer available');
+        }
+        
         if (quantity === 0) {
             return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
         }
+        
         // Use $set to directly set the quantity
         return Cart.updateOne(
             { user: userId, 'items.proId': objectId },

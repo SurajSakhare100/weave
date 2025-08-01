@@ -864,7 +864,7 @@ export const getVendorReleasedProducts = asyncHandler(async (req, res) => {
   // Build search query
   const searchQuery = {
     vendorId,
-    available: 'true', // Only released products
+    available: true, // Only released products
     status: 'active', // Only active products
     ...(search && { name: { $regex: search, $options: 'i' } })
   };
@@ -1189,7 +1189,7 @@ export const publishVendorProducts = asyncHandler(async (req, res) => {
     },
     {
       status: 'active',
-      available: 'true'
+      available: true
     }
   );
 
@@ -1539,7 +1539,7 @@ export const publishScheduledProducts = asyncHandler(async (req, res) => {
       scheduledPublishTime: null,
       scheduleStatus: 'published',
       status: 'active',
-      available: 'true'
+      available: true
     }
   );
 
@@ -1570,11 +1570,21 @@ export const updateVendorProduct = asyncHandler(async (req, res) => {
   const updatableFields = [
     'name', 'description', 'price', 'mrp', 'stock', 'available', 'colors', 'discount',
     'pickup_location', 'return', 'cancellation', 'category', 'variant', 'variantDetails',
-    'status', 'isScheduled', 'scheduledPublishDate', 'scheduledPublishTime', 'scheduleStatus'
+    'status', 'isScheduled', 'scheduledPublishDate', 'scheduledPublishTime', 'scheduleStatus',
+    'sizes'
   ];
   updatableFields.forEach(field => {
     if (req.body[field] !== undefined) {
-      product[field] = req.body[field];
+      // Handle sizes field specifically to prevent empty array issues
+      if (field === 'sizes') {
+        if (Array.isArray(req.body[field]) && req.body[field].length === 0) {
+          product[field] = ['M']; // Set default size if empty array
+        } else {
+          product[field] = req.body[field];
+        }
+      } else {
+        product[field] = req.body[field];
+      }
     }
   });
 

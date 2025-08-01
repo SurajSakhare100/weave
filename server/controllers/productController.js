@@ -5,9 +5,7 @@ import Review from '../models/Review.js';
 import { uploadMultipleImages, deleteMultipleImages } from '../utils/imageUpload.js';
 import mongoose from 'mongoose';
 
-// @desc    Get all products with filtering and pagination
-// @route   GET /api/products
-// @access  Public
+
 export const getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -181,9 +179,6 @@ export const getProducts = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get product by ID with reviews and rating distribution
-// @route   GET /api/products/:id
-// @access  Public
 export const getProductById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -247,7 +242,7 @@ export const getProductById = asyncHandler(async (req, res) => {
     // Add availableSizes virtual
     const availableSizes = product.sizes && product.sizes.length > 0 
       ? product.sizes 
-      : (product.size ? [product.size] : []);
+      : ['M']; // Default size if no sizes are set
 
     const productWithReviews = {
       ...product,
@@ -272,9 +267,6 @@ export const getProductById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get product by slug
-// @route   GET /api/products/slug/:slug
-// @access  Public
 export const getProductBySlug = asyncHandler(async (req, res) => {
   try {
     const { slug } = req.params;
@@ -318,9 +310,6 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Create a new product
-// @route   POST /api/products
-// @access  Private (Vendor)
 export const createProduct = asyncHandler(async (req, res) => {
   try {
     if (!req.vendor) {
@@ -441,6 +430,13 @@ export const createProduct = asyncHandler(async (req, res) => {
       calculatedDiscount = Math.round(((mrp - price) / mrp) * 100);
     }
 
+    // Handle sizes field to prevent empty array issues
+    let processedSizes = ['M']; // Default size
+    if (sizes !== undefined) {
+      if (Array.isArray(sizes) && sizes.length > 0) {
+        processedSizes = sizes;
+      }
+    }
     const product = await Product.create({
       name: name.trim(),
       slug,
@@ -470,7 +466,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       tags: Array.isArray(tags) ? tags.filter(t => t.trim()) : [],
       offers: offers || false,
       salePrice: salePrice ? Number(salePrice) : undefined,
-      sizes: Array.isArray(sizes) ? sizes : []
+      sizes: processedSizes
     });
 
     res.status(201).json({
@@ -486,9 +482,6 @@ export const createProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Private (Vendor)
 export const updateProduct = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -563,6 +556,13 @@ export const updateProduct = asyncHandler(async (req, res) => {
       req.body.colors = Array.isArray(colors) ? colors : [colors];
     }
 
+    // Handle sizes field to prevent empty array issues
+    if (req.body.sizes !== undefined) {
+      if (Array.isArray(req.body.sizes) && req.body.sizes.length === 0) {
+        req.body.sizes = ['M']; // Set default size if empty array
+      }
+    }
+
     // Handle new image uploads
     if (req.files && req.files.length > 0) {
       try {
@@ -625,9 +625,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete a product
-// @route   DELETE /api/products/:id
-// @access  Private (Vendor)
 export const deleteProduct = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -684,9 +681,6 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get similar products
-// @route   GET /api/products/:id/similar
-// @access  Public
 export const getSimilarProducts = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -743,9 +737,6 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get products by category
-// @route   GET /api/products/category/:categorySlug
-// @access  Public
 export const getProductsByCategory = asyncHandler(async (req, res) => {
   try {
     const { categorySlug } = req.params;
@@ -818,9 +809,6 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Search products
-// @route   GET /api/products/search
-// @access  Public
 export const searchProducts = asyncHandler(async (req, res) => {
   try {
     const { q, category, minPrice, maxPrice, sort = '-createdAt' } = req.query;
@@ -1060,9 +1048,6 @@ export const updateProductReview = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete user's review
-// @route   DELETE /api/products/:id/reviews/:reviewId
-// @access  Private (User - own review only)
 export const deleteProductReview = asyncHandler(async (req, res) => {
   try {
     const reviewDoc = await Review.findById(req.params.reviewId);
@@ -1104,9 +1089,6 @@ export const deleteProductReview = asyncHandler(async (req, res) => {
   }
 }); 
 
-// @desc    Add response to a review
-// @route   POST /api/products/:id/reviews/:reviewId/responses
-// @access  Private (User/Vendor)
 export const addReviewResponse = asyncHandler(async (req, res) => {
   try {
     const { content } = req.body;
@@ -1144,9 +1126,6 @@ export const addReviewResponse = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update response to a review
-// @route   PUT /api/products/:id/reviews/:reviewId/responses/:responseId
-// @access  Private (Response owner only)
 export const updateReviewResponse = asyncHandler(async (req, res) => {
   try {
     const { content } = req.body;
@@ -1182,9 +1161,6 @@ export const updateReviewResponse = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete response to a review
-// @route   DELETE /api/products/:id/reviews/:reviewId/responses/:responseId
-// @access  Private (Response owner only)
 export const deleteReviewResponse = asyncHandler(async (req, res) => {
   try {
     const review = await Review.findById(req.params.reviewId);
@@ -1216,11 +1192,6 @@ export const deleteReviewResponse = asyncHandler(async (req, res) => {
   }
 }); 
 
-
-
-// @desc    Add vendor response to a review
-// @route   POST /api/products/vendor/reviews/:reviewId/responses
-// @access  Private (Vendor only)
 export const addVendorReviewResponse = asyncHandler(async (req, res) => {
   try {
     const { content } = req.body;
@@ -1271,9 +1242,6 @@ export const addVendorReviewResponse = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update vendor response to a review
-// @route   PUT /api/products/vendor/reviews/:reviewId/responses/:responseId
-// @access  Private (Vendor only)
 export const updateVendorReviewResponse = asyncHandler(async (req, res) => {
   try {
     const { content } = req.body;
@@ -1311,9 +1279,6 @@ export const updateVendorReviewResponse = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete vendor response to a review
-// @route   DELETE /api/products/vendor/reviews/:reviewId/responses/:responseId
-// @access  Private (Vendor only)
 export const deleteVendorReviewResponse = asyncHandler(async (req, res) => {
   try {
     const vendorId = req.vendor._id;

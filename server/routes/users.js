@@ -21,7 +21,7 @@ import {
   validateSearch
 } from '../middleware/validation.js';
 import { protectUser, protectAdmin } from '../middleware/auth.js';
-import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '../controllers/cartController.js';
+import { getCart, addToCart, updateCartItem, removeFromCart, clearCart, cleanupCart } from '../controllers/cartController.js';
 
 const router = express.Router();
 
@@ -43,6 +43,7 @@ router.post('/cart', protectUser, addToCart);
 router.put('/cart/:itemId', protectUser, updateCartItem);
 router.delete('/cart/:itemId', protectUser, removeFromCart);
 router.delete('/cart', protectUser, clearCart);
+router.post('/cart/cleanup', protectUser, cleanupCart);
 
 // Admin routes (require admin authentication)
 router.get('/', protectAdmin, validatePagination, validateSearch, getUsers);
