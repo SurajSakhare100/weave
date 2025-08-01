@@ -263,15 +263,59 @@ export const getVendorProducts = async (vendorId, options = {}) => {
 };
 
 /**
- * Create product with Cloudinary image upload
+ * Create vendor product with Cloudinary image handling
  * @param {Object} productData - Product data
- * @param {Array} imageFiles - Array of image files
+ * @param {Array} imageFiles - Image files
  * @param {string} vendorId - Vendor ID
  * @returns {Promise<Object>} Created product
  */
 export const createVendorProduct = async (productData, imageFiles, vendorId) => {
   try {
     const { uploadMultipleImages } = await import('../utils/imageUpload.js');
+    
+    // Validate required fields
+    if (!productData.name || !productData.name.trim()) {
+      throw new Error('Product name is required');
+    }
+    
+    if (!productData.description || !productData.description.trim()) {
+      throw new Error('Product description is required');
+    }
+    
+    if (!productData.price || isNaN(Number(productData.price)) || Number(productData.price) <= 0) {
+      throw new Error('Valid price is required (must be greater than 0)');
+    }
+    
+    if (!productData.mrp || isNaN(Number(productData.mrp)) || Number(productData.mrp) <= 0) {
+      throw new Error('Valid MRP is required (must be greater than 0)');
+    }
+    
+    if (Number(productData.price) > Number(productData.mrp)) {
+      throw new Error('Price cannot be greater than MRP');
+    }
+    
+    if (!productData.category) {
+      throw new Error('Category is required');
+    }
+    
+    // Validate images
+    if (!imageFiles || imageFiles.length === 0) {
+      throw new Error('At least one image is required');
+    }
+    
+    if (imageFiles.length > 4) {
+      throw new Error('Maximum 4 images allowed');
+    }
+    
+    // Validate image files
+    for (const file of imageFiles) {
+      if (!file.mimetype.startsWith('image/')) {
+        throw new Error('All files must be images');
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        throw new Error('Each image must be less than 5MB');
+      }
+    }
     
     // Generate slug if not provided
     if (!productData.slug && productData.name) {
@@ -315,6 +359,58 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       productData.sizes = ['M']; // Default size
     }
     
+    // Validate sizes
+    if (productData.sizes.length === 0) {
+      throw new Error('At least one size must be selected');
+    }
+    
+    // Handle colors - ensure it's an array
+    if (productData.colors) {
+      if (typeof productData.colors === 'string') {
+        productData.colors = productData.colors.split(',')
+          .map(color => color.trim())
+          .filter(color => color.length > 0);
+      } else if (!Array.isArray(productData.colors)) {
+        productData.colors = [];
+      }
+    } else {
+      productData.colors = [];
+    }
+    
+    // Handle key features - ensure it's an array
+    if (productData.keyFeatures) {
+      if (!Array.isArray(productData.keyFeatures)) {
+        productData.keyFeatures = [];
+      }
+      // Filter out empty features
+      productData.keyFeatures = productData.keyFeatures.filter(feature => feature && feature.trim());
+    } else {
+      productData.keyFeatures = [];
+    }
+    
+    // Handle product details
+    if (productData.productDetails) {
+      if (typeof productData.productDetails === 'string') {
+        try {
+          productData.productDetails = JSON.parse(productData.productDetails);
+        } catch (e) {
+          productData.productDetails = {};
+        }
+      }
+    } else {
+      productData.productDetails = {};
+    }
+    
+    // Handle offers and sale price validation
+    if (productData.offers === 'true' || productData.offers === true) {
+      if (!productData.salePrice || isNaN(Number(productData.salePrice)) || Number(productData.salePrice) <= 0) {
+        throw new Error('Valid sale price is required when offers is enabled');
+      }
+      if (Number(productData.salePrice) >= Number(productData.price)) {
+        throw new Error('Sale price must be less than regular price');
+      }
+    }
+    
     // Handle image uploads
     let images = [];
     if (imageFiles && imageFiles.length > 0) {
@@ -343,13 +439,14 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       vendorId,
       vendor: true,
       adminApproved: false, // Require admin approval
+      status: 'draft', // Set initial status as draft
       images
     });
 
     return product;
   } catch (error) {
     console.error('Error creating vendor product:', error);
-    throw new Error('Failed to create product');
+    throw new Error(error.message || 'Failed to create product');
   }
 };
 
@@ -370,6 +467,31 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
     }
 
     const { uploadMultipleImages } = await import('../utils/imageUpload.js');
+    
+    // Validate required fields if they're being updated
+    if (updateData.name && (!updateData.name.trim())) {
+      throw new Error('Product name is required');
+    }
+    
+    if (updateData.description && (!updateData.description.trim())) {
+      throw new Error('Product description is required');
+    }
+    
+    if (updateData.price && (isNaN(Number(updateData.price)) || Number(updateData.price) <= 0)) {
+      throw new Error('Valid price is required (must be greater than 0)');
+    }
+    
+    if (updateData.mrp && (isNaN(Number(updateData.mrp)) || Number(updateData.mrp) <= 0)) {
+      throw new Error('Valid MRP is required (must be greater than 0)');
+    }
+    
+    if (updateData.price && updateData.mrp && Number(updateData.price) > Number(updateData.mrp)) {
+      throw new Error('Price cannot be greater than MRP');
+    }
+    
+    if (updateData.category && !updateData.category) {
+      throw new Error('Category is required');
+    }
     
     // Generate slug if name is being updated and slug is not provided
     if (updateData.name && !updateData.slug) {
@@ -407,6 +529,52 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
       } else if (!Array.isArray(updateData.sizes)) {
         updateData.sizes = ['M']; // Default size
       }
+      
+      // Validate sizes
+      if (updateData.sizes.length === 0) {
+        throw new Error('At least one size must be selected');
+      }
+    }
+    
+    // Handle colors - ensure it's an array
+    if (updateData.colors) {
+      if (typeof updateData.colors === 'string') {
+        updateData.colors = updateData.colors.split(',')
+          .map(color => color.trim())
+          .filter(color => color.length > 0);
+      } else if (!Array.isArray(updateData.colors)) {
+        updateData.colors = [];
+      }
+    }
+    
+    // Handle key features - ensure it's an array
+    if (updateData.keyFeatures) {
+      if (!Array.isArray(updateData.keyFeatures)) {
+        updateData.keyFeatures = [];
+      }
+      // Filter out empty features
+      updateData.keyFeatures = updateData.keyFeatures.filter(feature => feature && feature.trim());
+    }
+    
+    // Handle product details
+    if (updateData.productDetails) {
+      if (typeof updateData.productDetails === 'string') {
+        try {
+          updateData.productDetails = JSON.parse(updateData.productDetails);
+        } catch (e) {
+          updateData.productDetails = {};
+        }
+      }
+    }
+    
+    // Handle offers and sale price validation
+    if (updateData.offers === 'true' || updateData.offers === true) {
+      if (!updateData.salePrice || isNaN(Number(updateData.salePrice)) || Number(updateData.salePrice) <= 0) {
+        throw new Error('Valid sale price is required when offers is enabled');
+      }
+      if (Number(updateData.salePrice) >= Number(updateData.price || product.price)) {
+        throw new Error('Sale price must be less than regular price');
+      }
     }
     
     // Handle existing images
@@ -422,8 +590,23 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
       }
     }
 
-    // Handle new image uploads
+    // Validate new image files
     if (newImageFiles && newImageFiles.length > 0) {
+      // Check total image count (existing + new)
+      if (images.length + newImageFiles.length > 4) {
+        throw new Error('Maximum 4 images allowed');
+      }
+      
+      // Validate each new image file
+      for (const file of newImageFiles) {
+        if (!file.mimetype.startsWith('image/')) {
+          throw new Error('All files must be images');
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          throw new Error('Each image must be less than 5MB');
+        }
+      }
+      
       const imageBuffers = newImageFiles.map(file => file.buffer);
       const uploadResults = await uploadMultipleImages(
         imageBuffers,
@@ -445,6 +628,18 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
 
       images = [...images, ...newImages];
     }
+    
+    // Ensure at least one image remains
+    if (images.length === 0) {
+      throw new Error('At least one image is required');
+    }
+
+    // Reset admin approval status when product is updated
+    updateData.adminApproved = false;
+    updateData.adminApprovedAt = null;
+    updateData.adminApprovedBy = null;
+    updateData.adminRejectionReason = null;
+    updateData.status = 'draft'; // Set back to draft for admin review
 
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
@@ -455,7 +650,7 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
     return updatedProduct;
   } catch (error) {
     console.error('Error updating vendor product:', error);
-    throw new Error('Failed to update product');
+    throw new Error(error.message || 'Failed to update product');
   }
 };
 

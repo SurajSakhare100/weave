@@ -202,7 +202,8 @@ export default {
                 adminApproved: true,
                 adminApprovedAt: new Date(),
                 adminApprovedBy: adminId,
-                adminRejectionReason: null
+                adminRejectionReason: null,
+                status: 'active' // Set status to active when approved
             },
             { new: true }
         );
@@ -219,7 +220,8 @@ export default {
                 adminApproved: false,
                 adminApprovedAt: null,
                 adminApprovedBy: null,
-                adminRejectionReason: rejectionReason
+                adminRejectionReason: rejectionReason,
+                status: 'draft' // Set status back to draft when rejected
             },
             { new: true }
         );

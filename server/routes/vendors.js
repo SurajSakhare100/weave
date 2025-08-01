@@ -61,33 +61,33 @@ router.put('/profile', protectVendorWithStatus, updateVendorProfile);
 router.get('/dashboard', protectVendorWithStatus, getVendorDashboard);
 router.get('/earnings', protectVendorWithStatus, getVendorEarnings);
 
-// Vendor product routes (require approval)
-router.post('/products', protectVendor, handleMultipleUpload, createVendorProductController);
-router.put('/products/:id', protectVendor, handleMultipleUpload, updateVendorProduct);
-router.get('/products/released', protectVendor, validatePagination, getVendorReleasedProducts);
-router.get('/products/drafts', protectVendor, validatePagination, getVendorDraftProducts);
-router.get('/products/scheduled', protectVendor, validatePagination, getVendorScheduledProducts);
-router.post('/products/schedule', protectVendor, scheduleVendorProducts);
-router.put('/products/reschedule', protectVendor, rescheduleVendorProducts);
-router.post('/products/cancel-schedule', protectVendor, cancelScheduledProducts);
-router.post('/products/publish-scheduled', protectVendor, publishScheduledProducts);
+// Vendor product routes (allow access but check approval status)
+router.post('/products', protectVendorWithStatus, handleMultipleUpload, createVendorProductController);
+router.put('/products/:id', protectVendorWithStatus, handleMultipleUpload, updateVendorProduct);
+router.get('/products/released', protectVendorWithStatus, validatePagination, getVendorReleasedProducts);
+router.get('/products/drafts', protectVendorWithStatus, validatePagination, getVendorDraftProducts);
+router.get('/products/scheduled', protectVendorWithStatus, validatePagination, getVendorScheduledProducts);
+router.post('/products/schedule', protectVendorWithStatus, scheduleVendorProducts);
+router.put('/products/reschedule', protectVendorWithStatus, rescheduleVendorProducts);
+router.post('/products/cancel-schedule', protectVendorWithStatus, cancelScheduledProducts);
+router.post('/products/publish-scheduled', protectVendorWithStatus, publishScheduledProducts);
 
-// Bulk operations for products (require approval)
-router.post('/products/unpublish', protectVendor, unpublishVendorProducts);
-router.post('/products/publish', protectVendor, publishVendorProducts);
-router.delete('/products/bulk', protectVendor, deleteVendorProducts);
+// Bulk operations for products (allow access but check approval status)
+router.post('/products/unpublish', protectVendorWithStatus, unpublishVendorProducts);
+router.post('/products/publish', protectVendorWithStatus, publishVendorProducts);
+router.delete('/products/bulk', protectVendorWithStatus, deleteVendorProducts);
 
-// Vendor review routes (require approval)
-router.get('/reviews', protectVendor, validatePagination, getVendorReviews);
-router.get('/reviews/analytics', protectVendor, getVendorReviewAnalytics);
-router.post('/reviews/:reviewId/responses', protectVendor, addVendorReviewResponse);
-router.put('/reviews/:reviewId/responses/:responseId', protectVendor, updateVendorReviewResponse);
-router.delete('/reviews/:reviewId/responses/:responseId', protectVendor, deleteVendorReviewResponse);
+// Vendor review routes (allow access but check approval status)
+router.get('/reviews', protectVendorWithStatus, validatePagination, getVendorReviews);
+router.get('/reviews/analytics', protectVendorWithStatus, getVendorReviewAnalytics);
+router.post('/reviews/:reviewId/responses', protectVendorWithStatus, addVendorReviewResponse);
+router.put('/reviews/:reviewId/responses/:responseId', protectVendorWithStatus, updateVendorReviewResponse);
+router.delete('/reviews/:reviewId/responses/:responseId', protectVendorWithStatus, deleteVendorReviewResponse);
 
-// Vendor order routes (require approval)
-router.get('/orders', protectVendor, validatePagination, getVendorOrders);
-router.get('/orders/:id', protectVendor, validateId, getVendorOrderById);
-router.put('/orders/:id', protectVendor, validateId, updateVendorOrder);
-router.put('/orders/:id/status', protectVendor, validateId, updateOrderStatus);
+// Vendor order routes (allow access but check approval status)
+router.get('/orders', protectVendorWithStatus, validatePagination, getVendorOrders);
+router.get('/orders/:id', protectVendorWithStatus, validateId, getVendorOrderById);
+router.put('/orders/:id', protectVendorWithStatus, validateId, updateVendorOrder);
+router.put('/orders/:id/status', protectVendorWithStatus, validateId, updateOrderStatus);
 
 export default router; 

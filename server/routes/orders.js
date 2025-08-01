@@ -19,7 +19,7 @@ import {
   validateId,
   validatePagination
 } from '../middleware/validation.js';
-import { protectUser, protectAdmin, protectVendor } from '../middleware/auth.js';
+import { protectUser, protectAdmin, protectVendor, protectVendorWithStatus } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -31,10 +31,10 @@ router.put('/:id/pay', protectUser, validateId, updateOrderToPaid);
 router.put('/:id/cancel', protectUser, validateId, cancelOrder);
 
 // Vendor routes
-router.get('/vendor', protectVendor, validatePagination, getVendorOrders);
-router.get('/vendor/:id', protectVendor, validateId, getVendorOrderById);
-router.put('/vendor/:id/status', protectVendor, validateId, updateVendorOrderStatus);
-router.get('/vendor/stats', protectVendor, getVendorOrderStats);
+router.get('/vendor', protectVendorWithStatus, validatePagination, getVendorOrders);
+router.get('/vendor/:id', protectVendorWithStatus, validateId, getVendorOrderById);
+router.put('/vendor/:id/status', protectVendorWithStatus, validateId, updateVendorOrderStatus);
+router.get('/vendor/stats', protectVendorWithStatus, getVendorOrderStats);
 
 // Admin routes
 router.get('/', protectAdmin, validatePagination, getOrders);

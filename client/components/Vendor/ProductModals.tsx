@@ -45,24 +45,28 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
   onSuccess: () => void;
 }) => {
   const dispatch = useDispatch();
-  // Individual state for each input
   const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [mrp, setMrp] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
-  const [pickupLocation, setPickupLocation] = useState('');
-  const [allowReturn, setAllowReturn] = useState(true);
-  const [allowCancellation, setAllowCancellation] = useState(true);
-  const [available, setAvailable] = useState('true');
-  const [colors, setColors] = useState<string[]>([]);
-  const [stock, setStock] = useState('');
-  const [status, setStatus] = useState('active');
+  const [additionalDetails, setAdditionalDetails] = useState('');
+  const [productDetails, setProductDetails] = useState({ weight: '', dimensions: '', capacity: '', materials: '' });
+  const [keyFeatures, setKeyFeatures] = useState(['', '', '', '']);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [price, setPrice] = useState('');
+  const [mrp, setMrp] = useState('');
+  const [offers, setOffers] = useState(false);
+  const [salePrice, setSalePrice] = useState('');
+  const [category, setCategory] = useState('');
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [colors, setColors] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLocalLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+
+  const MAX_IMAGES = 4;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   useEffect(() => {
     loadCategories();
@@ -84,37 +88,175 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
     }
   };
 
+  const validateImage = (file: File): string | null => {
+    if (!file.type.startsWith('image/')) {
+      return 'File must be an image';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return 'Image size must be less than 5MB';
+    }
+    return null;
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setImages(files);
-    setImagePreviews(files.map(file => URL.createObjectURL(file)));
+    
+    // Validate number of images
+    if (images.length + files.length > MAX_IMAGES) {
+      dispatch(setError(`You can only upload a maximum of ${MAX_IMAGES} images`));
+      return;
+    }
+
+    // Validate each file
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    files.forEach(file => {
+      const error = validateImage(file);
+      if (error) {
+        dispatch(setError(`${file.name}: ${error}`));
+      } else {
+        validFiles.push(file);
+        validPreviews.push(URL.createObjectURL(file));
+      }
+    });
+
+    setImages(prev => [...prev, ...validFiles]);
+    setImagePreviews(prev => [...prev, ...validPreviews]);
+    
+    // Clear the input
+    e.target.value = '';
   };
 
   const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => {
+      const newPreviews = prev.filter((_, i) => i !== index);
+      // Revoke the URL to prevent memory leaks
+      URL.revokeObjectURL(prev[index]);
+      return newPreviews;
+    });
+  };
+
+  const handleFeatureChange = (idx: number, value: string) => {
+    setKeyFeatures(prev => prev.map((f, i) => (i === idx ? value : f)));
+  };
+
+  const handleSizeToggle = (size: string) => {
+    setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
+  };
+
+  const handleColorToggle = (color: string) => {
+    setColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
+  };
+
+  const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (!tags.includes(newTag) && tags.length < 10) {
+        setTags([...tags, newTag]);
+      } else if (tags.length >= 10) {
+        dispatch(setError('Maximum 10 tags allowed'));
+      }
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag: string) => setTags(tags.filter(t => t !== tag));
+
+  const validateForm = (): {[key: string]: string} => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!name.trim()) {
+      errors.name = 'Product name is required';
+    } else if (name.length > 100) {
+      errors.name = 'Product name cannot exceed 100 characters';
+    }
+
+    if (!description.trim()) {
+      errors.description = 'Product description is required';
+    } else if (description.length > 1000) {
+      errors.description = 'Description cannot exceed 1000 characters';
+    }
+
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      errors.price = 'Valid price is required (must be greater than 0)';
+    }
+
+    if (!mrp || isNaN(Number(mrp)) || Number(mrp) <= 0) {
+      errors.mrp = 'Valid MRP is required (must be greater than 0)';
+    }
+
+    if (Number(price) > Number(mrp)) {
+      errors.price = 'Price cannot be greater than MRP';
+    }
+
+    if (offers && (!salePrice || isNaN(Number(salePrice)) || Number(salePrice) <= 0)) {
+      errors.salePrice = 'Valid sale price is required when offers is enabled';
+    }
+
+    if (offers && Number(salePrice) >= Number(price)) {
+      errors.salePrice = 'Sale price must be less than regular price';
+    }
+
+    if (!category) {
+      errors.category = 'Category is required';
+    }
+
+    if (images.length === 0) {
+      errors.images = 'At least one image is required';
+    } else if (images.length > MAX_IMAGES) {
+      errors.images = `Maximum ${MAX_IMAGES} images allowed`;
+    }
+
+    if (sizes.length === 0) {
+      errors.sizes = 'At least one size must be selected';
+    }
+
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      dispatch(setError('Please fix the errors in the form'));
+      return;
+    }
+
     setLocalLoading(true);
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', name);
-      formDataToSend.append('price', price);
-      formDataToSend.append('mrp', mrp);
-      formDataToSend.append('discount', discount.toString());
-      formDataToSend.append('category', category);
-      formDataToSend.append('description', description);
-      formDataToSend.append('pickup_location', pickupLocation);
-      formDataToSend.append('return', allowReturn.toString());
-      formDataToSend.append('cancellation', allowCancellation.toString());
-      formDataToSend.append('available', available);
-      formDataToSend.append('status', status);
-      formDataToSend.append('stock', stock);
-      colors.forEach(color => formDataToSend.append('colors', color));
-      images.forEach(image => formDataToSend.append('images', image));
-      await createProduct(formDataToSend);
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      formData.append('description', description.trim());
+      formData.append('srtDescription', additionalDetails.trim());
+      formData.append('price', price);
+      formData.append('mrp', mrp);
+      formData.append('category', category);
+      formData.append('offers', String(offers));
+      if (offers && salePrice) {
+        formData.append('salePrice', salePrice);
+      }
+      formData.append('productDetails', JSON.stringify(productDetails));
+      
+      // Add key features (filter out empty ones)
+      const nonEmptyFeatures = keyFeatures.filter(f => f.trim());
+      nonEmptyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f.trim()));
+
+      // Add sizes and colors
+      sizes.forEach(size => formData.append('sizes', size));
+      colors.forEach(color => formData.append('colors', color));
+      tags.forEach(tag => formData.append('tags', tag));
+      
+      // Add images
+      images.forEach(img => formData.append('images', img));
+
+      await createProduct(formData);
       onSuccess();
       onClose();
       resetForm();
@@ -136,20 +278,21 @@ export const AddProductModal = ({ isOpen, onClose, onSuccess }: {
 
   const resetForm = () => {
     setName('');
-    setPrice('');
-    setMrp('');
-    setDiscount(0);
-    setCategory('');
     setDescription('');
-    setPickupLocation('');
-    setAllowReturn(true);
-    setAllowCancellation(true);
-    setAvailable('true');
-    setColors([]);
-    setStock('');
-    setStatus('active');
+    setAdditionalDetails('');
+    setProductDetails({ weight: '', dimensions: '', capacity: '', materials: '' });
+    setKeyFeatures(['', '', '', '']);
     setImages([]);
     setImagePreviews([]);
+    setPrice('');
+    setMrp('');
+    setOffers(false);
+    setSalePrice('');
+    setCategory('');
+    setSizes([]);
+    setColors([]);
+    setTags([]);
+    setTagInput('');
   };
 
   if (!isOpen) return null;
@@ -277,6 +420,8 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+  
   // Form fields
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
@@ -295,85 +440,203 @@ export const EditProductModal = ({ isOpen, onClose, onSuccess, product }: {
   const [colors, setColors] = useState<string[]>(product?.colors || []);
   const [tags, setTags] = useState<string[]>(product?.tags || []);
   const [tagInput, setTagInput] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+
+  const MAX_IMAGES = 4;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   useEffect(() => {
     api.get('/categories').then(res => {
       setCategories(res.data.data || []);
+    }).catch(err => {
+      console.error('Failed to load categories:', err);
+      dispatch(setError('Failed to load categories'));
     });
-  }, []);
+  }, [dispatch]);
 
   // Early return after hooks
   if (!isOpen || !product) return null;
 
+  const validateImage = (file: File): string | null => {
+    if (!file.type.startsWith('image/')) {
+      return 'File must be an image';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return 'Image size must be less than 5MB';
+    }
+    return null;
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setImages(files);
-    setImagePreviews(files.map(file => URL.createObjectURL(file)));
+    
+    // Validate total number of images (existing + new)
+    if (existingImages.length + images.length + files.length > MAX_IMAGES) {
+      dispatch(setError(`You can only have a maximum of ${MAX_IMAGES} images total`));
+      return;
+    }
+
+    // Validate each file
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    files.forEach(file => {
+      const error = validateImage(file);
+      if (error) {
+        dispatch(setError(`${file.name}: ${error}`));
+      } else {
+        validFiles.push(file);
+        validPreviews.push(URL.createObjectURL(file));
+      }
+    });
+
+    setImages(prev => [...prev, ...validFiles]);
+    setImagePreviews(prev => [...prev, ...validPreviews]);
+    
+    // Clear the input
+    e.target.value = '';
   };
+
   const removeImage = (idx: number) => {
-    setImages(images.filter((_, i) => i !== idx));
-    setImagePreviews(imagePreviews.filter((_, i) => i !== idx));
+    setImages(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => {
+      const newPreviews = prev.filter((_, i) => i !== idx);
+      // Revoke the URL to prevent memory leaks
+      URL.revokeObjectURL(prev[idx]);
+      return newPreviews;
+    });
   };
+
   const removeExistingImage = (idx: number) => {
-    setExistingImages(existingImages.filter((_, i) => i !== idx));
+    setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
+
   const handleFeatureChange = (idx: number, value: string) => {
-    setKeyFeatures((prev: string[]) => prev.map((f: string, i: number) => (i === idx ? value : f)));
+    setKeyFeatures(prev => prev.map((f, i) => (i === idx ? value : f)));
   };
+
   const handleSizeToggle = (size: string) => {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
+
   const handleColorToggle = (color: string) => {
     setColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
   };
+
   const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
       e.preventDefault();
-      if (!tags.includes(tagInput.trim())) setTags([...tags, tagInput.trim()]);
+      const newTag = tagInput.trim();
+      if (!tags.includes(newTag) && tags.length < 10) {
+        setTags([...tags, newTag]);
+      } else if (tags.length >= 10) {
+        dispatch(setError('Maximum 10 tags allowed'));
+      }
       setTagInput('');
     }
   };
+
   const removeTag = (tag: string) => setTags(tags.filter(t => t !== tag));
+
+  const validateForm = (): {[key: string]: string} => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!name.trim()) {
+      errors.name = 'Product name is required';
+    } else if (name.length > 100) {
+      errors.name = 'Product name cannot exceed 100 characters';
+    }
+
+    if (!description.trim()) {
+      errors.description = 'Product description is required';
+    } else if (description.length > 1000) {
+      errors.description = 'Description cannot exceed 1000 characters';
+    }
+
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      errors.price = 'Valid price is required (must be greater than 0)';
+    }
+
+    if (!mrp || isNaN(Number(mrp)) || Number(mrp) <= 0) {
+      errors.mrp = 'Valid MRP is required (must be greater than 0)';
+    }
+
+    if (Number(price) > Number(mrp)) {
+      errors.price = 'Price cannot be greater than MRP';
+    }
+
+    if (offers && (!salePrice || isNaN(Number(salePrice)) || Number(salePrice) <= 0)) {
+      errors.salePrice = 'Valid sale price is required when offers is enabled';
+    }
+
+    if (offers && Number(salePrice) >= Number(price)) {
+      errors.salePrice = 'Sale price must be less than regular price';
+    }
+
+    if (!category) {
+      errors.category = 'Category is required';
+    }
+
+    const totalImages = existingImages.length + images.length;
+    if (totalImages === 0) {
+      errors.images = 'At least one image is required';
+    } else if (totalImages > MAX_IMAGES) {
+      errors.images = `Maximum ${MAX_IMAGES} images allowed`;
+    }
+
+    if (sizes.length === 0) {
+      errors.sizes = 'At least one size must be selected';
+    }
+
+    return errors;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
+
     // Client-side validation
-    const newErrors: {[key: string]: string} = {};
-    if (!name.trim()) newErrors.name = 'Product name is required.';
-    if (!price || isNaN(Number(price)) || Number(price) < 0) newErrors.price = 'Valid price is required.';
-    if (!mrp || isNaN(Number(mrp)) || Number(mrp) < 0) newErrors.mrp = 'Valid MRP is required.';
-    if (!category) newErrors.category = 'Category is required.';
-    if (images.length === 0 && (!existingImages || existingImages.length === 0)) newErrors.images = 'At least one image is required.';
-    if (Object.keys(newErrors).length > 0) {
-      setFieldErrors(newErrors);
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      dispatch(setError('Please fix the errors in the form'));
       return;
     }
+
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('srtDescription', additionalDetails);
+      formData.append('name', name.trim());
+      formData.append('description', description.trim());
+      formData.append('srtDescription', additionalDetails.trim());
       formData.append('price', price);
       formData.append('mrp', mrp);
       formData.append('category', category);
       formData.append('offers', String(offers));
-      formData.append('salePrice', salePrice);
+      if (offers && salePrice) {
+        formData.append('salePrice', salePrice);
+      }
       formData.append('productDetails', JSON.stringify(productDetails));
-      keyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f));
+      
+      // Add key features (filter out empty ones)
+      const nonEmptyFeatures = keyFeatures.filter(f => f.trim());
+      nonEmptyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f.trim()));
+
+      // Add sizes and colors
       sizes.forEach(size => formData.append('sizes', size));
       colors.forEach(color => formData.append('colors', color));
       tags.forEach(tag => formData.append('tags', tag));
+      
+      // Add existing images and new images
       formData.append('existingImages', JSON.stringify(existingImages));
       images.forEach(img => formData.append('images', img));
+
       await updateProduct(product._id, formData);
       onSuccess();
       onClose();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      dispatch(setError(err?.response?.data?.message || 'Failed to update product'));
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error?.response?.data?.message || 'Failed to update product';
+      dispatch(setError(errorMessage));
     } finally {
       setLoading(false);
     }

@@ -27,7 +27,7 @@ import {
   validateSearch,
   validatePriceRange
 } from '../middleware/validation.js';
-import { protectUser, protectVendor, optionalVendorAuth } from '../middleware/auth.js';
+import { protectUser, protectVendor, protectVendorWithStatus, optionalVendorAuth } from '../middleware/auth.js';
 import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -52,13 +52,13 @@ router.put('/:id/reviews/:reviewId/responses/:responseId', protectUser, validate
 router.delete('/:id/reviews/:reviewId/responses/:responseId', protectUser, validateId, deleteReviewResponse);
 
 // Vendor review response routes
-router.post('/:id/reviews/:reviewId/vendor-responses', protectVendor, validateId, addVendorReviewResponse);
-router.put('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendor, validateId, updateVendorReviewResponse);
-router.delete('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendor, validateId, deleteVendorReviewResponse);
+router.post('/:id/reviews/:reviewId/vendor-responses', protectVendorWithStatus, validateId, addVendorReviewResponse);
+router.put('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendorWithStatus, validateId, updateVendorReviewResponse);
+router.delete('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendorWithStatus, validateId, deleteVendorReviewResponse);
 
 // Vendor product management routes
 router.post('/', 
-  protectVendor, 
+  protectVendorWithStatus, 
   validateProduct,
   handleMultipleUpload,
   processUploadedFiles,
@@ -66,7 +66,7 @@ router.post('/',
 );
 
 router.put('/:id', 
-  protectVendor, 
+  protectVendorWithStatus, 
   validateId,
   validateProduct,
   handleMultipleUpload,
@@ -75,7 +75,7 @@ router.put('/:id',
 );
 
 router.delete('/:id', 
-  protectVendor, 
+  protectVendorWithStatus, 
   validateId, 
   deleteProduct
 );

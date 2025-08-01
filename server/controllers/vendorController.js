@@ -3,7 +3,7 @@ import Vendor from '../models/Vendor.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Review from '../models/Review.js';
-import { createVendorProduct } from '../helpers/vendorHelpers.js';
+import { createVendorProduct, updateVendorProduct as updateVendorProductHelper } from '../helpers/vendorHelpers.js';
 
 
 export const getVendorProfile = asyncHandler(async (req, res) => {
@@ -1574,58 +1574,18 @@ export const publishScheduledProducts = asyncHandler(async (req, res) => {
 // @route   PUT /api/vendors/products/:id
 // @access  Private (Vendor)
 export const updateVendorProduct = asyncHandler(async (req, res) => {
-  const vendorId = req.vendor._id;
-  const productId = req.params.id;
-
-  // Find the product and ensure it belongs to the vendor
-  const product = await Product.findOne({ _id: productId, vendorId });
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found or does not belong to you');
+  try {
+    const vendorId = req.vendor._id;
+    const productId = req.params.id;
+    const updateData = req.body;
+    // Images are available as req.files (from multer)
+    const newImageFiles = req.files || [];
+    
+    const product = await updateVendorProductHelper(productId, updateData, newImageFiles, vendorId);
+    res.json({ success: true, data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
-
-  // Update fields from req.body
-  const updatableFields = [
-    'name', 'description', 'price', 'mrp', 'stock', 'available', 'colors', 'discount',
-    'pickup_location', 'return', 'cancellation', 'category', 'variant', 'variantDetails',
-    'status', 'isScheduled', 'scheduledPublishDate', 'scheduledPublishTime', 'scheduleStatus',
-    'sizes'
-  ];
-  updatableFields.forEach(field => {
-    if (req.body[field] !== undefined) {
-      // Handle sizes field specifically to prevent empty array issues
-      if (field === 'sizes') {
-        if (Array.isArray(req.body[field]) && req.body[field].length === 0) {
-          product[field] = ['M']; // Set default size if empty array
-        } else {
-          product[field] = req.body[field];
-        }
-      } else {
-        product[field] = req.body[field];
-      }
-    }
-  });
-
-  // Handle file uploads (images)
-  if (req.files && req.files.length > 0) {
-    // Assume files are already uploaded and URLs are available in req.files
-    // You may need to adjust this depending on your upload middleware
-    const newImages = req.files.map(file => ({ url: file.path || file.location || file.url, is_primary: false }));
-    // Optionally, merge with existing images or replace
-    product.images = [...(product.images || []), ...newImages];
-  }
-
-  // Optionally, handle setting a primary image
-  if (req.body.primaryImageIndex !== undefined && product.images && product.images.length > 0) {
-    product.images.forEach((img, idx) => { img.is_primary = idx === Number(req.body.primaryImageIndex); });
-  }
-
-  await product.save();
-
-  res.json({
-    success: true,
-    data: product
-  });
 }); 
 
 // @desc    Accept a vendor
