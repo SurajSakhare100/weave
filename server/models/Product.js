@@ -43,6 +43,23 @@ const ProductSchema = new mongoose.Schema({
         type: Boolean, 
         default: true,
     },
+    // Admin approval fields
+    adminApproved: {
+        type: Boolean,
+        default: false,
+    },
+    adminApprovedAt: {
+        type: Date,
+    },
+    adminApprovedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+    },
+    adminRejectionReason: {
+        type: String,
+        trim: true,
+        maxlength: [500, 'Rejection reason cannot exceed 500 characters']
+    },
     
     // Multiple sizes for products
     sizes: [{

@@ -20,10 +20,17 @@ function Cupons({ loaded, setLoaded }) {
 
   const navigate = useRouter()
 
-  const logOut = () => {
-    localStorage.removeItem('adminToken');
-    setLoaded(true);
-    navigate.push('/admin/login');
+  const logOut = async () => {
+    try {
+      // Call logout endpoint to clear cookie
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    navigate.push('/admin/login')
   }
 
   const [cupons, setCupons] = useState([])

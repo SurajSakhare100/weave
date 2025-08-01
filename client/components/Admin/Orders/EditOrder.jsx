@@ -16,8 +16,16 @@ function EditOrder({ Order, setOrder }) {
     const navigate = useRouter()
     const { data: orderData, error, isLoading } = useGetOrderSpecificQuery({ orderId: Order.order_id_shiprocket, userId: Order.userId }, { skip: !(Order.order_id_shiprocket && Order.userId) })
     const [loaded, setLoaded] = useState(true)
-    const logOut = () => {
-        localStorage.removeItem("adminToken")
+    const logOut = async () => {
+        try {
+            // Call logout endpoint to clear cookie
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
         navigate.push('/admin/login')
     }
     useEffect(() => {

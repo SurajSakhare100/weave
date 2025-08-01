@@ -31,7 +31,7 @@ export default function VendorProductsPage() {
   const { products, loading, error } = useSelector((state: RootState) => state.vendor);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'draft'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'draft' | 'pending' | 'approved' | 'rejected'>('all');
   
   useEffect(() => {
     // Check authentication
@@ -98,7 +98,7 @@ export default function VendorProductsPage() {
     toast.success('Operation successful!');
   };
 
-  const handleStatusFilter = (status: 'all' | 'active' | 'inactive' | 'draft') => {
+  const handleStatusFilter = (status: 'all' | 'active' | 'inactive' | 'draft' | 'pending' | 'approved' | 'rejected') => {
     setFilterStatus(status);
   };
 
@@ -108,7 +108,27 @@ export default function VendorProductsPage() {
   const totalPages = products?.pages || 1;
   const totalProducts = products?.total || 0;
 
-  const filteredProducts = productsList;
+  // Filter products based on status
+  const filteredProducts = productsList.filter(product => {
+    if (filterStatus === 'all') return true;
+    
+    switch (filterStatus) {
+      case 'active':
+        return product.available === 'true';
+      case 'inactive':
+        return product.available === 'false';
+      case 'draft':
+        return product.available === 'draft';
+      case 'pending':
+        return !product.adminApproved && !product.adminRejectionReason;
+      case 'approved':
+        return product.adminApproved;
+      case 'rejected':
+        return !product.adminApproved && product.adminRejectionReason;
+      default:
+        return true;
+    }
+  });
 
   const getImageUrl = (images: { url: string; is_primary?: boolean }[] = []) => {
     if (Array.isArray(images) && images.length > 0) {
@@ -170,13 +190,16 @@ export default function VendorProductsPage() {
                   <Filter className="h-5 w-5 text-gray-400" />
                   <select
                     value={filterStatus}
-                    onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'active' | 'inactive' | 'draft')}
+                    onChange={(e) => handleStatusFilter(e.target.value as 'all' | 'active' | 'inactive' | 'draft' | 'pending' | 'approved' | 'rejected')}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="draft">Draft</option>
+                    <option value="pending">Pending Approval</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
                   </select>
                 </div>
 
@@ -246,6 +269,23 @@ export default function VendorProductsPage() {
                               : 'bg-red-100 text-red-800'
                           }`}>
                             {product.available === 'true' ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        {/* Approval Status Badge */}
+                        <div className="absolute top-2 left-2">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            product.adminApproved 
+                              ? 'bg-green-100 text-green-800' 
+                              : product.adminRejectionReason
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {product.adminApproved 
+                              ? 'Approved' 
+                              : product.adminRejectionReason
+                              ? 'Rejected'
+                              : 'Pending'
+                            }
                           </span>
                         </div>
                       </div>

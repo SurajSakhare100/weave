@@ -158,11 +158,6 @@ const validateCategory = [
     .trim()
     .isLength({ max: 500 })
     .withMessage('Description must be less than 500 characters'),
-  body('image')
-    .optional()
-    .trim()
-    .isURL()
-    .withMessage('Please provide a valid image URL'),
   handleValidationErrors
 ];
 

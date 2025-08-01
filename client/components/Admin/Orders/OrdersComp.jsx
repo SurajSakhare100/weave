@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Loading from '../../../components/Loading'
+import LoadingSpinner from '../../ui/LoadingSpinner'
+import { toast } from 'sonner'
 import { 
     Search, 
     Eye, 
@@ -23,9 +24,16 @@ function OrdersComp({ loaded, setLoaded }) {
 
     const { data, error, isLoading: queryLoading, refetch } = useGetAllOrdersQuery({ search, skip: 0 })
 
-    const logOut = () => {
-        localStorage.removeItem("adminToken")
-        setLoaded(true)
+    const logOut = async () => {
+        try {
+            // Call logout endpoint to clear cookie
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
         navigate.push('/admin/login')
     }
 
@@ -78,20 +86,10 @@ function OrdersComp({ loaded, setLoaded }) {
         }
     }
 
-    if (!loaded) return <Loading />
+    if (!loaded) return <LoadingSpinner text="Loading orders..." />
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Header */}
-                <div className="mb-8">
-                    <div className="flex items-center space-x-3 mb-4">
-                        <ShoppingCart className="h-8 w-8 text-primary-600" />
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-                            <p className="text-gray-600">Manage customer orders and track their status</p>
-                        </div>
-                    </div>
+        <div className="space-y-6">
                     
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -132,7 +130,6 @@ function OrdersComp({ loaded, setLoaded }) {
                             </div>
                         </div>
                     </div>
-                </div>
 
                 {/* Search Bar */}
                 <div className="mb-6">
@@ -266,7 +263,6 @@ function OrdersComp({ loaded, setLoaded }) {
                         </div>
                     )}
                 </div>
-            </div>
         </div>
     )
 }

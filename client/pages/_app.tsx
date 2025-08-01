@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/vendor-globals.css";
+import "@/styles/admin-globals.css";
 import type { AppProps } from "next/app";
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
@@ -76,14 +77,18 @@ function CartHydrator() {
   return null;
 }
 
-function VendorStyleManager() {
+function StyleManager() {
   const router = useRouter();
   
   useEffect(() => {
+    // Remove all theme classes first
+    document.body.classList.remove('vendor-theme', 'admin-theme');
+    
+    // Add appropriate theme class based on route
     if (router.pathname.startsWith('/vendor')) {
       document.body.classList.add('vendor-theme');
-    } else {
-      document.body.classList.remove('vendor-theme');
+    } else if (router.pathname.startsWith('/admin')) {
+      document.body.classList.add('admin-theme');
     }
   }, [router.pathname]);
   
@@ -97,7 +102,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <PersistGate loading={null} persistor={persistor}>
           <UserHydrator />
           <CartHydrator />
-          <VendorStyleManager />
+          <StyleManager />
           <Toaster richColors position="top-right" />
           <Component {...pageProps} />
         </PersistGate>

@@ -147,6 +147,8 @@ const loginVendor = asyncHandler(async (req, res) => {
         email: vendor.email,
         number: vendor.number,
         accept: vendor.accept,
+        adminApproved: vendor.adminApproved,
+        adminRejectionReason: vendor.adminRejectionReason,
         bankAccOwner: vendor.bankAccOwner,
         bankName: vendor.bankName,
         bankAccNumber: vendor.bankAccNumber,
@@ -197,7 +199,8 @@ const registerVendor = asyncHandler(async (req, res) => {
     bankIFSC,
     bankBranchName,
     bankBranchNumber,
-    accept: true
+    accept: false, // Don't auto-approve vendors
+    adminApproved: false // Require admin approval
   });
 
   if (vendor) {
@@ -211,6 +214,8 @@ const registerVendor = asyncHandler(async (req, res) => {
         email: vendor.email,
         number: vendor.number,
         accept: vendor.accept,
+        adminApproved: vendor.adminApproved,
+        adminRejectionReason: vendor.adminRejectionReason,
         bankAccOwner: vendor.bankAccOwner,
         bankName: vendor.bankName,
         bankAccNumber: vendor.bankAccNumber,
@@ -244,9 +249,20 @@ const loginAdmin = asyncHandler(async (req, res) => {
   const admin = await Admin.findOne({ email }).select('+password');
 
   if (admin && (await admin.comparePassword(password))) {
+    // Generate JWT token
+    const token = generateAdminToken(admin._id);
+    
+    // Set secure HTTP-only cookie
+    res.cookie('adminToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
+    });
+
     res.json({
       success: true,
-      token: generateAdminToken(admin._id),
       userType: 'admin',
       admin: {
         _id: admin._id,
@@ -261,10 +277,82 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Admin registration
+// @route   POST /api/auth/admin/register
+// @access  Public
+const registerAdmin = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+  // Check if admin already exists
+  const adminExists = await Admin.findOne({ email });
+  if (adminExists) {
+    res.status(400);
+    throw new Error('Admin with this email already exists');
+  }
+
+  // Create new admin
+  const admin = await Admin.create({
+    name,
+    email,
+    password
+  });
+
+  if (admin) {
+    // Generate JWT token
+    const token = generateAdminToken(admin._id);
+    
+    // Set secure HTTP-only cookie
+    res.cookie('adminToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
+    });
+
+    res.status(201).json({
+      success: true,
+      userType: 'admin',
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        isActive: admin.isActive
+      }
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid admin data');
+  }
+});
+
+// @desc    Get current admin
+// @route   GET /api/auth/admin/me
+// @access  Private
+const getCurrentAdmin = asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    admin: {
+      _id: req.admin._id,
+      name: req.admin.name,
+      email: req.admin.email,
+      isActive: req.admin.isActive
+    }
+  });
+});
+
 // @desc    Admin logout
 // @route   POST /api/auth/admin/logout
 // @access  Private
 const logoutAdmin = (req, res) => {
+  // Clear the admin token cookie
+  res.cookie('adminToken', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0),
+    path: '/'
+  });
+
   res.status(200).json({ 
     success: true,
     message: 'Admin logged out successfully' 
@@ -582,8 +670,10 @@ export {
   registerVendor,
   loginVendor,
   logoutVendor,
+  registerAdmin,
   loginAdmin,
   logoutAdmin,
+  getCurrentAdmin,
   forgotPassword,
   resetPassword,
   verifyEmail,

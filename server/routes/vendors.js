@@ -27,7 +27,8 @@ import {
   rescheduleVendorProducts,
   cancelScheduledProducts,
   publishScheduledProducts,
-  updateVendorProduct
+  updateVendorProduct,
+  acceptVendor
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -39,7 +40,7 @@ import {
   validatePagination,
   validateSearch
 } from '../middleware/validation.js';
-import { protectVendor, protectAdmin } from '../middleware/auth.js';
+import { protectVendor, protectVendorWithStatus, protectAdmin } from '../middleware/auth.js';
 import { handleMultipleUpload } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -52,14 +53,15 @@ router.put('/admin/:id', protectAdmin, validateId, updateVendor);
 router.delete('/admin/:id', protectAdmin, validateId, deleteVendor);
 router.get('/admin/:id/products', protectAdmin, validateId, validatePagination, getVendorProducts);
 router.get('/admin/:id/orders', protectAdmin, validateId, validatePagination, getVendorOrders);
+router.post('/accept', protectAdmin, acceptVendor);
 
-// Vendor routes (require vendor authentication)
-router.get('/profile', protectVendor, getVendorProfile);
-router.put('/profile', protectVendor, updateVendorProfile);
-router.get('/dashboard', protectVendor, getVendorDashboard);
-router.get('/earnings', protectVendor, getVendorEarnings);
+// Vendor routes (allow access but check approval status)
+router.get('/profile', protectVendorWithStatus, getVendorProfile);
+router.put('/profile', protectVendorWithStatus, updateVendorProfile);
+router.get('/dashboard', protectVendorWithStatus, getVendorDashboard);
+router.get('/earnings', protectVendorWithStatus, getVendorEarnings);
 
-// Vendor product routes
+// Vendor product routes (require approval)
 router.post('/products', protectVendor, handleMultipleUpload, createVendorProductController);
 router.put('/products/:id', protectVendor, handleMultipleUpload, updateVendorProduct);
 router.get('/products/released', protectVendor, validatePagination, getVendorReleasedProducts);
@@ -70,19 +72,19 @@ router.put('/products/reschedule', protectVendor, rescheduleVendorProducts);
 router.post('/products/cancel-schedule', protectVendor, cancelScheduledProducts);
 router.post('/products/publish-scheduled', protectVendor, publishScheduledProducts);
 
-// Bulk operations for products
+// Bulk operations for products (require approval)
 router.post('/products/unpublish', protectVendor, unpublishVendorProducts);
 router.post('/products/publish', protectVendor, publishVendorProducts);
 router.delete('/products/bulk', protectVendor, deleteVendorProducts);
 
-// Vendor review routes
+// Vendor review routes (require approval)
 router.get('/reviews', protectVendor, validatePagination, getVendorReviews);
 router.get('/reviews/analytics', protectVendor, getVendorReviewAnalytics);
 router.post('/reviews/:reviewId/responses', protectVendor, addVendorReviewResponse);
 router.put('/reviews/:reviewId/responses/:responseId', protectVendor, updateVendorReviewResponse);
 router.delete('/reviews/:reviewId/responses/:responseId', protectVendor, deleteVendorReviewResponse);
 
-// Vendor order routes
+// Vendor order routes (require approval)
 router.get('/orders', protectVendor, validatePagination, getVendorOrders);
 router.get('/orders/:id', protectVendor, validateId, getVendorOrderById);
 router.put('/orders/:id', protectVendor, validateId, updateVendorOrder);

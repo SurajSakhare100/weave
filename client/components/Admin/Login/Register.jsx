@@ -3,15 +3,21 @@ import Server from '@/Config/Server'
 import { useRouter } from 'next/router'
 import React, { useRef, useState } from 'react'
 
-function Login() {
+function Register() {
     const [formData, setFormData] = useState({
+        name: '',
         email: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
     })
+    
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [success, setSuccess] = useState('')
     const passRef = useRef()
+    const confirmPassRef = useRef()
     const [passShow, setPassShow] = useState(false)
+    const [confirmPassShow, setConfirmPassShow] = useState(false)
 
     const navigate = useRouter()
 
@@ -19,17 +25,39 @@ function Login() {
         e.preventDefault()
         setIsLoading(true)
         setError('')
+        setSuccess('')
+
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match')
+            setIsLoading(false)
+            return
+        }
+
+        // Validate password strength
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters long')
+            setIsLoading(false)
+            return
+        }
 
         try {
-            const res = await Server.post('/auth/admin/login', formData)
+            const res = await Server.post('/auth/admin/register', {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
+            })
+            
             if (res.data.success) {
-                // Cookie is automatically set by the server
-                navigate.push('/admin/dashboard')
+                setSuccess('Admin account created successfully! Redirecting to dashboard...')
+                setTimeout(() => {
+                    navigate.push('/admin/dashboard')
+                }, 2000)
             } else {
-                setError('Invalid email or password')
+                setError('Registration failed. Please try again.')
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Please try again.')
+            setError(err.response?.data?.message || 'Registration failed. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -40,8 +68,8 @@ function Login() {
             <div className="max-w-md w-full">
                 <div className="admin-card p-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold admin-text-primary mb-2">Admin Login</h1>
-                        <p className="admin-text-secondary">Access your admin dashboard</p>
+                        <h1 className="text-3xl font-bold admin-text-primary mb-2">Admin Registration</h1>
+                        <p className="admin-text-secondary">Create a new admin account</p>
                     </div>
 
                     {error && (
@@ -50,7 +78,27 @@ function Login() {
                         </div>
                     )}
 
+                    {success && (
+                        <div className="mb-6 admin-alert admin-alert-success">
+                            <p className="text-sm">{success}</p>
+                        </div>
+                    )}
+
                     <form onSubmit={formHandle} className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium admin-text-secondary mb-2">
+                                Full Name
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="admin-input"
+                                placeholder="Enter your full name"
+                                required
+                            />
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium admin-text-secondary mb-2">
                                 Email Address
@@ -92,6 +140,33 @@ function Login() {
                             </div>
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium admin-text-secondary mb-2">
+                                Confirm Password
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={confirmPassShow ? "text" : "password"}
+                                    value={formData.confirmPassword}
+                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    ref={confirmPassRef}
+                                    className="admin-input pr-12"
+                                    placeholder="Confirm your password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setConfirmPassShow(!confirmPassShow)
+                                        confirmPassRef.current.type = confirmPassShow ? "password" : "text"
+                                    }}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 admin-text-tertiary hover:admin-text-secondary transition-colors"
+                                >
+                                    {confirmPassShow ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={isLoading}
@@ -100,25 +175,22 @@ function Login() {
                             {isLoading ? (
                                 <>
                                     <div className="admin-spinner mr-2"></div>
-                                    Signing in...
+                                    Creating Account...
                                 </>
                             ) : (
-                                'Sign In'
+                                'Create Admin Account'
                             )}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
                         <p className="text-sm admin-text-tertiary">
-                            Secure admin access for authorized personnel only
-                        </p>
-                        <p className="text-sm admin-text-tertiary mt-2">
-                            Need an admin account?{' '}
+                            Already have an account?{' '}
                             <button
-                                onClick={() => navigate.push('/admin/register')}
+                                onClick={() => navigate.push('/admin/login')}
                                 className="admin-text-primary hover:admin-text-important font-medium"
                             >
-                                Register here
+                                Sign In
                             </button>
                         </p>
                     </div>
@@ -128,4 +200,4 @@ function Login() {
     )
 }
 
-export default Login
+export default Register 

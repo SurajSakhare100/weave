@@ -166,6 +166,62 @@ export const emailTemplates = {
         </div>
       </div>
     `
+  },
+  
+  productApproval: {
+    subject: 'Product Approved - \${productName}',
+    template: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">Product Approved!</h1>
+        </div>
+        <div style="padding: 20px; background: #f9f9f9;">
+          <h2>Hello \${vendorName},</h2>
+          <p>Great news! Your product <strong>\${productName}</strong> has been approved and is now live on our platform.</p>
+          <p>Your product is now visible to customers and can be purchased.</p>
+          <div style="background: #d1fae5; border: 1px solid #a7f3d0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Product Details:</strong></p>
+            <p>Name: \${productName}</p>
+            <p>Category: \${category}</p>
+            <p>Price: \${price}</p>
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="\${dashboardUrl}" style="background: #22c55e; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View Product</a>
+          </div>
+          <p>Thank you for being part of our platform!</p>
+        </div>
+        <div style="background: #333; color: white; padding: 20px; text-align: center;">
+          <p>&copy; 2024 MultiVendor Platform. All rights reserved.</p>
+        </div>
+      </div>
+    `
+  },
+  
+  productRejection: {
+    subject: 'Product Update - \${productName}',
+    template: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">Product Update</h1>
+        </div>
+        <div style="padding: 20px; background: #f9f9f9;">
+          <h2>Hello \${vendorName},</h2>
+          <p>We have reviewed your product submission <strong>\${productName}</strong>.</p>
+          <p>Unfortunately, we are unable to approve this product at this time.</p>
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Reason:</strong> \${rejectionReason}</p>
+          </div>
+          <p>Please review the feedback and make the necessary changes. You can resubmit the product once the issues are resolved.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="\${dashboardUrl}" style="background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Edit Product</a>
+          </div>
+          <p>If you have any questions, please contact our support team.</p>
+        </div>
+        <div style="background: #333; color: white; padding: 20px; text-align: center;">
+          <p>&copy; 2024 MultiVendor Platform. All rights reserved.</p>
+        </div>
+      </div>
+    `
   }
 };
 

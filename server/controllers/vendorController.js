@@ -15,9 +15,19 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
       throw new Error('Vendor not found');
     }
 
+    // Get approval status from middleware
+    const approvalStatus = req.vendorApprovalStatus || {
+      isApproved: vendor.adminApproved,
+      rejectionReason: vendor.adminRejectionReason,
+      needsApproval: !vendor.adminApproved
+    };
+
     res.json({
       success: true,
-      data: vendor
+      data: {
+        ...vendor.toObject(),
+        approvalStatus
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -72,6 +82,13 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
 
 export const getVendorDashboard = asyncHandler(async (req, res) => {
   const vendorId = req.vendor._id;
+
+  // Get approval status from middleware
+  const approvalStatus = req.vendorApprovalStatus || {
+    isApproved: req.vendor.adminApproved,
+    rejectionReason: req.vendor.adminRejectionReason,
+    needsApproval: !req.vendor.adminApproved
+  };
 
   // Get recent products
   const recentProducts = await Product.find({ vendorId })
@@ -133,6 +150,7 @@ export const getVendorDashboard = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
+      approvalStatus,
       recentProducts,
       productStats: productStats[0] || {
         totalProducts: 0,
@@ -1607,5 +1625,50 @@ export const updateVendorProduct = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: product
+  });
+}); 
+
+// @desc    Accept a vendor
+// @route   POST /api/vendors/accept
+// @access  Private (Admin)
+export const acceptVendor = asyncHandler(async (req, res) => {
+  const { email, address } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error('Email is required');
+  }
+
+  // Find the vendor by email
+  const vendor = await Vendor.findOne({ email });
+
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
+  }
+
+  // Update vendor approval status
+  vendor.isApproved = true;
+  vendor.adminApproved = true;
+  vendor.adminApprovedAt = new Date();
+  vendor.adminApprovedBy = req.admin?._id;
+
+  // Update address if provided
+  if (address) {
+    vendor.address = address;
+  }
+
+  await vendor.save();
+
+  res.json({
+    success: true,
+    message: 'Vendor accepted successfully',
+    data: {
+      _id: vendor._id,
+      name: vendor.name,
+      email: vendor.email,
+      isApproved: vendor.isApproved,
+      adminApproved: vendor.adminApproved
+    }
   });
 }); 

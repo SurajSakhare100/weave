@@ -273,6 +273,48 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
   try {
     const { uploadMultipleImages } = await import('../utils/imageUpload.js');
     
+    // Generate slug if not provided
+    if (!productData.slug && productData.name) {
+      productData.slug = productData.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    
+    // Generate categorySlug if not provided
+    if (!productData.categorySlug && productData.category) {
+      productData.categorySlug = productData.category.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    
+    // Handle tags - ensure it's an array
+    if (productData.tags) {
+      if (typeof productData.tags === 'string') {
+        // If tags is a string, split by comma and clean up
+        productData.tags = productData.tags.split(',')
+          .map(tag => tag.trim())
+          .filter(tag => tag.length > 0);
+      } else if (!Array.isArray(productData.tags)) {
+        productData.tags = [];
+      }
+    } else {
+      productData.tags = [];
+    }
+    
+    // Handle sizes - ensure it's an array
+    if (productData.sizes) {
+      if (typeof productData.sizes === 'string') {
+        // If sizes is a string, split by comma and clean up
+        productData.sizes = productData.sizes.split(',')
+          .map(size => size.trim().toUpperCase())
+          .filter(size => size.length > 0);
+      } else if (!Array.isArray(productData.sizes)) {
+        productData.sizes = ['M']; // Default size
+      }
+    } else {
+      productData.sizes = ['M']; // Default size
+    }
+    
     // Handle image uploads
     let images = [];
     if (imageFiles && imageFiles.length > 0) {
@@ -280,7 +322,7 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       const uploadResults = await uploadMultipleImages(
         imageBuffers,
         'weave-products',
-        `product_${productData.slug}_${Date.now()}`
+        `product_${productData.slug || 'temp'}_${Date.now()}`
       );
 
       images = uploadResults.map((result, index) => ({
@@ -300,6 +342,7 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       ...productData,
       vendorId,
       vendor: true,
+      adminApproved: false, // Require admin approval
       images
     });
 
@@ -327,6 +370,44 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
     }
 
     const { uploadMultipleImages } = await import('../utils/imageUpload.js');
+    
+    // Generate slug if name is being updated and slug is not provided
+    if (updateData.name && !updateData.slug) {
+      updateData.slug = updateData.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    
+    // Generate categorySlug if category is being updated and categorySlug is not provided
+    if (updateData.category && !updateData.categorySlug) {
+      updateData.categorySlug = updateData.category.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    
+    // Handle tags - ensure it's an array
+    if (updateData.tags) {
+      if (typeof updateData.tags === 'string') {
+        // If tags is a string, split by comma and clean up
+        updateData.tags = updateData.tags.split(',')
+          .map(tag => tag.trim())
+          .filter(tag => tag.length > 0);
+      } else if (!Array.isArray(updateData.tags)) {
+        updateData.tags = [];
+      }
+    }
+    
+    // Handle sizes - ensure it's an array
+    if (updateData.sizes) {
+      if (typeof updateData.sizes === 'string') {
+        // If sizes is a string, split by comma and clean up
+        updateData.sizes = updateData.sizes.split(',')
+          .map(size => size.trim().toUpperCase())
+          .filter(size => size.length > 0);
+      } else if (!Array.isArray(updateData.sizes)) {
+        updateData.sizes = ['M']; // Default size
+      }
+    }
     
     // Handle existing images
     let images = product.images || [];

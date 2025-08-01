@@ -8,12 +8,20 @@ import Admin from '../models/Admin.js';
 const verifyToken = asyncHandler(async (req, res, next) => {
   let token;
 
+  // Check for token in Authorization header (for API calls)
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  // Check for token in cookies (for admin authentication)
+  else if (req.cookies && req.cookies.adminToken) {
+    token = req.cookies.adminToken;
+  }
+
+  if (token) {
     try {
-      token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Check if token has the required fields
@@ -81,7 +89,42 @@ const protectUser = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Vendor authentication middleware
+// Vendor authentication middleware (allows access but checks approval status)
+const protectVendorWithStatus = asyncHandler(async (req, res, next) => {
+  await verifyToken(req, res, async () => {
+    try {
+      // Verify token is for vendor type
+      if (req.tokenInfo.userType !== 'vendor') {
+        console.error('Expected vendor token, got:', req.tokenInfo.userType);
+        res.status(403);
+        throw new Error('Access denied. Vendor token required.');
+      }
+
+      const vendor = await Vendor.findById(req.tokenInfo.id).select('-password');
+      if (!vendor) {
+        console.error('Vendor not found for id:', req.tokenInfo.id);
+        res.status(401);
+        throw new Error('Not authorized, vendor not found');
+      }
+
+      // Always allow access but provide approval status
+      req.vendor = vendor;
+      req.vendorApprovalStatus = {
+        isApproved: vendor.adminApproved,
+        rejectionReason: vendor.adminRejectionReason,
+        needsApproval: !vendor.adminApproved
+      };
+      
+      next();
+    } catch (error) {
+      console.error('Vendor authentication failed:', error.message);
+      res.status(401);
+      throw new Error('Vendor authentication failed');
+    }
+  });
+});
+
+// Vendor authentication middleware (strict - requires approval)
 const protectVendor = asyncHandler(async (req, res, next) => {
   await verifyToken(req, res, async () => {
     try {
@@ -99,9 +142,9 @@ const protectVendor = asyncHandler(async (req, res, next) => {
         throw new Error('Not authorized, vendor not found');
       }
 
-      if (!vendor.accept) {
+      if (!vendor.adminApproved) {
         res.status(403);
-        throw new Error('Vendor account not yet approved');
+        throw new Error('Vendor account not yet approved by admin');
       }
 
       req.vendor = vendor;
@@ -183,13 +226,12 @@ const optionalVendorAuth = asyncHandler(async (req, res, next) => {
       
       if (decoded.userType === 'vendor') {
         const vendor = await Vendor.findById(decoded.id).select('-password');
-        if (vendor && vendor.accept) {
+        if (vendor && vendor.adminApproved) {
           req.vendor = vendor;
         }
       }
     }
   } catch (error) {
-    // Silently fail for optional auth
     console.log('Optional vendor auth failed:', error.message);
   }
   next();
@@ -245,9 +287,10 @@ const protectAny = asyncHandler(async (req, res, next) => {
 export { 
   protectUser, 
   protectVendor, 
+  protectVendorWithStatus, 
   protectAdmin, 
   protectAny,
-  optionalUserAuth, 
+  optionalUserAuth,
   optionalVendorAuth,
   verifyToken
 }; 

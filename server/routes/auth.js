@@ -9,8 +9,10 @@ import {
   registerVendor,
   loginVendor,
   logoutVendor,
+  registerAdmin,
   loginAdmin,
   logoutAdmin,
+  getCurrentAdmin,
   deleteAccount
 } from '../controllers/authController.js';
 import { protectUser, protectVendor, protectAdmin } from '../middleware/auth.js';
@@ -31,7 +33,9 @@ router.post('/vendor/login', validateVendorLogin, loginVendor);
 router.post('/vendor/logout', protectVendor, logoutVendor);
 
 // Admin routes
+router.post('/admin/register', registerAdmin);
 router.post('/admin/login', loginAdmin);
+router.get('/admin/me', protectAdmin, getCurrentAdmin);
 router.post('/admin/logout', protectAdmin, logoutAdmin);
 
 // Delete account route

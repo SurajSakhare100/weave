@@ -2,8 +2,9 @@ import React, { Fragment, useEffect, useState } from 'react';
 import EditCategory from './EditCategory';
 import MainModal from './MainModal';
 import ExtraModal from './ExtraModal';
-import Loading from '../../../components/Loading';
+import LoadingSpinner from '../../ui/LoadingSpinner';
 import { useRouter } from 'next/router';
+import { toast } from 'sonner';
 import { 
     Plus, 
     Edit, 
@@ -22,12 +23,17 @@ import {
   useGetOneCategoryQuery
 } from '../../../services/adminApi';
 
-function CategoriesComp({ loaded, setLoaded }) {
+function CategoriesComp({ loaded = false, setLoaded }) {
     const navigate = useRouter();
-
-    const logOut = () => {
-        localStorage.removeItem("adminToken");
-        setLoaded(true);
+    const logOut = async () => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
         navigate.push('/admin/login');
     };
 
@@ -68,16 +74,17 @@ function CategoriesComp({ loaded, setLoaded }) {
     const [mainSub, setMainSub] = useState([]);
     const [subCategory, setSub] = useState([]);
 
+    // Update local state when data changes
     useEffect(() => {
         if (data) {
-            setCategories(data.categories);
-            setMainSub(data.mainSub);
-            setSub(data.subCategory);
+            setCategories(data.categories || []);
+            setMainSub(data.mainSub || []);
+            setSub(data.subCategory || []);
+        }
+        if (setLoaded && typeof setLoaded === 'function') {
             setLoaded(true);
         }
-        if (isLoading) setLoaded(false);
-        if (error) setLoaded(true);
-    }, [data, isLoading, error, setLoaded]);
+    }, [data, setLoaded]);
 
     const handleDeleteCategory = async (category) => {
         if (window.confirm(`Do you want to delete "${category.name}"?`)) {
@@ -86,10 +93,11 @@ function CategoriesComp({ loaded, setLoaded }) {
                 if (res.data && res.data.login) {
                     logOut();
                 } else {
+                    toast.success('Category deleted successfully');
                     refetch();
                 }
             } catch (err) {
-                alert("Sorry, we're facing some error");
+                toast.error("Sorry, we're facing some error");
             }
         }
     };
@@ -101,10 +109,11 @@ function CategoriesComp({ loaded, setLoaded }) {
                 if (res.data && res.data.login) {
                     logOut();
                 } else {
+                    toast.success('Main sub-category deleted successfully');
                     refetch();
                 }
             } catch (err) {
-                alert("Sorry, we're facing some error");
+                toast.error("Sorry, we're facing some error");
             }
         }
     };
@@ -116,10 +125,11 @@ function CategoriesComp({ loaded, setLoaded }) {
                 if (res.data && res.data.login) {
                     logOut();
                 } else {
+                    toast.success('Sub-category deleted successfully');
                     refetch();
                 }
             } catch (err) {
-                alert("Sorry, we're facing some error");
+                toast.error("Sorry, we're facing some error");
             }
         }
     };
@@ -142,287 +152,322 @@ function CategoriesComp({ loaded, setLoaded }) {
             }
         }
         if (oneCategoryError) {
-            alert('Facing an error');
+            toast.error('Facing an error');
         }
     }, [oneCategoryData, oneCategoryError]);
 
-    if (!loaded) return <Loading />;
+    if (!loaded) return <LoadingSpinner text="Loading categories..." />;
 
     return (
         <Fragment>
             {mainModal.active && (
                 <MainModal
-                    mainModal={mainModal}
-                    setMainModal={setMainModal}
-                    setCategories={setCategories}
-                    logOut={logOut}
+                    modal={mainModal}
+                    setModal={setMainModal}
+                    page={page}
+                    setPage={setPage}
+                    onCategoryCreated={refetch}
                 />
             )}
-            {editModal.active && (
-                <EditCategory
-                    editModal={editModal}
-                    setEditModal={setEditModal}
-                    setCategories={setCategories}
-                    editCategory={editCategory}
-                    logOut={logOut}
-                />
-            )}
+
             {extraModal.active && (
                 <ExtraModal
-                    extraModal={extraModal}
-                    setExtraModal={setExtraModal}
-                    setCategories={setCategories}
-                    setMainSub={setMainSub}
-                    setSub={setSub}
-                    logOut={logOut}
+                    modal={extraModal}
+                    setModal={setExtraModal}
+                    page={page}
+                    setPage={setPage}
                 />
             )}
 
-            <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Page Header */}
-                    <div className="mb-8">
-                        <div className="flex items-center space-x-3 mb-4">
-                            <Tag className="h-8 w-8 text-primary-600" />
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900">Categories</h1>
-                                <p className="text-gray-600">Manage your product categories and subcategories</p>
-                            </div>
-                        </div>
-                    </div>
+            {editModal.active && (
+                <EditCategory
+                    modal={editModal}
+                    setModal={setEditModal}
+                    editCategory={editCategory}
+                    setEditCategory={setEditCategory}
+                />
+            )}
 
-                    {/* Action Buttons */}
-                    <div className="mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <button
-                                onClick={() => setMainModal({ ...mainModal, btn: true, active: true })}
-                                className="btn-primary flex items-center justify-center space-x-2"
-                            >
-                                <Plus size={20} />
-                                <span>Add Category</span>
-                            </button>
-                            <button
-                                onClick={() => setExtraModal({ ...extraModal, btn: true, active: true, for: 'mainSub' })}
-                                className="btn-outline flex items-center justify-center space-x-2"
-                            >
-                                <Layers size={20} />
-                                <span>Add Main Sub</span>
-                            </button>
-                            <button
-                                onClick={() => setExtraModal({ ...extraModal, btn: true, active: true, for: 'sub' })}
-                                className="btn-outline flex items-center justify-center space-x-2"
-                            >
-                                <FolderTree size={20} />
-                                <span>Add Sub</span>
-                            </button>
-                            <button
-                                onClick={() => setExtraModal({ ...extraModal, btn: true, active: true, for: 'header' })}
-                                className="btn-outline flex items-center justify-center space-x-2"
-                            >
-                                <FolderOpen size={20} />
-                                <span>Add Header</span>
-                            </button>
-                        </div>
+            <div className="space-y-6">
 
-                        {/* Navigation Tabs */}
-                        <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-soft">
-                            <button
-                                onClick={() => {
-                                    refetch();
-                                    setPage({ ...page, category: true, mainSub: false, sub: false });
-                                }}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                                    page.category
-                                        ? 'bg-primary-600 text-white'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                }`}
-                            >
-                                Categories
-                            </button>
-                            <button
-                                onClick={() => {
-                                    refetch();
-                                    setPage({ ...page, category: false, mainSub: true, sub: false });
-                                }}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                                    page.mainSub
-                                        ? 'bg-primary-600 text-white'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                }`}
-                            >
-                                Main Sub
-                            </button>
-                            <button
-                                onClick={() => {
-                                    refetch();
-                                    setPage({ ...page, category: false, mainSub: false, sub: true });
-                                }}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                                    page.sub
-                                        ? 'bg-primary-600 text-white'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                }`}
-                            >
-                                Sub Categories
-                            </button>
-                        </div>
-                    </div>
+                {/* Navigation Tabs */}
+                <div className="border-b border-gray-200 mb-6">
+                    <nav className="-mb-px flex space-x-8">
+                        <button
+                            onClick={() => setPage({ category: true, mainSub: false, sub: false })}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                page.category
+                                    ? 'border-indigo-500 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                            Categories
+                        </button>
+                        <button
+                            onClick={() => setPage({ category: false, mainSub: true, sub: false })}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                page.mainSub
+                                    ? 'border-indigo-500 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                            Main Sub-Categories
+                        </button>
+                        <button
+                            onClick={() => setPage({ category: false, mainSub: false, sub: true })}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                page.sub
+                                    ? 'border-indigo-500 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                            Sub-Categories
+                        </button>
+                    </nav>
+                </div>
 
-                    {/* Categories Table */}
+                {/* Content */}
+                <div className="bg-white shadow rounded-lg">
+                    {/* Categories Tab */}
                     {page.category && (
-                        <div className="card overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                <div className="flex items-center">
-                                                    <Image size={16} className="mr-2" />
-                                                    Image
-                                                </div>
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Name
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Header
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {categories.map((category, key) => (
-                                            <tr key={key} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <img
-                                                        className="h-12 w-12 rounded-lg object-cover"
-                                                        src={`${ServerId}/category/${category.uni_id1}${category.uni_id2}/${category.file.filename}`}
-                                                        alt={category.name}
-                                                    />
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {category.name}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {category.header}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button
-                                                        onClick={() => handleEditCategory(category)}
-                                                        className="btn-outline text-xs"
-                                                    >
-                                                        <Edit size={14} className="mr-1" />
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteCategory(category)}
-                                                        className="bg-error-600 hover:bg-error-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={14} className="mr-1" />
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">Categories</h2>
+                                <button
+                                    onClick={() => setMainModal({ ...mainModal, btn: true, active: true })}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Category
+                                </button>
                             </div>
+
+                            {isLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                    <p className="mt-2 text-sm text-gray-500">Loading categories...</p>
+                                </div>
+                            ) : categories.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
+                                    <h3 className="mt-2 text-sm font-medium text-gray-900">No categories</h3>
+                                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new category.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Name
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Description
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Slug
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Header
+                                                </th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {categories.map((category) => (
+                                                <tr key={category._id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm text-gray-900">{category.description || 'No description'}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{category.slug}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                            category.header
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {category.header ? 'Yes' : 'No'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button
+                                                            onClick={() => handleEditCategory(category)}
+                                                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteCategory(category)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Main Sub Categories Table */}
+                    {/* Main Sub-Categories Tab */}
                     {page.mainSub && (
-                        <div className="card overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Category
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Name
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {mainSub.map((item, key) => (
-                                            <tr key={key} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.category}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.name}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <button
-                                                        onClick={() => handleDeleteMainSub(item)}
-                                                        className="bg-error-600 hover:bg-error-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={14} className="mr-1" />
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">Main Sub-Categories</h2>
+                                <button
+                                    onClick={() => setExtraModal({ ...extraModal, btn: true, active: true, for: 'mainSub' })}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Main Sub-Category
+                                </button>
                             </div>
+
+                            {isLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                    <p className="mt-2 text-sm text-gray-500">Loading main sub-categories...</p>
+                                </div>
+                            ) : mainSub.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Layers className="mx-auto h-12 w-12 text-gray-400" />
+                                    <h3 className="mt-2 text-sm font-medium text-gray-900">No main sub-categories</h3>
+                                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new main sub-category.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Name
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Category
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Slug
+                                                </th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {mainSub.map((item) => (
+                                                <tr key={item.uni_id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{item.category}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{item.slug}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button
+                                                            onClick={() => handleDeleteMainSub(item)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Sub Categories Table */}
+                    {/* Sub-Categories Tab */}
                     {page.sub && (
-                        <div className="card overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Category
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Main Sub
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Name
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {subCategory.map((item, key) => (
-                                            <tr key={key} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.category}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.mainSub}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.name}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <button
-                                                        onClick={() => handleDeleteSub(item)}
-                                                        className="bg-error-600 hover:bg-error-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={14} className="mr-1" />
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">Sub-Categories</h2>
+                                <button
+                                    onClick={() => setExtraModal({ ...extraModal, btn: true, active: true, for: 'sub' })}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Sub-Category
+                                </button>
                             </div>
+
+                            {isLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                    <p className="mt-2 text-sm text-gray-500">Loading sub-categories...</p>
+                                </div>
+                            ) : subCategory.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <FolderTree className="mx-auto h-12 w-12 text-gray-400" />
+                                    <h3 className="mt-2 text-sm font-medium text-gray-900">No sub-categories</h3>
+                                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new sub-category.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Name
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Main Sub-Category
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Category
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Slug
+                                                </th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {subCategory.map((item) => (
+                                                <tr key={item.uni_id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{item.mainSub}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{item.category}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900">{item.slug}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button
+                                                            onClick={() => handleDeleteSub(item)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

@@ -22,13 +22,38 @@ const CategorySchema = new mongoose.Schema({
         required: [true, 'Category name is required'],
         trim: true,
     },
+    description: {
+        type: String,
+        default: null,
+    },
+    slug: {
+        type: String,
+        unique: true,
+        required: true,
+    },
+    image: {
+        type: String,
+        default: null,
+    },
+    imagePublicId: {
+        type: String,
+        default: null,
+    },
     file: {
         type: String,
         default: null,
     },
     header: {
+        type: Boolean,
+        default: false,
+    },
+    uni_id1: {
         type: String,
-        default: "false",
+        default: null,
+    },
+    uni_id2: {
+        type: String,
+        default: null,
     },
     mainSub: [MainSubCategorySchema],
     sub: [SubCategorySchema],

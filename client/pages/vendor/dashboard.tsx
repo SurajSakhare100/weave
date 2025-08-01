@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setDashboard, setLoading, setError } from '../../features/vendor/vendorSlice';
 import { getVendorToken } from '../../utils/vendorAuth';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 import Image from 'next/image';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
@@ -53,6 +54,11 @@ export default function VendorDashboard() {
   const dispatch = useDispatch();
   const { } = useSelector((state: RootState) => state.vendor);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState({
+    isApproved: false,
+    isPending: true,
+    rejectionReason: null
+  });
 
   useEffect(() => {
     // Check authentication using the new approach
@@ -66,6 +72,23 @@ export default function VendorDashboard() {
     const loadDashboard = async () => {
       try {
         dispatch(setLoading(true));
+        
+        // Check vendor approval status
+        const profileResponse = await fetch('/api/vendors/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setApprovalStatus({
+            isApproved: profileData.data.adminApproved || false,
+            isPending: !profileData.data.adminApproved && !profileData.data.adminRejectionReason,
+            rejectionReason: profileData.data.adminRejectionReason || null
+          });
+        }
+        
         // For now, we'll use mock data since getVendorDashboard doesn't exist
         // You can replace this with actual API call when the endpoint is available
         const mockData = {
@@ -99,7 +122,54 @@ export default function VendorDashboard() {
 
   return (
     <VendorLayout>
-      <div className="min-h-screen bg-[#f4f8fb] text-black">
+      <div className="min-h-screen vendor-bg-secondary p-6">
+        {/* Approval Status Banner */}
+        {!approvalStatus.isApproved && (
+          <div className="mb-6">
+            {approvalStatus.isPending ? (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-orange-600 mr-3" />
+                  <div>
+                    <h3 className="text-sm font-medium text-orange-800">Account Pending Approval</h3>
+                    <p className="text-sm text-orange-700 mt-1">
+                      Your vendor account is currently under review. You'll be notified once it's approved.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <XCircle className="h-5 w-5 text-red-600 mr-3" />
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">Account Not Approved</h3>
+                    <p className="text-sm text-red-700 mt-1">
+                      {approvalStatus.rejectionReason || 'Your vendor account was not approved. Please contact support for more information.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {approvalStatus.isApproved && (
+          <div className="mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                <div>
+                  <h3 className="text-sm font-medium text-green-800">Account Approved</h3>
+                  <p className="text-sm text-green-700 mt-1">
+                    Your vendor account is active and you can now manage your products.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Topbar */}
         <div className="sticky top-0 z-10 bg-[#5A9BD8] px-8 py-4 flex items-center justify-between shadow">
           <div className="flex items-center gap-4">

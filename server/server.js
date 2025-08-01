@@ -6,6 +6,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,6 +20,7 @@ import categoryRoutes from './routes/categories.js';
 import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import vendorRoutes from './routes/vendors.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 connectDB();
@@ -64,6 +66,7 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,6 +119,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({

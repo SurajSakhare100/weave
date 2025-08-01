@@ -5,17 +5,12 @@ import Cookies from 'js-cookie';
 const Server = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
+  withCredentials: true, // Include cookies
 });
 
-// Add request interceptor to include admin token
+// Add request interceptor (no need to manually add Authorization header for cookie-based auth)
 Server.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const adminToken = localStorage.getItem('adminToken');
-      if (adminToken) {
-        config.headers.Authorization = `Bearer ${adminToken}`;
-      }
-    }
     return config;
   },
   (error) => {
@@ -28,9 +23,8 @@ Server.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear admin token and redirect to login
+      // Redirect to login on authentication failure
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('adminToken');
         window.location.href = '/admin/login';
       }
     }
@@ -41,17 +35,10 @@ Server.interceptors.response.use(
 // adminAxios function that takes a server parameter
 export const adminAxios = async (callback) => {
   try {
-    const adminToken = localStorage.getItem('adminToken');
-    if (!adminToken) {
-      throw new Error('No admin token found');
-    }
-    
     const server = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
       timeout: 10000,
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-      },
+      withCredentials: true, // Include cookies
     });
     
     return await callback(server);

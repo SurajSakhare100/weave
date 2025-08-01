@@ -170,35 +170,127 @@ export default {
         return result;
     },
 
-    updateProduct: (data) => {
-        return Product.updateOne(
-            { _id: data._id },
-            {
-                $set: {
-                    name: data.name,
-                    slug: data.slug,
-                    price: data.price,
-                    mrp: data.mrp,
-                    available: data.available,
-                    category: data.category,
-                    categorySlug: data.categorySlug,
-                    srtDescription: data.srtDescription,
-                    description: data.description,
-                    seoDescription: data.seoDescription,
-                    seoKeyword: data.seoKeyword,
-                    seoTitle: data.seoTitle,
-                    vendor: false,
-                    files: data.serverImg,
-                    discount: data.discount,
-                    return: data.return,
-                    cancellation: data.cancellation,
-                    pickup_location: data.pickup_location,
-                    variant: data.variant,
-                    variantDetails: data.variantDetails,
-                    currVariantSize: data.currVariantSize
-                }
-            }
+    updateProduct: async (productId, updateData) => {
+        const result = await Product.findByIdAndUpdate(
+            productId,
+            updateData,
+            { new: true }
         );
+        if (!result) {
+            throw new Error('Product not found');
+        }
+        return result;
+    },
+
+    // Product approval functions
+    getPendingProducts: (skip, limit) => {
+        return Product.find({ adminApproved: false })
+            .populate('vendorId', 'name email businessName')
+            .sort({ createdAt: -1 })
+            .skip(parseInt(skip))
+            .limit(limit);
+    },
+
+    getPendingProductsCount: () => {
+        return Product.countDocuments({ adminApproved: false });
+    },
+
+    approveProduct: async (productId, adminId) => {
+        const result = await Product.findByIdAndUpdate(
+            productId,
+            {
+                adminApproved: true,
+                adminApprovedAt: new Date(),
+                adminApprovedBy: adminId,
+                adminRejectionReason: null
+            },
+            { new: true }
+        );
+        if (!result) {
+            throw new Error('Product not found');
+        }
+        return result;
+    },
+
+    rejectProduct: async (productId, adminId, rejectionReason) => {
+        const result = await Product.findByIdAndUpdate(
+            productId,
+            {
+                adminApproved: false,
+                adminApprovedAt: null,
+                adminApprovedBy: null,
+                adminRejectionReason: rejectionReason
+            },
+            { new: true }
+        );
+        if (!result) {
+            throw new Error('Product not found');
+        }
+        return result;
+    },
+
+    // Vendor approval functions
+    getPendingVendors: (skip, limit) => {
+        return Vendor.find({ adminApproved: false })
+            .sort({ createdAt: -1 })
+            .skip(parseInt(skip))
+            .limit(limit);
+    },
+
+    getPendingVendorsCount: () => {
+        return Vendor.countDocuments({ adminApproved: false });
+    },
+
+    approveVendor: async (vendorId, adminId) => {
+        const result = await Vendor.findByIdAndUpdate(
+            vendorId,
+            {
+                adminApproved: true,
+                adminApprovedAt: new Date(),
+                adminApprovedBy: adminId,
+                adminRejectionReason: null,
+                accept: true // Also set the legacy accept field
+            },
+            { new: true }
+        );
+        if (!result) {
+            throw new Error('Vendor not found');
+        }
+        return result;
+    },
+
+    rejectVendor: async (vendorId, adminId, rejectionReason) => {
+        const result = await Vendor.findByIdAndUpdate(
+            vendorId,
+            {
+                adminApproved: false,
+                adminApprovedAt: null,
+                adminApprovedBy: null,
+                adminRejectionReason: rejectionReason,
+                accept: false
+            },
+            { new: true }
+        );
+        if (!result) {
+            throw new Error('Vendor not found');
+        }
+        return result;
+    },
+
+    // Dashboard stats for pending approvals
+    getApprovalStats: async () => {
+        const pendingVendors = await Vendor.countDocuments({ adminApproved: false });
+        const pendingProducts = await Product.countDocuments({ adminApproved: false });
+        const totalVendors = await Vendor.countDocuments();
+        const totalProducts = await Product.countDocuments();
+
+        return {
+            pendingVendors,
+            pendingProducts,
+            totalVendors,
+            totalProducts,
+            approvalRate: totalVendors > 0 ? ((totalVendors - pendingVendors) / totalVendors * 100).toFixed(1) : 0
+        };
     },
 
     addProduct: (details) => {

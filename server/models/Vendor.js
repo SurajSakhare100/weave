@@ -13,6 +13,16 @@ const VendorSchema = new mongoose.Schema({
   password: { type: String, required: true },
   number: { type: String },
   accept: { type: Boolean, default: false },
+  // Admin approval fields
+  adminApproved: { type: Boolean, default: false },
+  adminApprovedAt: { type: Date },
+  adminApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  adminRejectionReason: { type: String, trim: true },
+  // Business details
+  businessName: { type: String, trim: true },
+  businessAddress: { type: String, trim: true },
+  gstin: { type: String, trim: true },
+  pan: { type: String, trim: true },
   bankAccOwner: String,
   bankName: String,
   bankAccNumber: String,

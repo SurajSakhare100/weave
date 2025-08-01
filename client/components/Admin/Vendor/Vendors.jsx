@@ -29,9 +29,16 @@ function Vendors({ loaded, setLoaded }) {
   const [acceptVendor] = useAcceptVendorMutation();
   const [deleteVendor] = useDeleteVendorMutation();
 
-  const logOut = () => {
-    localStorage.removeItem("adminToken")
-    setLoaded(true)
+  const logOut = async () => {
+    try {
+      // Call logout endpoint to clear cookie
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     navigate.push('/admin/login')
   }
 
@@ -99,40 +106,40 @@ function Vendors({ loaded, setLoaded }) {
   if (!loaded) return <Loading />
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen admin-bg-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-4">
-            <Users className="h-8 w-8 text-[#5A9BD8]" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Vendors</h1>
-              <p className="text-gray-600">Manage vendor accounts and their status</p>
+          <h1 className="text-3xl font-bold admin-text-primary">Vendors</h1>
+          <p className="admin-text-secondary">Manage vendor accounts and their status</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="admin-card p-4">
+            <div className="flex items-center">
+              <div className="p-2 admin-bg-success-light rounded-lg">
+                <CheckCircle className="h-6 w-6 admin-text-success-dark" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm admin-text-secondary">Accepted Vendors</p>
+                <p className="text-2xl font-bold admin-text-primary">
+                  {vendors.filter(v => v.adminApproved).length}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-[#5A9BD8] mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Accepted Vendors</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {vendors.filter(v => v.accept).length}
-                  </p>
-                </div>
+          <div className="admin-card p-4">
+            <div className="flex items-center">
+              <div className="p-2 admin-bg-warning-light rounded-lg">
+                <Clock className="h-6 w-6 admin-text-warning-dark" />
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-[#5A9BD8] mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Pending Vendors</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {vendors.filter(v => !v.accept).length}
-                  </p>
-                </div>
+              <div className="ml-4">
+                <p className="text-sm admin-text-secondary">Pending Vendors</p>
+                <p className="text-2xl font-bold admin-text-primary">
+                  {vendors.filter(v => !v.adminApproved).length}
+                </p>
               </div>
             </div>
           </div>
@@ -140,169 +147,145 @@ function Vendors({ loaded, setLoaded }) {
 
         {/* Filter Tabs */}
         <div className="mb-6">
-          <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+          <div className="flex space-x-1 admin-card p-1">
             <button
-              onClick={() => {
-                refetch()
-                setAccepted(true)
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                accepted
-                  ? 'bg-[#5A9BD8] text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              onClick={() => setActiveTab('all')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'all'
+                  ? 'admin-btn-primary'
+                  : 'admin-btn-outline'
               }`}
             >
-              <CheckCircle size={16} className="mr-2 inline" />
-              Accepted Vendors
+              All Vendors
             </button>
             <button
-              onClick={() => {
-                refetch()
-                setAccepted(false)
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                !accepted
-                  ? 'bg-[#5A9BD8] text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              onClick={() => setActiveTab('approved')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'approved'
+                  ? 'admin-btn-primary'
+                  : 'admin-btn-outline'
               }`}
             >
-              <Clock size={16} className="mr-2 inline" />
-              Pending Vendors
+              Approved
             </button>
           </div>
         </div>
 
         {/* Vendors Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="admin-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y admin-border-primary">
+              <thead className="admin-bg-tertiary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vendor Details
+                  <th className="px-6 py-3 text-left text-xs font-medium admin-text-tertiary uppercase tracking-wider">
+                    Vendor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium admin-text-tertiary uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                  <th className="px-6 py-3 text-left text-xs font-medium admin-text-tertiary uppercase tracking-wider">
+                    Business
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                  <th className="px-6 py-3 text-left text-xs font-medium admin-text-tertiary uppercase tracking-wider">
+                    Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {vendors.length > 0 ? (
-                  vendors.map((vendor, key) => (
-                    <tr key={key} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+              <tbody className="admin-bg-primary divide-y admin-border-primary">
+                {filteredVendors.map((vendor, key) => (
+                  <tr key={key} className="hover:admin-bg-secondary">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {vendor.adharName}
+                          <div className="text-sm font-medium admin-text-primary">
+                            {vendor.name}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {vendor._id.slice(-8)}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-gray-900">
-                            <Mail size={14} className="mr-2 text-gray-400" />
-                            {vendor.email}
-                          </div>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Phone size={14} className="mr-2 text-gray-400" />
-                            {vendor.number}
+                          <div className="text-sm admin-text-secondary">
+                            ID: {vendor._id}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          vendor.accept 
-                            ? 'text-[#5A9BD8] bg-blue-50' 
-                            : 'text-orange-600 bg-orange-50'
-                        }`}>
-                          {vendor.accept ? 'Accepted' : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => navigate.push(`/admin/vendor/details/${vendor._id}`)}
-                          className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
-                        >
-                          <Eye size={14} className="mr-1" />
-                          Details
-                        </button>
-
-                        {vendor.accept ? (
-                          <button
-                            onClick={() => navigate.push(`/admin/vendor/products/${vendor._id}`)}
-                            className="inline-flex items-center px-3 py-1 border border-[#5A9BD8] rounded-md text-xs font-medium text-[#5A9BD8] bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] transition-colors"
-                          >
-                            <Package size={14} className="mr-1" />
-                            Products
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleAcceptVendor(vendor)}
-                            className="inline-flex items-center px-3 py-1 bg-[#5A9BD8] hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
-                          >
-                            <UserCheck size={14} className="mr-1" />
-                            Accept
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => handleDeleteVendor(vendor)}
-                          className="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors"
-                        >
-                          <Trash2 size={14} className="mr-1" />
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                      <div className="flex flex-col items-center">
-                        <Users className="h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-lg font-medium text-gray-900 mb-2">
-                          No {accepted ? 'accepted' : 'pending'} vendors found
-                        </p>
-                        <p className="text-gray-600">
-                          {accepted ? 'Accepted vendors will appear here' : 'Pending vendor applications will appear here'}
-                        </p>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm admin-text-primary">
+                        <Mail size={14} className="mr-2 admin-text-tertiary" />
+                        {vendor.email}
+                      </div>
+                      <div className="flex items-center text-sm admin-text-secondary">
+                        <Phone size={14} className="mr-2 admin-text-tertiary" />
+                        {vendor.number || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm admin-text-primary">
+                        {vendor.businessName || 'N/A'}
+                      </div>
+                      <div className="text-sm admin-text-secondary">
+                        {vendor.businessType || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        vendor.adminApproved
+                          ? 'admin-badge admin-badge-success'
+                          : 'admin-badge admin-badge-warning'
+                      }`}>
+                        {vendor.adminApproved ? 'Approved' : 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleViewVendor(vendor)}
+                        className="admin-btn admin-btn-outline text-xs py-1"
+                      >
+                        <Eye size={14} className="mr-1" />
+                        View
+                      </button>
+                    </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
+        </div>
 
-          {/* Load More Button */}
-          {vendors.length < total && (
-            <div className="px-6 py-4 border-t border-gray-200 text-center">
+        {/* Empty State */}
+        {filteredVendors.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 admin-text-tertiary mb-4" />
+            <p className="text-lg font-medium admin-text-primary mb-2">
+              No vendors found
+            </p>
+            <p className="admin-text-secondary">
+              {activeTab === 'approved' ? 'No approved vendors yet.' : 'No vendors match your criteria.'}
+            </p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t admin-border-primary text-center">
+            <div className="flex justify-center space-x-2">
               <button
-                onClick={handleLoadMore}
-                disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5A9BD8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#5A9BD8] mr-2"></div>
-                    Loading...
-                  </>
-                ) : (
-                  'Load More Vendors'
-                )}
+                Previous
+              </button>
+              <span className="inline-flex items-center px-4 py-2 text-sm font-medium admin-text-secondary">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -20,10 +20,17 @@ function LayoutsComp({ setLoaded, loaded }) {
 
   const navigate = useRouter()
 
-  const logOut = () => {
-    localStorage.removeItem('adminToken');
-    setLoaded(true);
-    navigate.push('/admin/login');
+  const logOut = async () => {
+    try {
+      // Call logout endpoint to clear cookie
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    navigate.push('/admin/login')
   }
 
   const [activeSecModal, setActiveSecModal] = useState({
@@ -142,8 +149,8 @@ function LayoutsComp({ setLoaded, loaded }) {
   if (!loaded) return <Loading />
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen flex flex-col admin-bg-secondary">
+      <div className="max-w-7xl flex mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
