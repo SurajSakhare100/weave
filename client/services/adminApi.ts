@@ -205,10 +205,10 @@ export const adminApi = createApi({
       providesTags: (result, error, id) => [{ type: 'Order', id }],
     }),
     updateOrderStatus: builder.mutation({
-      query: ({ id, status }) => ({
+      query: ({ id, status, rejectionReason }) => ({
         url: `/orders/admin/${id}/status`,
         method: 'PUT',
-        body: { status },
+        body: { status, ...(rejectionReason && { rejectionReason }) },
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, 'Order'],
     }),
@@ -218,6 +218,54 @@ export const adminApi = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['Order'],
+    }),
+
+    // Product endpoints
+    getAllProducts: builder.query({
+      query: (params) => ({
+        url: '/admin/products/all',
+        params,
+      }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { products: [], total: 0, totalPages: 1 };
+      },
+      providesTags: ['Product'],
+    }),
+    getProductById: builder.query({
+      query: (id) => `/admin/products/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, id) => [{ type: 'Product', id }],
+    }),
+    approveProduct: builder.mutation({
+      query: (productId) => ({
+        url: `/admin/products/${productId}/approve`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, productId) => [{ type: 'Product', productId }, 'Product'],
+    }),
+    rejectProduct: builder.mutation({
+      query: ({ productId, rejectionReason }) => ({
+        url: `/admin/products/${productId}/reject`,
+        method: 'PUT',
+        body: { rejectionReason },
+      }),
+      invalidatesTags: (result, error, { productId }) => [{ type: 'Product', productId }, 'Product'],
+    }),
+    deleteProduct: builder.mutation({
+      query: ({ id, folderId }) => ({
+        url: `/admin/products/${id}`,
+        method: 'DELETE',
+        body: { folderId },
+      }),
+      invalidatesTags: ['Product'],
     }),
   }),
 });
@@ -238,4 +286,9 @@ export const {
   useGetOrderByIdQuery,
   useUpdateOrderStatusMutation,
   useDeleteOrderMutation,
+  useGetAllProductsQuery,
+  useGetProductByIdQuery,
+  useApproveProductMutation,
+  useRejectProductMutation,
+  useDeleteProductMutation,
 } = adminApi; 

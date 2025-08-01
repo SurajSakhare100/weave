@@ -10,19 +10,36 @@ import {
     User, 
     DollarSign,
     CreditCard,
-    Package
+    Package,
+    Edit,
+    Filter,
+    X,
+    CheckCircle,
+    XCircle
 } from 'lucide-react'
-import { useGetAllOrdersQuery } from '../../../services/adminApi'
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from '../../../services/adminApi'
+import BaseModal from '../../ui/BaseModal'
 
 function OrdersComp({ loaded, setLoaded }) {
     const [search, setSearch] = useState('')
     const [orders, setOrders] = useState([])
     const [total, setTotal] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
+    const [statusFilter, setStatusFilter] = useState('all')
+    const [vendorFilter, setVendorFilter] = useState('all')
+    const [editModal, setEditModal] = useState({ active: false, order: null })
+    const [rejectionReason, setRejectionReason] = useState('')
+    const [selectedStatus, setSelectedStatus] = useState('')
 
     const navigate = useRouter()
 
-    const { data, error, isLoading: queryLoading, refetch } = useGetAllOrdersQuery({ search, skip: 0 })
+    const { data, error, isLoading: queryLoading, refetch } = useGetAllOrdersQuery({ 
+        search, 
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        vendor: vendorFilter !== 'all' ? vendorFilter : undefined,
+        skip: 0 
+    })
+    const [updateOrderStatus, { isLoading: updateLoading }] = useUpdateOrderStatusMutation()
 
     const logOut = async () => {
         try {
@@ -50,6 +67,41 @@ function OrdersComp({ loaded, setLoaded }) {
     const handleLoadMore = () => {
         refetch()
     }
+
+    const handleEditOrder = (order) => {
+        setEditModal({ active: true, order })
+        setRejectionReason('')
+        setSelectedStatus('')
+    }
+
+    const handleCloseEditModal = () => {
+        setEditModal({ active: false, order: null })
+        setRejectionReason('')
+        setSelectedStatus('')
+    }
+
+    const handleUpdateOrderStatus = async (orderId, newStatus) => {
+        try {
+            const updateData = { id: orderId, status: newStatus }
+            if (newStatus === 'rejected' && rejectionReason.trim()) {
+                updateData.rejectionReason = rejectionReason.trim()
+            }
+            
+            await updateOrderStatus(updateData).unwrap()
+            toast.success(`Order status updated to ${newStatus}`)
+            handleCloseEditModal()
+            refetch()
+        } catch (error) {
+            console.error('Error updating order status:', error)
+            toast.error('Failed to update order status')
+        }
+    }
+
+    // Get unique vendors from orders
+    const vendors = [...new Set(orders.map(order => order.vendorName || order.vendor).filter(Boolean))]
+
+    // Get unique statuses from orders
+    const statuses = [...new Set(orders.map(order => order.OrderStatus).filter(Boolean))]
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-IN', {
@@ -90,9 +142,103 @@ function OrdersComp({ loaded, setLoaded }) {
 
     return (
         <div className="space-y-6">
+            {/* Edit Order Modal */}
+            {editModal.active && editModal.order && (
+                <BaseModal
+                    isOpen={editModal.active}
+                    onClose={handleCloseEditModal}
+                    title="Edit Order Status"
+                    size="md"
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="font-medium text-gray-900 mb-2">Order Details</h4>
+                            <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                                <p><span className="font-medium">Order ID:</span> {editModal.order.secretOrderId}</p>
+                                <p><span className="font-medium">Customer:</span> {editModal.order.customer}</p>
+                                <p><span className="font-medium">Amount:</span> {formatCurrency(editModal.order.price)}</p>
+                                <p><span className="font-medium">Current Status:</span> 
+                                    <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(editModal.order.OrderStatus)}`}>
+                                        {editModal.order.OrderStatus}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Update Status
+                            </label>
+                            <select 
+                                id="statusSelect"
+                                value={selectedStatus}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onChange={(e) => {
+                                    setSelectedStatus(e.target.value)
+                                    if (e.target.value === 'rejected') {
+                                        setRejectionReason('')
+                                    }
+                                }}
+                            >
+                                <option value="">Select new status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="return">Return</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Rejection Reason (if rejecting)
+                            </label>
+                            <textarea
+                                value={rejectionReason}
+                                onChange={(e) => setRejectionReason(e.target.value)}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                placeholder="Enter reason for rejection..."
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-gray-200">
+                            <button
+                                type="button"
+                                onClick={handleCloseEditModal}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (selectedStatus) {
+                                        handleUpdateOrderStatus(editModal.order._id, selectedStatus)
+                                    } else {
+                                        toast.error('Please select a status')
+                                    }
+                                }}
+                                disabled={updateLoading}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                            >
+                                {updateLoading ? (
+                                    <>
+                                        <div className="spinner mr-2"></div>
+                                        Updating...
+                                    </>
+                                ) : (
+                                    'Update Status'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </BaseModal>
+            )}
                     
-                    {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div className="card p-4">
                             <div className="flex items-center">
                                 <Package className="h-5 w-5 text-primary-600 mr-3" />
@@ -131,19 +277,65 @@ function OrdersComp({ loaded, setLoaded }) {
                         </div>
                     </div>
 
-                {/* Search Bar */}
-                <div className="mb-6">
-                    <div className="max-w-md">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search by customer name..."
-                                className="input-field pl-10"
-                            />
+                {/* Search and Filters */}
+                <div className="mb-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        {/* Search Bar */}
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search by customer name or order ID..."
+                                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
                         </div>
+
+                        {/* Status Filter */}
+                        <div className="flex-1 max-w-xs">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="all">All Statuses</option>
+                                {statuses.map(status => (
+                                    <option key={status} value={status}>{status}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Vendor Filter */}
+                        <div className="flex-1 max-w-xs">
+                            <select
+                                value={vendorFilter}
+                                onChange={(e) => setVendorFilter(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="all">All Vendors</option>
+                                {vendors.map(vendor => (
+                                    <option key={vendor} value={vendor}>{vendor}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Clear Filters */}
+                        {(statusFilter !== 'all' || vendorFilter !== 'all' || search) && (
+                            <button
+                                onClick={() => {
+                                    setStatusFilter('all')
+                                    setVendorFilter('all')
+                                    setSearch('')
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center"
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                Clear
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -163,6 +355,12 @@ function OrdersComp({ loaded, setLoaded }) {
                                         <div className="flex items-center">
                                             <User size={16} className="mr-2" />
                                             Customer
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <User size={16} className="mr-2" />
+                                            Vendor
                                         </div>
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -187,7 +385,7 @@ function OrdersComp({ loaded, setLoaded }) {
                                         Order ID
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Action
+                                        Actions
                                     </th>
                                 </tr>
                             </thead>
@@ -200,6 +398,9 @@ function OrdersComp({ loaded, setLoaded }) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {order.customer}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {order.vendorName || order.vendor || 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {formatCurrency(order.price)}
@@ -218,19 +419,28 @@ function OrdersComp({ loaded, setLoaded }) {
                                                 {order.secretOrderId}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <button
-                                                    onClick={() => navigate.push(`/admin/orders/${order.secretOrderId}/${order.userId}`)}
-                                                    className="btn-outline text-xs flex items-center"
-                                                >
-                                                    <Eye size={14} className="mr-1" />
-                                                    View
-                                                </button>
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() => navigate.push(`/admin/orders/${order.secretOrderId}/${order.userId}`)}
+                                                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEditOrder(order)}
+                                                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                                                        title="Edit Order"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                                        <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                                             <div className="flex flex-col items-center">
                                                 <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
                                                 <p className="text-lg font-medium text-gray-900 mb-2">No orders found</p>
