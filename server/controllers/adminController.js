@@ -191,11 +191,140 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
   }
 }); 
 
+// @desc    Get product statistics (Admin)
+// @route   GET /api/admin/products/stats
+// @access  Private/Admin
+export const getAdminProductStats = asyncHandler(async (req, res) => {
+  try {
+    // Get approval status counts
+    const approvalCounts = await Product.aggregate([
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ['$adminApproved', true] },
+              'approved',
+              {
+                $cond: [
+                  { $and: [{ $eq: ['$adminApproved', false] }, { $ne: ['$adminRejectionReason', null] }] },
+                  'rejected',
+                  'pending'
+                ]
+              }
+            ]
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get vendor counts
+    const vendorCounts = await Product.aggregate([
+      {
+        $lookup: {
+          from: 'vendors',
+          localField: 'vendorId',
+          foreignField: '_id',
+          as: 'vendor'
+        }
+      },
+      {
+        $unwind: '$vendor'
+      },
+      {
+        $group: {
+          _id: '$vendor.businessName',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get category counts
+    const categoryCounts = await Product.aggregate([
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryInfo'
+        }
+      },
+      {
+        $unwind: '$categoryInfo'
+      },
+      {
+        $group: {
+          _id: '$categoryInfo.name',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get total products
+    const totalProducts = await Product.countDocuments();
+
+    // Get recent products (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentProducts = await Product.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
+
+    // Format approval counts
+    const formattedApprovalCounts = {
+      all: totalProducts,
+      pending: 0,
+      approved: 0,
+      rejected: 0
+    };
+
+    approvalCounts.forEach(item => {
+      if (item._id && formattedApprovalCounts.hasOwnProperty(item._id)) {
+        formattedApprovalCounts[item._id] = item.count;
+      }
+    });
+
+    // Format vendor counts
+    const formattedVendorCounts = {};
+    vendorCounts.forEach(item => {
+      if (item._id) {
+        formattedVendorCounts[item._id] = item.count;
+      }
+    });
+
+    // Format category counts
+    const formattedCategoryCounts = {};
+    categoryCounts.forEach(item => {
+      if (item._id) {
+        formattedCategoryCounts[item._id] = item.count;
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        approvalCounts: formattedApprovalCounts,
+        vendorCounts: formattedVendorCounts,
+        categoryCounts: formattedCategoryCounts,
+        totalProducts,
+        recentProducts
+      }
+    });
+  } catch (error) {
+    console.error('Get product stats error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch product statistics',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
 // Get all products for admin with filtering
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const { page = 1, search = '', approvalStatus = 'pending' } = req.query; // Default to pending
-  const limit = 12;
-  const skip = (page - 1) * limit;
+  const { page = 1, search = '', approvalStatus = 'all', limit = 10 } = req.query; // Default to all
+  const limitNum = parseInt(limit);
+  const skip = (page - 1) * limitNum;
   
   // Build query based on filters
   let query = {};
@@ -228,10 +357,10 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     .populate('vendorId', 'name email')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limitNum);
     
   const total = await Product.countDocuments(query);
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / limitNum);
   
   res.json({
     success: true,

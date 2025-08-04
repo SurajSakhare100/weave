@@ -18,9 +18,11 @@ import {
 import { 
     useGetAllProductsQuery, 
     useApproveProductMutation, 
-    useRejectProductMutation
+    useRejectProductMutation,
+    useGetAdminProductStatsQuery
 } from '../../../services/adminApi'
 import BaseModal from '../../ui/BaseModal'
+import Select from '../../ui/select'
 import { useAdminLogout } from '../../../hooks/useAdminLogout'
 import { 
     formatCurrency, 
@@ -32,12 +34,14 @@ function ProductsComp({ loaded, setLoaded }) {
     const [products, setProducts] = useState([])
     const [total, setTotal] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState('pending')
+    const [pageSize, setPageSize] = useState(10)
+    const [statusFilter, setStatusFilter] = useState('all')
     const [vendorFilter, setVendorFilter] = useState('all')
     const [rejectModal, setRejectModal] = useState({ active: false, product: null })
     const [rejectionReason, setRejectionReason] = useState('')
     const [approveModal, setApproveModal] = useState({ active: false, product: null })
     const [approvalFeedback, setApprovalFeedback] = useState('')
+    const [productDetailsModal, setProductDetailsModal] = useState({ active: false, product: null })
 
     const navigate = useRouter()
     const { logout } = useAdminLogout()
@@ -47,8 +51,10 @@ function ProductsComp({ loaded, setLoaded }) {
         approvalStatus: statusFilter !== 'all' ? statusFilter : undefined,
         vendor: vendorFilter !== 'all' ? vendorFilter : undefined,
         page: currentPage,
-        limit: 20
+        limit: pageSize
     })
+
+    const { data: statsData, error: statsError, isLoading: statsLoading } = useGetAdminProductStatsQuery({})
 
     const [approveProduct, { isLoading: approveLoading }] = useApproveProductMutation()
     const [rejectProduct, { isLoading: rejectLoading }] = useRejectProductMutation()
@@ -66,6 +72,11 @@ function ProductsComp({ loaded, setLoaded }) {
             }
         }
     }, [data, error, setLoaded, logout])
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [search, statusFilter, vendorFilter, pageSize])
 
     const handleApprove = async (product) => {
         try {
@@ -125,6 +136,14 @@ function ProductsComp({ loaded, setLoaded }) {
     const closeRejectModal = () => {
         setRejectModal({ active: false, product: null })
         setRejectionReason('')
+    }
+
+    const openProductDetailsModal = (product) => {
+        setProductDetailsModal({ active: true, product })
+    }
+
+    const closeProductDetailsModal = () => {
+        setProductDetailsModal({ active: false, product: null })
     }
     const getPrimaryImage = (product) => {
         if (product.images && product.images.length > 0) {
@@ -264,51 +283,192 @@ function ProductsComp({ loaded, setLoaded }) {
                 </BaseModal>
             )}
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center">
-                        <Package className="h-5 w-5 text-blue-600 mr-3" />
-                        <div>
-                            <p className="text-sm text-gray-600">Total Products</p>
-                            <p className="text-2xl font-bold text-gray-900">{total}</p>
+            {/* Product Details Modal */}
+            {productDetailsModal.active && productDetailsModal.product && (
+                <BaseModal
+                    isOpen={productDetailsModal.active}
+                    onClose={closeProductDetailsModal}
+                    title="Product Details"
+                    size="lg"
+                >
+                    <div className="space-y-6">
+                        {/* Product Images */}
+                        <div className="flex flex-col sm:flex-row gap-6">
+                            <div className="flex-shrink-0">
+                                <img 
+                                    className="w-32 h-32 rounded-lg object-cover border border-gray-200" 
+                                    src={getPrimaryImage(productDetailsModal.product)} 
+                                    alt={productDetailsModal.product.name}
+                                />
+                            </div>
+                            <div className="flex-1 space-y-4">
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-900">{productDetailsModal.product.name}</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Product ID: {productDetailsModal.product._id}</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Price</label>
+                                        <p className="text-lg font-semibold text-green-600">{formatCurrency(productDetailsModal.product.price)}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                                            productDetailsModal.product.adminApproved === true 
+                                                ? 'bg-green-100 text-green-800 border-green-200'
+                                                : productDetailsModal.product.adminApproved === false && productDetailsModal.product.adminRejectionReason
+                                                ? 'bg-red-100 text-red-800 border-red-200'
+                                                : 'bg-orange-100 text-orange-800 border-orange-200'
+                                        }`}>
+                                            {productDetailsModal.product.adminApproved === true ? (
+                                                <>
+                                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                                    Approved
+                                                </>
+                                            ) : productDetailsModal.product.adminApproved === false && productDetailsModal.product.adminRejectionReason ? (
+                                                <>
+                                                    <XCircle className="h-3 w-3 mr-1" />
+                                                    Rejected
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    Pending
+                                                </>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Product Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+                                    <p className="text-sm text-gray-900">{productDetailsModal.product.vendorName || productDetailsModal.product.vendor || 'N/A'}</p>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <p className="text-sm text-gray-900">{productDetailsModal.product.category || 'N/A'}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                                    <p className="text-sm text-gray-900">{productDetailsModal.product.stock || 0} units</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Created Date</label>
+                                    <p className="text-sm text-gray-900">{new Date(productDetailsModal.product.createdAt).toLocaleDateString()}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
+                                    <p className="text-sm text-gray-900">{new Date(productDetailsModal.product.updatedAt || productDetailsModal.product.createdAt).toLocaleDateString()}</p>
+                                </div>
+
+                                {productDetailsModal.product.adminRejectionReason && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Rejection Reason</label>
+                                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">{productDetailsModal.product.adminRejectionReason}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Product Description */}
+                        {productDetailsModal.product.description && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{productDetailsModal.product.description}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3 pt-4 border-t border-gray-200">
+                            <button
+                                type="button"
+                                onClick={closeProductDetailsModal}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                Close
+                            </button>
+                            
+                            {/* Quick Actions */}
+                            {!productDetailsModal.product.adminApproved && !productDetailsModal.product.adminRejectionReason && (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            closeProductDetailsModal()
+                                            openApproveModal(productDetailsModal.product)
+                                        }}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center"
+                                    >
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            closeProductDetailsModal()
+                                            openRejectModal(productDetailsModal.product)
+                                        }}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors flex items-center"
+                                    >
+                                        <XCircle className="h-4 w-4 mr-2" />
+                                        Reject
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <div>
-                            <p className="text-sm text-gray-600">Approved</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => p.adminApproved === true).length}
-                            </p>
-                        </div>
+                </BaseModal>
+            )}
+
+            {/* Status Tabs */}
+            {statsData && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Approval Overview</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                            { key: 'all', label: 'All Products', count: statsData.approvalCounts?.all || 0, color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Package },
+                            { key: 'pending', label: 'Pending', count: statsData.approvalCounts?.pending || 0, color: 'bg-orange-100 text-orange-800 border-orange-200', icon: Clock },
+                            { key: 'approved', label: 'Approved', count: statsData.approvalCounts?.approved || 0, color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
+                            { key: 'rejected', label: 'Rejected', count: statsData.approvalCounts?.rejected || 0, color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle }
+                        ].map((status) => {
+                            const IconComponent = status.icon;
+                            return (
+                                <button
+                                    key={status.key}
+                                    onClick={() => setStatusFilter(status.key)}
+                                    className={`p-4 rounded-lg text-center transition-all duration-200 border-2 ${
+                                        statusFilter === status.key 
+                                            ? `${status.color} border-current shadow-md transform scale-105` 
+                                            : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-center mb-2">
+                                        <IconComponent className={`h-6 w-6 ${statusFilter === status.key ? '' : 'text-gray-600'}`} />
+                                    </div>
+                                    <div className={`text-2xl font-bold ${statusFilter === status.key ? '' : 'text-gray-900'}`}>
+                                        {status.count}
+                                    </div>
+                                    <div className={`text-xs font-medium mt-1 ${statusFilter === status.key ? '' : 'text-gray-600'}`}>
+                                        {status.label}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center">
-                        <Clock className="h-5 w-5 text-yellow-600 mr-3" />
-                        <div>
-                            <p className="text-sm text-gray-600">Pending</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => !p.adminApproved && !p.adminRejectionReason).length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center">
-                        <XCircle className="h-5 w-5 text-red-600 mr-3" />
-                        <div>
-                            <p className="text-sm text-gray-600">Rejected</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => p.adminApproved === false && p.adminRejectionReason).length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            )}
 
             {/* Search and Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -329,39 +489,61 @@ function ProductsComp({ loaded, setLoaded }) {
 
                     {/* Status Filter */}
                     <div className="flex-1 max-w-xs">
-                        <select
+                        <Select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                            onChange={setStatusFilter}
+                            options={[
+                                { value: 'all', label: 'All Statuses', count: statsData?.approvalCounts?.all },
+                                { value: 'pending', label: 'Pending', count: statsData?.approvalCounts?.pending },
+                                { value: 'approved', label: 'Approved', count: statsData?.approvalCounts?.approved },
+                                { value: 'rejected', label: 'Rejected', count: statsData?.approvalCounts?.rejected }
+                            ]}
+                            showCounts={true}
+                            placeholder="Select Status"
+                        />
                     </div>
 
                     {/* Vendor Filter */}
                     <div className="flex-1 max-w-xs">
-                        <select
+                        <Select
                             value={vendorFilter}
-                            onChange={(e) => setVendorFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="all">All Vendors</option>
-                            {vendors.map(vendor => (
-                                <option key={vendor} value={vendor}>{vendor}</option>
-                            ))}
-                        </select>
+                            onChange={setVendorFilter}
+                            options={[
+                                { value: 'all', label: 'All Vendors' },
+                                ...vendors.map(vendor => ({
+                                    value: vendor,
+                                    label: vendor,
+                                    count: statsData?.vendorCounts?.[vendor]
+                                }))
+                            ]}
+                            showCounts={true}
+                            placeholder="Select Vendor"
+                        />
+                    </div>
+
+                    {/* Page Size Selector */}
+                    <div className="flex-1 max-w-xs">
+                        <Select
+                            value={pageSize.toString()}
+                            onChange={(value) => setPageSize(parseInt(value))}
+                            options={[
+                                { value: '10', label: '10 per page' },
+                                { value: '20', label: '20 per page' },
+                                { value: '50', label: '50 per page' },
+                                { value: '100', label: '100 per page' }
+                            ]}
+                            placeholder="Items per page"
+                        />
                     </div>
 
                     {/* Clear Filters */}
-                    {(statusFilter !== 'all' || vendorFilter !== 'all' || search) && (
+                    {(statusFilter !== 'all' || vendorFilter !== 'all' || search || pageSize !== 10) && (
                         <button
                             onClick={() => {
                                 setStatusFilter('all')
                                 setVendorFilter('all')
                                 setSearch('')
+                                setPageSize(10)
                             }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center"
                         >
@@ -372,45 +554,52 @@ function ProductsComp({ loaded, setLoaded }) {
                 </div>
 
                 {/* Products Table */}
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        <Package size={16} className="mr-2" />
-                                        Product
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        <User size={16} className="mr-2" />
-                                        Vendor
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        <DollarSign size={16} className="mr-2" />
-                                        Price
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        <Calendar size={16} className="mr-2" />
-                                        Status
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        <Calendar size={16} className="mr-2" />
-                                        Created
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Package className="h-5 w-5 mr-2 text-gray-600" /> 
+                            Products ({total})
+                        </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <Package size={16} className="mr-2" />
+                                            Product
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <User size={16} className="mr-2" />
+                                            Vendor
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <DollarSign size={16} className="mr-2" />
+                                            Price
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <AlertCircle size={16} className="mr-2" />
+                                            Status
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center">
+                                            <Calendar size={16} className="mr-2" />
+                                            Created
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {products.length > 0 ? (
                                 products.map((product, key) => (
@@ -437,12 +626,12 @@ function ProductsComp({ loaded, setLoaded }) {
                                             {formatCurrency(product.price)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+                                            <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full border ${
                                                 product.adminApproved === true 
-                                                    ? 'bg-green-100 text-green-800'
+                                                    ? 'bg-green-100 text-green-800 border-green-200'
                                                     : product.adminApproved === false && product.adminRejectionReason
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    ? 'bg-red-100 text-red-800 border-red-200'
+                                                    : 'bg-orange-100 text-orange-800 border-orange-200'
                                             }`}>
                                                 {product.adminApproved === true ? (
                                                     <>
@@ -466,10 +655,10 @@ function ProductsComp({ loaded, setLoaded }) {
                                             {new Date(product.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div className="flex items-center space-x-2">
+                                            <div className="flex items-center justify-center space-x-2">
                                                 {/* View Details - Always available */}
                                                 <button
-                                                    onClick={() => navigate.push(`/admin/products/${product._id}`)}
+                                                    onClick={() => openProductDetailsModal(product)}
                                                     className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
                                                     title="View Details"
                                                 >
@@ -523,34 +712,120 @@ function ProductsComp({ loaded, setLoaded }) {
                                     </td>
                                 </tr>
                             )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination */}
-                {data?.totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                        <div className="text-sm text-gray-700">
-                            Showing page {currentPage} of {data.totalPages}
-                        </div>
-                        <div className="flex space-x-2">
-                            <button
-                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                disabled={currentPage === 1}
-                                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => setCurrentPage(Math.min(data.totalPages, currentPage + 1))}
-                                disabled={currentPage === data.totalPages}
-                                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Next
-                            </button>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                )}
+
+                    {/* Enhanced Pagination */}
+                    {total > 0 && (
+                        <div className="px-6 py-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-gray-700">
+                                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, total)} of {total} products
+                                </div>
+                                {data?.totalPages > 1 && (
+                                    <div className="flex items-center space-x-2">
+                                    {/* First Page */}
+                                    <button
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        First
+                                    </button>
+                                    
+                                    {/* Previous */}
+                                    <button
+                                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+
+                                    {/* Page Numbers */}
+                                    <div className="flex items-center space-x-1">
+                                        {(() => {
+                                            const totalPages = data.totalPages;
+                                            const current = currentPage;
+                                            const pages = [];
+                                            
+                                            // Show first page
+                                            if (current > 3) {
+                                                pages.push(
+                                                    <button
+                                                        key={1}
+                                                        onClick={() => setCurrentPage(1)}
+                                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        1
+                                                    </button>
+                                                );
+                                                if (current > 4) {
+                                                    pages.push(<span key="dots1" className="px-2 text-gray-500">...</span>);
+                                                }
+                                            }
+                                            
+                                            // Show pages around current
+                                            for (let i = Math.max(1, current - 2); i <= Math.min(totalPages, current + 2); i++) {
+                                                pages.push(
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => setCurrentPage(i)}
+                                                        className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                                                            i === current
+                                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                                : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        {i}
+                                                    </button>
+                                                );
+                                            }
+                                            
+                                            // Show last page
+                                            if (current < totalPages - 2) {
+                                                if (current < totalPages - 3) {
+                                                    pages.push(<span key="dots2" className="px-2 text-gray-500">...</span>);
+                                                }
+                                                pages.push(
+                                                    <button
+                                                        key={totalPages}
+                                                        onClick={() => setCurrentPage(totalPages)}
+                                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        {totalPages}
+                                                    </button>
+                                                );
+                                            }
+                                            
+                                            return pages;
+                                        })()}
+                                    </div>
+
+                                    {/* Next */}
+                                    <button
+                                        onClick={() => setCurrentPage(Math.min(data.totalPages, currentPage + 1))}
+                                        disabled={currentPage === data.totalPages}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                    
+                                    {/* Last Page */}
+                                    <button
+                                        onClick={() => setCurrentPage(data.totalPages)}
+                                        disabled={currentPage === data.totalPages}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Last
+                                    </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )

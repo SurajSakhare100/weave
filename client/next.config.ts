@@ -173,12 +173,12 @@ const withPWA = require('next-pwa')({
   },
   // Handle service worker conflicts
   dynamicStartUrl: false,
-  reloadOnOnline: false,
-  swcMinify: true
+  reloadOnOnline: false
 })
 
 const nextConfig: NextConfig = withPWA({
   reactStrictMode: false, // Disabled for better deployment compatibility
+  swcMinify: true, // Enable SWC minification for better performance
   images: {
     remotePatterns: [
       {

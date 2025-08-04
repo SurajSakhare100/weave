@@ -9,6 +9,7 @@ import {
   getApprovalStats,
   getDashboardStats,
   getAllProducts,
+  getAdminProductStats,
   getAllCategories,
   createCategory,
   updateCategory,
@@ -39,7 +40,8 @@ router.get('/approval-stats', getApprovalStats);
 router.get('/dashboard-stats', getDashboardStats);
 
 // Product management routes
-router.get('/getProducts', getAllProducts);
+router.get('/products/stats', protectAdmin, getAdminProductStats);
+router.get('/getProducts', protectAdmin, getAllProducts);
 
 // Vendor approval routes
 router.get('/vendors/pending', validatePagination, getPendingVendors);

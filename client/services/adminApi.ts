@@ -7,7 +7,7 @@ export const adminApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
     credentials: 'include',
   }),
-  tagTypes: ['Category', 'Vendor', 'Product', 'Order', 'OrderStats', 'Dashboard', 'Coupon'],
+  tagTypes: ['Category', 'Vendor', 'Product', 'ProductStats', 'Order', 'OrderStats', 'Dashboard', 'Coupon'],
   endpoints: (builder) => ({
     // ==================== DASHBOARD ENDPOINTS ====================
     getDashboardStats: builder.query({
@@ -174,14 +174,36 @@ export const adminApi = createApi({
     }),
 
     // ==================== PRODUCT ENDPOINTS ====================
+    getAdminProductStats: builder.query({
+      query: () => '/admin/products/stats',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return {
+          approvalCounts: {
+            all: 0,
+            pending: 0,
+            approved: 0,
+            rejected: 0
+          },
+          vendorCounts: {},
+          categoryCounts: {},
+          totalProducts: 0,
+          recentProducts: 0
+        };
+      },
+      providesTags: ['ProductStats'],
+    }),
+
     getAllProducts: builder.query({
       query: (params) => ({
         url: '/admin/getProducts',
         params: {
           page: params.page || 1,
-          limit: params.limit || 12,
+          limit: params.limit || 10,
           search: params.search || '',
-          approvalStatus: params.approvalStatus || 'pending',
+          approvalStatus: params.approvalStatus || 'all',
           category: params.category || '',
           vendor: params.vendor || ''
         },
@@ -471,6 +493,7 @@ export const {
   useGetVendorOrdersQuery,
   
   // Products
+  useGetAdminProductStatsQuery,
   useGetAllProductsQuery,
   useGetProductByIdQuery,
   useGetPendingProductsQuery,
