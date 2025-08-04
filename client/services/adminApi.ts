@@ -19,11 +19,23 @@ export const adminApi = createApi({
         return {
           totalOrders: 0,
           totalRevenue: 0,
-          totalProducts: 0,
+          deliveredOrders: 0,
+          cancelledOrders: 0,
+          returnedOrders: 0,
+          pendingOrders: 0,
+          processingOrders: 0,
+          shippedOrders: 0,
+          recentOrders: 0,
+          recentRevenue: 0,
           totalVendors: 0,
-          recentOrders: [],
-          topProducts: [],
-          revenueChart: []
+          approvedVendors: 0,
+          pendingVendors: 0,
+          totalProducts: 0,
+          approvedProducts: 0,
+          pendingProducts: 0,
+          recentOrdersList: [],
+          dailyRevenue: [],
+          topProducts: []
         };
       },
       providesTags: ['Dashboard'],

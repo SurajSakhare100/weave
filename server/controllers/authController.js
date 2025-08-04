@@ -254,7 +254,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
     res.cookie('adminToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-origin in production
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/'
     });
@@ -302,7 +302,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
     res.cookie('adminToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-origin in production
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/'
     });
@@ -346,7 +346,7 @@ const logoutAdmin = (req, res) => {
   res.cookie('adminToken', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-origin in production
     expires: new Date(0),
     path: '/'
   });

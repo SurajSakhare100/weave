@@ -170,24 +170,208 @@ export const getApprovalStats = asyncHandler(async (req, res) => {
 // Get dashboard stats
 export const getDashboardStats = asyncHandler(async (req, res) => {
   try {
-    // Get basic stats for admin dashboard
+    // Get time periods
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get order statistics
+    const orderStats = await Order.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalRevenue: { $sum: '$totalPrice' },
+          deliveredOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0] }
+          },
+          cancelledOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
+          },
+          returnedOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'returned'] }, 1, 0] }
+          },
+          pendingOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
+          },
+          processingOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'processing'] }, 1, 0] }
+          },
+          shippedOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'shipped'] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // Get recent orders (last 30 days)
+    const recentOrderStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          recentOrders: { $sum: 1 },
+          recentRevenue: { $sum: '$totalPrice' }
+        }
+      }
+    ]);
+
+    // Get vendor statistics
+    const vendorStats = await Vendor.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalVendors: { $sum: 1 },
+          approvedVendors: {
+            $sum: { $cond: [{ $eq: ['$adminApproved', true] }, 1, 0] }
+          },
+          pendingVendors: {
+            $sum: { $cond: [{ $ne: ['$adminApproved', true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // Get product statistics
+    const productStats = await Product.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalProducts: { $sum: 1 },
+          approvedProducts: {
+            $sum: { $cond: [{ $eq: ['$adminApproved', true] }, 1, 0] }
+          },
+          pendingProducts: {
+            $sum: { $cond: [{ $ne: ['$adminApproved', true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // Get recent orders for display
+    const recentOrders = await Order.find()
+      .populate('user', 'firstName lastName email')
+      .populate({
+        path: 'orderItems.productId',
+        populate: {
+          path: 'vendorId',
+          select: 'businessName name'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Get daily revenue for the last 7 days
+    const dailyRevenue = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sevenDaysAgo },
+          status: { $ne: 'cancelled' }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+          },
+          revenue: { $sum: '$totalPrice' },
+          orders: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    // Get top performing products
+    const topProducts = await Order.aggregate([
+      { $unwind: '$orderItems' },
+      {
+        $group: {
+          _id: '$orderItems.productId',
+          totalSold: { $sum: '$orderItems.quantity' },
+          totalRevenue: { $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price'] } }
+        }
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $project: {
+          name: '$product.name',
+          totalSold: 1,
+          totalRevenue: 1,
+          image: { $arrayElemAt: ['$product.images.url', 0] }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Format the response
     const stats = {
-      totalOrders: 0,
-      totalRevenue: 0,
-      totalVendors: 0,
-      totalProducts: 0,
-      pendingVendors: 0,
-      pendingProducts: 0
+      // Order stats
+      totalOrders: orderStats[0]?.totalOrders || 0,
+      totalRevenue: orderStats[0]?.totalRevenue || 0,
+      deliveredOrders: orderStats[0]?.deliveredOrders || 0,
+      cancelledOrders: orderStats[0]?.cancelledOrders || 0,
+      returnedOrders: orderStats[0]?.returnedOrders || 0,
+      pendingOrders: orderStats[0]?.pendingOrders || 0,
+      processingOrders: orderStats[0]?.processingOrders || 0,
+      shippedOrders: orderStats[0]?.shippedOrders || 0,
+      
+      // Recent stats
+      recentOrders: recentOrderStats[0]?.recentOrders || 0,
+      recentRevenue: recentOrderStats[0]?.recentRevenue || 0,
+      
+      // Vendor stats
+      totalVendors: vendorStats[0]?.totalVendors || 0,
+      approvedVendors: vendorStats[0]?.approvedVendors || 0,
+      pendingVendors: vendorStats[0]?.pendingVendors || 0,
+      
+      // Product stats
+      totalProducts: productStats[0]?.totalProducts || 0,
+      approvedProducts: productStats[0]?.approvedProducts || 0,
+      pendingProducts: productStats[0]?.pendingProducts || 0,
+      
+      // Additional data
+      recentOrdersList: recentOrders.map(order => ({
+        _id: order._id,
+        secretOrderId: order._id.toString(),
+        customer: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || order.user?.email || 'N/A',
+        totalPrice: order.totalPrice,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        isPaid: order.isPaid,
+        createdAt: order.createdAt,
+        itemCount: order.orderItems.length,
+        vendorName: order.orderItems[0]?.productId?.vendorId?.businessName || order.orderItems[0]?.productId?.vendorId?.name || 'N/A'
+      })),
+      dailyRevenue,
+      topProducts
     };
     
     res.json({
       success: true,
-      stats
+      data: stats
     });
   } catch (error) {
     console.error('Error getting dashboard stats:', error);
-    res.status(500);
-    throw new Error('Failed to get dashboard stats');
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get dashboard stats',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 }); 
 
