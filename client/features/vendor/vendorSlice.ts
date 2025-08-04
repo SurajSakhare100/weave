@@ -42,14 +42,19 @@ interface VendorProfile {
   name: string
   email: string
   number?: string
-  accept: boolean
-  bankAccOwner?: string
-  bankName?: string
-  bankAccNumber?: string
-  bankIFSC?: string
-  bankBranchName?: string
-  bankBranchNumber?: string
+  adminApproved: boolean
+  adminApprovedAt?: string
+  adminApprovedBy?: string
+  adminRejectionReason?: string
+  adminApprovalFeedback?: string
+  status: 'pending' | 'approved' | 'rejected' | 'deleted'
+  businessName?: string
+  address?: string
+  city?: string
+  state?: string
+  pinCode?: string
   createdAt: string
+  updatedAt: string
 }
 
 // Pagination interface

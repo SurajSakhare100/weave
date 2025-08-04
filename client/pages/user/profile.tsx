@@ -10,25 +10,25 @@ export default function UserProfile() {
 
   return (
     <MainLayout>
-      <section className="py-16 bg-[#faf5f2] min-h-screen text-black flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow p-8 flex flex-col items-center w-full max-w-md">
+      <section className="py-8 sm:py-16 bg-[#faf5f2] min-h-screen text-black flex items-center justify-center px-4 sm:px-6">
+        <div className="bg-white rounded-2xl shadow p-6 sm:p-8 flex flex-col items-center w-full max-w-md">
           <span className="text-2xl mb-4">👤</span>
-          <h1 className="text-2xl font-bold mb-2">{user.email}</h1>
-          <div className="mb-2">Wishlist: <Link href="/user/wishlist" className="text-pink-500 underline">{user.wishlist.length} items</Link></div>
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-center">{user.email}</h1>
+          <div className="mb-2 text-center">Wishlist: <Link href="/user/wishlist" className="text-pink-500 underline">{user.wishlist.length} items</Link></div>
           <div className="flex flex-col gap-3 mt-4 w-full">
-            <Link href="/user/settings" className="bg-[#EE346C] text-white px-6 py-2 rounded hover:bg-[#c2185b] transition text-center">
+            <Link href="/user/settings" className="bg-[#EE346C] text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-[#c2185b] transition text-center text-sm sm:text-base">
               Settings & Orders
             </Link>
-            <Link href="/user/orders" className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 transition text-center">
+            <Link href="/user/orders" className="bg-pink-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-pink-600 transition text-center text-sm sm:text-base">
               View Orders
             </Link>
-            <Link href="/user/addresses" className="bg-[#6c4323] text-white px-6 py-2 rounded hover:bg-[#6c4323]/90 transition text-center">
+            <Link href="/user/addresses" className="bg-[#6c4323] text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-[#6c4323]/90 transition text-center text-sm sm:text-base">
               Manage Addresses
             </Link>
-            <Link href="/" className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition text-center">
+            <Link href="/" className="bg-gray-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-gray-600 transition text-center text-sm sm:text-base">
               Back to Home
             </Link>
-            <Link href="/products" className="bg-[#cf1a53] text-white px-6 py-2 rounded hover:bg-[#cf1a53]/90 transition text-center">
+            <Link href="/products" className="bg-[#cf1a53] text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-[#cf1a53]/90 transition text-center text-sm sm:text-base">
               Continue Shopping
             </Link>
           </div>

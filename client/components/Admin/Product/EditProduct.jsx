@@ -310,37 +310,9 @@ function EditProduct() {
                                 <option value={JSON.stringify({ name: productDetails.category, slug: productDetails.categorySlug })}>{productDetails.category}</option>
 
                                 {
-                                    categories.map((obj, key) => {
-                                        var mainSub = obj.mainSub
-                                        var sub = obj.sub
-                                        return (
-                                            <Fragment key={key}>
-                                                <option value={JSON.stringify(obj)}>{obj.name}</option>
-                                                {
-                                                    mainSub.map((obj2, key2) => {
-                                                        return (
-                                                            <option key={key2} value={JSON.stringify({
-                                                                name: `${obj.name} > ${obj2.name}`,
-                                                                slug: obj2.slug
-                                                            })
-                                                            }> {obj.name}{' > '}{obj2.name}</option>
-                                                        )
-                                                    })
-                                                }
-
-                                                {
-                                                    sub.map((obj3, key3) => {
-                                                        return (
-                                                            <option key={key3} value={JSON.stringify({
-                                                                name: `${obj.name} > ${obj3.mainSub} > ${obj3.name}`,
-                                                                slug: obj3.slug
-                                                            })}>{obj.name}{' > '}{obj3.mainSub}{' > '}{obj3.name}</option>
-                                                        )
-                                                    })
-                                                }
-                                            </Fragment>
-                                        )
-                                    })
+                                    categories.map((obj, key) => (
+                                        <option key={key} value={JSON.stringify(obj)}>{obj.name}</option>
+                                    ))
                                 }
 
                             </select>

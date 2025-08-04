@@ -8,12 +8,6 @@ import {
   deleteCategory,
   searchCategories,
   getHeaderCategories,
-  getMainSubCategories,
-  getSubCategories,
-  addMainSubCategory,
-  addSubCategory,
-  deleteMainSubCategory,
-  deleteSubCategory,
   getAllTypesCategory
 } from '../controllers/categoryController.js';
 import {
@@ -48,8 +42,6 @@ const router = express.Router();
 router.get('/', getCategories);
 router.get('/all-types', getAllTypesCategory);
 router.get('/header', getHeaderCategories);
-router.get('/main-sub', getMainSubCategories);
-router.get('/sub', getSubCategories);
 router.get('/search', validateSearch, searchCategories);
 router.get('/slug/:slug', getCategoryBySlug);
 router.get('/:id', validateId, getCategoryById);
@@ -87,10 +79,5 @@ router.put('/:id', protectAdmin, (req, res, next) => {
   });
 }, validateId, validateCategory, updateCategory);
 router.delete('/:id', protectAdmin, validateId, deleteCategory);
-
-router.post('/:id/main-sub', protectAdmin, validateId, addMainSubCategory);
-router.delete('/:id/main-sub/:uni_id', protectAdmin, validateId, deleteMainSubCategory);
-router.post('/:id/sub', protectAdmin, validateId, addSubCategory);
-router.delete('/:id/sub/:uni_id', protectAdmin, validateId, deleteSubCategory);
 
 export default router; 

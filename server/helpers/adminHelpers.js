@@ -127,7 +127,7 @@ export default {
     acceptVendor: (email) => {
         return Vendor.updateOne(
             { email: email },
-            { $set: { accept: true } }
+            { $set: { adminApproved: true } }
         );
     },
 
@@ -184,7 +184,10 @@ export default {
 
     // Product approval functions
     getPendingProducts: (skip, limit) => {
-        return Product.find({ adminApproved: false })
+        return Product.find({ 
+            adminApproved: { $exists: false },
+            adminRejectionReason: { $exists: false }
+        })
             .populate('vendorId', 'name email businessName')
             .sort({ createdAt: -1 })
             .skip(parseInt(skip))
@@ -192,10 +195,13 @@ export default {
     },
 
     getPendingProductsCount: () => {
-        return Product.countDocuments({ adminApproved: false });
+        return Product.countDocuments({ 
+            adminApproved: { $exists: false },
+            adminRejectionReason: { $exists: false }
+        });
     },
 
-    approveProduct: async (productId, adminId) => {
+    approveProduct: async (productId, adminId, feedback) => {
         const result = await Product.findByIdAndUpdate(
             productId,
             {
@@ -203,10 +209,11 @@ export default {
                 adminApprovedAt: new Date(),
                 adminApprovedBy: adminId,
                 adminRejectionReason: null,
+                adminFeedback: feedback || null,
                 status: 'active' // Set status to active when approved
             },
             { new: true }
-        );
+        ).populate('vendorId', 'name email');
         if (!result) {
             throw new Error('Product not found');
         }
@@ -243,7 +250,7 @@ export default {
         return Vendor.countDocuments({ adminApproved: false });
     },
 
-    approveVendor: async (vendorId, adminId) => {
+    approveVendor: async (vendorId, adminId, feedback) => {
         const result = await Vendor.findByIdAndUpdate(
             vendorId,
             {
@@ -251,7 +258,8 @@ export default {
                 adminApprovedAt: new Date(),
                 adminApprovedBy: adminId,
                 adminRejectionReason: null,
-                accept: true // Also set the legacy accept field
+                adminApprovalFeedback: feedback || null, // Add approval feedback
+                status: 'approved'
             },
             { new: true }
         );
@@ -269,7 +277,8 @@ export default {
                 adminApprovedAt: null,
                 adminApprovedBy: null,
                 adminRejectionReason: rejectionReason,
-                accept: false
+                adminApprovalFeedback: null, // Clear approval feedback when rejecting
+                status: 'rejected'
             },
             { new: true }
         );
@@ -330,33 +339,7 @@ export default {
         );
     },
 
-    addMainSubCategory: (details, cateId) => {
-        return Category.updateOne(
-            { _id: cateId },
-            { $push: { mainSub: details } }
-        );
-    },
 
-    addSubCategory: (details, cateId) => {
-        return Category.updateOne(
-            { _id: cateId },
-            { $push: { sub: details } }
-        );
-    },
-
-    deleteMainSubCategory: (details, cateId) => {
-        return Category.updateOne(
-            { _id: cateId },
-            { $pull: { mainSub: details } }
-        );
-    },
-
-    deleteSubCategory: (details, cateId) => {
-        return Category.updateOne(
-            { _id: cateId },
-            { $pull: { sub: details } }
-        );
-    },
 
     getAdminProducts: (skip, limit) => {
         return Product.find({ vendor: false })

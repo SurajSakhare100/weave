@@ -6,7 +6,7 @@ import { RootState } from '../../store/store';
 import { loginStart, loginSuccess, loginFailure, clearError } from '../../features/vendor/vendorSlice';
 import { vendorRegister } from '../../services/vendorService';
 import { setVendorToken } from '../../utils/vendorAuth';
-import { Eye, EyeOff, Mail, Lock, User, Phone, Building, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, Building, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function VendorRegisterPage() {
   const router = useRouter();
@@ -19,12 +19,11 @@ export default function VendorRegisterPage() {
     password: '',
     confirmPassword: '',
     number: '',
-    bankAccOwner: '',
-    bankName: '',
-    bankAccNumber: '',
-    bankIFSC: '',
-    bankBranchName: '',
-    bankBranchNumber: ''
+    businessName: '',
+    address: '',
+    city: '',
+    state: '',
+    pinCode: ''
   });
   
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +43,7 @@ export default function VendorRegisterPage() {
     
     // Step 1 validation
     if (!formData.name.trim()) {
-      errors.name = 'Business name is required';
+      errors.name = 'Full name is required';
     }
     
     if (!formData.email) {
@@ -74,7 +73,7 @@ export default function VendorRegisterPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -114,12 +113,11 @@ export default function VendorRegisterPage() {
         email: formData.email,
         password: formData.password,
         number: formData.number || undefined,
-        bankAccOwner: formData.bankAccOwner || undefined,
-        bankName: formData.bankName || undefined,
-        bankAccNumber: formData.bankAccNumber || undefined,
-        bankIFSC: formData.bankIFSC || undefined,
-        bankBranchName: formData.bankBranchName || undefined,
-        bankBranchNumber: formData.bankBranchNumber || undefined
+        businessName: formData.businessName || undefined,
+        address: formData.address || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
+        pinCode: formData.pinCode || undefined
       };
       
       const response = await vendorRegister(vendorData);
@@ -166,7 +164,7 @@ export default function VendorRegisterPage() {
                 }`}>
                   2
                 </div>
-                <span className="ml-2 text-sm font-medium">Bank Details</span>
+                <span className="ml-2 text-sm font-medium">Business Details</span>
               </div>
             </div>
           </div>
@@ -183,10 +181,10 @@ export default function VendorRegisterPage() {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name *
+                    Full Name *
                   </label>
                   <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                       type="text"
                       name="name"
@@ -195,7 +193,7 @@ export default function VendorRegisterPage() {
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors ${
                         formErrors.name ? 'border-red-300' : 'border-gray-300'
                       }`}
-                      placeholder="Enter your business name"
+                      placeholder="Enter your full name"
                       required
                     />
                   </div>
@@ -210,7 +208,7 @@ export default function VendorRegisterPage() {
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
+                    <input
                       type="email"
                       name="email"
                       value={formData.email}
@@ -219,9 +217,9 @@ export default function VendorRegisterPage() {
                         formErrors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Enter your email"
-              required
-            />
-          </div>
+                      required
+                    />
+                  </div>
                   {formErrors.email && (
                     <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
                   )}
@@ -312,7 +310,7 @@ export default function VendorRegisterPage() {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                                      className="w-full bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                  className="w-full bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
                   Next Step
                 </button>
@@ -320,96 +318,79 @@ export default function VendorRegisterPage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Account Holder Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="text"
-                        name="bankAccOwner"
-                        value={formData.bankAccOwner}
-                        onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                        placeholder="Account holder name"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bank Name
+                      Business Name
                     </label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
                         type="text"
-                        name="bankName"
-                        value={formData.bankName}
+                        name="businessName"
+                        value={formData.businessName}
                         onChange={handleInputChange}
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                        placeholder="Bank name"
+                        placeholder="Enter your business name"
                       />
                     </div>
                   </div>
 
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Account Number
+                      Street Address
                     </label>
                     <div className="relative">
-                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="text"
-                        name="bankAccNumber"
-                        value={formData.bankAccNumber}
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <textarea
+                        name="address"
+                        value={formData.address}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                        placeholder="Account number"
+                        rows={3}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors resize-none"
+                        placeholder="Enter your business address"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      IFSC Code
+                      City
                     </label>
                     <input
                       type="text"
-                      name="bankIFSC"
-                      value={formData.bankIFSC}
+                      name="city"
+                      value={formData.city}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                      placeholder="IFSC code"
+                      placeholder="City"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Branch Name
+                      State
                     </label>
                     <input
                       type="text"
-                      name="bankBranchName"
-                      value={formData.bankBranchName}
+                      name="state"
+                      value={formData.state}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                      placeholder="Branch name"
+                      placeholder="State"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Branch Number
+                      PIN Code
                     </label>
                     <input
                       type="text"
-                      name="bankBranchNumber"
-                      value={formData.bankBranchNumber}
+                      name="pinCode"
+                      value={formData.pinCode}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] transition-colors"
-                      placeholder="Branch number"
+                      placeholder="PIN Code"
                     />
                   </div>
                 </div>
@@ -422,8 +403,8 @@ export default function VendorRegisterPage() {
                   >
                     Previous
                   </button>
-          <button
-            type="submit"
+                  <button
+                    type="submit"
                     disabled={loading}
                     className="flex-1 bg-[#5A9BD8] text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
@@ -435,11 +416,11 @@ export default function VendorRegisterPage() {
                     ) : (
                       'Create Account'
                     )}
-          </button>
+                  </button>
                 </div>
               </>
             )}
-        </form>
+          </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">

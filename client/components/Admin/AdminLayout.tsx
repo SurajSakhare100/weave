@@ -34,8 +34,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = "Admin Pane
         { href: '/admin/dashboard', label: 'Dashboard', icon: BarChart3 },
         { href: '/admin/products', label: 'Products', icon: Package },
         { href: '/admin/categories', label: 'Categories', icon: Tags },
-        { href: '/admin/layouts', label: 'Layouts', icon: Layout },
-        { href: '/admin/cupons', label: 'Coupons', icon: Gift },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
         { href: '/admin/vendors', label: 'Vendors', icon: Users },
     ];

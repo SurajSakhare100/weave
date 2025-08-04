@@ -1,8 +1,10 @@
 import asyncHandler from 'express-async-handler';
 import adminHelpers from '../helpers/adminHelpers.js';
-import { sendTemplateEmail } from '../utils/emailService.js';
+import { sendTemplateEmail, sendVendorRejectionEmail, sendVendorApprovalEmail } from '../utils/emailService.js';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
+import Coupon from '../models/Coupon.js';
+import Vendor from '../models/Vendor.js';
 
 // Get pending vendors for approval
 export const getPendingVendors = asyncHandler(async (req, res) => {
@@ -13,8 +15,10 @@ export const getPendingVendors = asyncHandler(async (req, res) => {
   
   res.json({
     success: true,
-    vendors,
-    total,
+    data: {
+      vendors,
+      total
+    },
     skip: parseInt(skip),
     limit: parseInt(limit)
   });
@@ -23,17 +27,14 @@ export const getPendingVendors = asyncHandler(async (req, res) => {
 // Approve vendor
 export const approveVendor = asyncHandler(async (req, res) => {
   const { vendorId } = req.params;
+  const { feedback } = req.body; // Add feedback from request body
   const adminId = req.admin._id;
   
-  const vendor = await adminHelpers.approveVendor(vendorId, adminId);
+  const vendor = await adminHelpers.approveVendor(vendorId, adminId, feedback);
   
   // Send approval email to vendor
   try {
-    await sendTemplateEmail('vendorApproval', {
-      contactName: vendor.name,
-      businessName: vendor.businessName || vendor.name,
-      dashboardUrl: `${process.env.FRONTEND_URL}/vendor/dashboard`
-    }, vendor.email);
+    await sendVendorApprovalEmail(vendor, feedback);
   } catch (error) {
     console.error('Failed to send vendor approval email:', error);
   }
@@ -60,11 +61,7 @@ export const rejectVendor = asyncHandler(async (req, res) => {
   
   // Send rejection email to vendor
   try {
-    await sendTemplateEmail('vendorRejection', {
-      contactName: vendor.name,
-      businessName: vendor.businessName || vendor.name,
-      rejectionReason
-    }, vendor.email);
+    await sendVendorRejectionEmail(vendor, rejectionReason);
   } catch (error) {
     console.error('Failed to send vendor rejection email:', error);
   }
@@ -94,10 +91,15 @@ export const getPendingProducts = asyncHandler(async (req, res) => {
 
 // Approve product
 export const approveProduct = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
+  const { productId, feedback } = req.body;
   const adminId = req.admin._id;
   
-  const product = await adminHelpers.approveProduct(productId, adminId);
+  if (!productId) {
+    res.status(400);
+    throw new Error('Product ID is required');
+  }
+  
+  const product = await adminHelpers.approveProduct(productId, adminId, feedback);
   
   // Send approval email to vendor
   try {
@@ -109,6 +111,7 @@ export const approveProduct = asyncHandler(async (req, res) => {
         style: 'currency',
         currency: 'INR'
       }).format(product.price),
+      feedback: feedback || 'No additional feedback provided.',
       dashboardUrl: `${process.env.FRONTEND_URL}/vendor/products/${product._id}`
     }, product.vendorId.email);
   } catch (error) {
@@ -190,7 +193,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 
 // Get all products for admin with filtering
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const { page = 1, search = '', approvalStatus = 'all' } = req.query;
+  const { page = 1, search = '', approvalStatus = 'pending' } = req.query; // Default to pending
   const limit = 12;
   const skip = (page - 1) * limit;
   
@@ -206,14 +209,19 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     ];
   }
   
-  // Approval status filter
+  // Approval status filter - Default to pending products only
   if (approvalStatus === 'pending') {
-    query.adminApproved = { $ne: true };
+    // Show products that are not yet approved (pending admin review)
+    query.adminApproved = { $exists: false };
+    query.adminRejectionReason = { $exists: false };
   } else if (approvalStatus === 'approved') {
     query.adminApproved = true;
   } else if (approvalStatus === 'rejected') {
     query.adminApproved = false;
     query.adminRejectionReason = { $exists: true, $ne: null };
+  } else if (approvalStatus === 'all') {
+    // Show all products including pending, approved, and rejected
+    // No additional filter needed
   }
   
   const products = await Product.find(query)
@@ -243,17 +251,10 @@ export const getAllCategories = asyncHandler(async (req, res) => {
   try {
     const categories = await Category.find().sort({ createdAt: -1 });
     
-    // Group categories by type
-    const mainCategories = categories.filter(cat => !cat.parentId);
-    const mainSubCategories = categories.filter(cat => cat.parentId && !cat.mainSubId);
-    const subCategories = categories.filter(cat => cat.mainSubId);
-    
     res.json({
       success: true,
       data: {
-        categories: mainCategories,
-        mainSub: mainSubCategories,
-        subCategory: subCategories
+        categories: categories
       }
     });
   } catch (error) {
@@ -265,7 +266,7 @@ export const getAllCategories = asyncHandler(async (req, res) => {
 
 // Create new category
 export const createCategory = asyncHandler(async (req, res) => {
-  const { name, description, slug, image, parentId, mainSubId } = req.body;
+  const { name, description, slug, image, parentId } = req.body;
   
   if (!name) {
     res.status(400);
@@ -280,8 +281,7 @@ export const createCategory = asyncHandler(async (req, res) => {
     description,
     slug: categorySlug,
     image,
-    parentId: parentId || null,
-    mainSubId: mainSubId || null
+    parentId: parentId || null
   };
   
   const category = await Category.create(categoryData);
@@ -349,39 +349,7 @@ export const getCategory = asyncHandler(async (req, res) => {
   });
 });
 
-// Delete main sub category
-export const deleteMainSubCategory = asyncHandler(async (req, res) => {
-  const { id, uni_id } = req.params;
-  
-  const category = await Category.findByIdAndDelete(id);
-  
-  if (!category) {
-    res.status(404);
-    throw new Error('Category not found');
-  }
-  
-  res.json({
-    success: true,
-    message: 'Main sub category deleted successfully'
-  });
-});
 
-// Delete sub category
-export const deleteSubCategory = asyncHandler(async (req, res) => {
-  const { id, uni_id } = req.params;
-  
-  const category = await Category.findByIdAndDelete(id);
-  
-  if (!category) {
-    res.status(404);
-    throw new Error('Category not found');
-  }
-  
-  res.json({
-    success: true,
-    message: 'Sub category deleted successfully'
-  });
-});
 
 // Add header category (legacy endpoint)
 export const addHeaderCategory = asyncHandler(async (req, res) => {
@@ -409,57 +377,183 @@ export const addHeaderCategory = asyncHandler(async (req, res) => {
   });
 });
 
-// Add main sub category (legacy endpoint)
-export const addMainSubCategory = asyncHandler(async (req, res) => {
-  const { name, description, slug, image, category } = req.body;
+
+
+// ==================== COUPON MANAGEMENT ====================
+
+// Get all coupons
+export const getAllCoupons = asyncHandler(async (req, res) => {
+  const { skip = 0, limit = 10, search = '', status = 'all' } = req.query;
   
-  if (!name || !category) {
-    res.status(400);
-    throw new Error('Name and category are required');
+  let query = {};
+  
+  if (search) {
+    query.$or = [
+      { code: { $regex: search, $options: 'i' } }
+    ];
   }
   
-  const categorySlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  if (status === 'active') {
+    query.isActive = true;
+  } else if (status === 'inactive') {
+    query.isActive = false;
+  }
   
-  const mainSubCategory = await Category.create({
-    name,
-    description,
-    slug: categorySlug,
-    image,
-    parentId: category,
-    type: 'mainSub'
-  });
+  const coupons = await Coupon.find(query)
+    .sort({ createdAt: -1 })
+    .skip(parseInt(skip))
+    .limit(parseInt(limit));
+    
+  const total = await Coupon.countDocuments(query);
   
   res.json({
     success: true,
-    message: 'Main sub category added successfully',
-    data: mainSubCategory
+    data: {
+      coupons,
+      total,
+      skip: parseInt(skip),
+      limit: parseInt(limit)
+    }
   });
 });
 
-// Add sub category (legacy endpoint)
-export const addSubCategory = asyncHandler(async (req, res) => {
-  const { name, description, slug, image, mainSub, category } = req.body;
+// Get coupon by ID
+export const getCouponById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
   
-  if (!name || !mainSub || !category) {
-    res.status(400);
-    throw new Error('Name, main sub, and category are required');
+  const coupon = await Coupon.findById(id);
+  
+  if (!coupon) {
+    res.status(404);
+    throw new Error('Coupon not found');
   }
-  
-  const categorySlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  
-  const subCategory = await Category.create({
-    name,
-    description,
-    slug: categorySlug,
-    image,
-    parentId: category,
-    mainSubId: mainSub,
-    type: 'sub'
-  });
   
   res.json({
     success: true,
-    message: 'Sub category added successfully',
-    data: subCategory
+    data: coupon
   });
+});
+
+// Create coupon
+export const createCoupon = asyncHandler(async (req, res) => {
+  const { code, discount, min, max, validFrom, validTo, isActive, usageLimit } = req.body;
+  
+  if (!code || !discount || !min || !max) {
+    res.status(400);
+    throw new Error('Code, discount, min, and max are required');
+  }
+  
+  // Check if coupon code already exists
+  const existingCoupon = await Coupon.findOne({ code });
+  if (existingCoupon) {
+    res.status(400);
+    throw new Error('Coupon code already exists');
+  }
+  
+  const coupon = await Coupon.create({
+    code,
+    discount: parseFloat(discount),
+    min: parseFloat(min),
+    max: parseFloat(max),
+    validFrom: validFrom ? new Date(validFrom) : new Date(),
+    validTo: validTo ? new Date(validTo) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
+    isActive: isActive !== undefined ? isActive : true,
+    usageLimit: usageLimit ? parseInt(usageLimit) : -1
+  });
+  
+  res.status(201).json({
+    success: true,
+    message: 'Coupon created successfully',
+    data: coupon
+  });
+});
+
+// Update coupon
+export const updateCoupon = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  
+  const coupon = await Coupon.findByIdAndUpdate(id, updateData, { new: true });
+  
+  if (!coupon) {
+    res.status(404);
+    throw new Error('Coupon not found');
+  }
+  
+  res.json({
+    success: true,
+    message: 'Coupon updated successfully',
+    data: coupon
+  });
+});
+
+// Delete coupon
+export const deleteCoupon = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const coupon = await Coupon.findByIdAndDelete(id);
+  
+  if (!coupon) {
+    res.status(404);
+    throw new Error('Coupon not found');
+  }
+  
+  res.json({
+    success: true,
+    message: 'Coupon deleted successfully'
+  });
+});
+
+// ==================== LAYOUT MANAGEMENT ====================
+
+// Get all layouts
+export const getLayouts = asyncHandler(async (req, res) => {
+  // This is a placeholder - you'll need to create a Layout model
+  // For now, returning empty array
+  res.json({
+    success: true,
+    data: {
+      layouts: []
+    }
+  });
+});
+
+// Update layout
+export const updateLayout = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const layoutData = req.body;
+  
+  // This is a placeholder - you'll need to create a Layout model
+  // For now, returning success
+  res.json({
+    success: true,
+    message: 'Layout updated successfully',
+    data: { id, ...layoutData }
+  });
+});
+
+// ==================== VENDOR STATS ====================
+
+// Get vendor statistics
+export const getVendorStats = asyncHandler(async (req, res) => {
+  try {
+    const totalVendors = await Vendor.countDocuments();
+    const activeVendors = await Vendor.countDocuments({ adminApproved: true });
+    const pendingVendors = await Vendor.countDocuments({ adminApproved: { $ne: true } });
+    const suspendedVendors = await Vendor.countDocuments({ isSuspended: true });
+    
+    res.json({
+      success: true,
+      data: {
+        totalVendors,
+        activeVendors,
+        pendingVendors,
+        suspendedVendors
+      }
+    });
+  } catch (error) {
+    console.error('Error getting vendor stats:', error);
+    res.status(500);
+    throw new Error('Failed to get vendor stats');
+  }
 }); 

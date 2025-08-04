@@ -129,44 +129,44 @@ export default function UserAddressesPage() {
   return (
     <MainLayout>
       <div className="min-h-screen bg-[#fafafa]">
-        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <Button
                 variant="outline"
                 onClick={() => router.push('/user/profile')}
-                className="text-[#6c4323] border-[#6c4323] hover:bg-[#6c4323] hover:text-white"
+                className="text-[#6c4323] border-[#6c4323] hover:bg-[#6c4323] hover:text-white w-fit text-sm sm:text-base"
               >
                 ← Back to Profile
               </Button>
-              <h1 className="text-3xl font-bold text-[#6c4323]">My Addresses</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#6c4323]">My Addresses</h1>
             </div>
             <Button 
               onClick={handleAddNewClick}
-              className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
+              className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white w-full sm:w-auto text-sm sm:text-base"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add New Address
             </Button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 max-w-5xl mx-auto">
             {addresses.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus className="w-8 h-8 text-gray-400" />
+              <div className="text-center py-8 sm:py-12">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No addresses yet</h3>
-                <p className="text-gray-500 mb-6">Add your first delivery address to get started.</p>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No addresses yet</h3>
+                <p className="text-gray-500 mb-4 sm:mb-6 text-sm sm:text-base">Add your first delivery address to get started.</p>
                 <Button 
                   onClick={handleAddNewClick}
-                  className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white"
+                  className="bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white text-sm sm:text-base"
                 >
                   Add Your First Address
                 </Button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {addresses.map((address) => (
                   <AddressCard
                     key={address.id}

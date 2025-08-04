@@ -9,6 +9,7 @@ import {
   cancelOrder,
   updateOrderStatus,
   getOrderStats,
+  getAdminOrderStats,
   getVendorOrders,
   getVendorOrderById,
   updateVendorOrderStatus,
@@ -23,12 +24,12 @@ import { protectUser, protectAdmin, protectVendor, protectVendorWithStatus } fro
 
 const router = express.Router();
 
-// User routes
-router.post('/', protectUser, createOrder);
-router.get('/myorders', protectUser, validatePagination, getMyOrders);
-router.get('/:id', protectUser, validateId, getOrderById);
-router.put('/:id/pay', protectUser, validateId, updateOrderToPaid);
-router.put('/:id/cancel', protectUser, validateId, cancelOrder);
+// Admin routes (must come first to avoid conflicts with parameterized routes)
+router.get('/admin-stats', protectAdmin, getAdminOrderStats);
+router.get('/stats', protectAdmin, getOrderStats);
+router.get('/', protectAdmin, validatePagination, getOrders);
+router.put('/:id/deliver', protectAdmin, validateId, updateOrderToDelivered);
+router.put('/:id/status', protectAdmin, validateId, updateOrderStatus);
 
 // Vendor routes
 router.get('/vendor', protectVendorWithStatus, validatePagination, getVendorOrders);
@@ -36,10 +37,11 @@ router.get('/vendor/:id', protectVendorWithStatus, validateId, getVendorOrderByI
 router.put('/vendor/:id/status', protectVendorWithStatus, validateId, updateVendorOrderStatus);
 router.get('/vendor/stats', protectVendorWithStatus, getVendorOrderStats);
 
-// Admin routes
-router.get('/', protectAdmin, validatePagination, getOrders);
-router.put('/:id/deliver', protectAdmin, validateId, updateOrderToDelivered);
-router.put('/:id/status', protectAdmin, validateId, updateOrderStatus);
-router.get('/stats', protectAdmin, getOrderStats);
+// User routes (parameterized routes should come last)
+router.post('/', protectUser, createOrder);
+router.get('/myorders', protectUser, validatePagination, getMyOrders);
+router.get('/:id', protectUser, validateId, getOrderById);
+router.put('/:id/pay', protectUser, validateId, updateOrderToPaid);
+router.put('/:id/cancel', protectUser, validateId, cancelOrder);
 
 export default router; 

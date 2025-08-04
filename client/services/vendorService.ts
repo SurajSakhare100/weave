@@ -21,12 +21,11 @@ export async function vendorRegister(vendorData: {
   email: string;
   password: string;
   number?: string;
-  bankAccOwner?: string;
-  bankName?: string;
-  bankAccNumber?: string;
-  bankIFSC?: string;
-  bankBranchName?: string;
-  bankBranchNumber?: string;
+  businessName?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
 }) {
   const res = await api.post('/auth/vendor/register', vendorData);
   
@@ -75,6 +74,16 @@ export async function getVendorEarnings(params?: any) {
 // ============================================================================
 // VENDOR PRODUCTS - CORE OPERATIONS
 // ============================================================================
+
+export async function getVendorProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
+  const res = await api.get('/vendors/products', { params });
+  return res.data;
+}
 
 export async function createVendorProduct(productData: any) {
   const res = await api.post('/vendors/products', productData);

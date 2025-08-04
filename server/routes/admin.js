@@ -14,11 +14,15 @@ import {
   updateCategory,
   deleteCategory,
   getCategory,
-  deleteMainSubCategory,
-  deleteSubCategory,
   addHeaderCategory,
-  addMainSubCategory,
-  addSubCategory
+  getAllCoupons,
+  getCouponById,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
+  getLayouts,
+  updateLayout,
+  getVendorStats
 } from '../controllers/adminController.js';
 import { protectAdmin } from '../middleware/auth.js';
 import { validatePagination } from '../middleware/validation.js';
@@ -44,7 +48,7 @@ router.put('/vendors/:vendorId/reject', rejectVendor);
 
 // Product approval routes
 router.get('/products/pending', validatePagination, getPendingProducts);
-router.put('/products/:productId/approve', approveProduct);
+router.post('/products/approve', approveProduct);
 router.put('/products/:productId/reject', rejectProduct);
 
 // Category management routes
@@ -56,11 +60,19 @@ router.delete('/categories/:id', deleteCategory);
 
 // Legacy category routes (for compatibility)
 router.put('/addHeaderCategory', addHeaderCategory);
-router.put('/addMainSubCategory', addMainSubCategory);
-router.put('/addSubCategory', addSubCategory);
 
-// Category deletion routes
-router.delete('/categories/:id/main-sub/:uni_id', deleteMainSubCategory);
-router.delete('/categories/:id/sub/:uni_id', deleteSubCategory);
+// Coupon management routes
+router.get('/coupons', validatePagination, getAllCoupons);
+router.get('/coupons/:id', getCouponById);
+router.post('/coupons', createCoupon);
+router.put('/coupons/:id', updateCoupon);
+router.delete('/coupons/:id', deleteCoupon);
+
+// Layout management routes
+router.get('/layouts', getLayouts);
+router.put('/layouts/:id', updateLayout);
+
+// Vendor statistics
+router.get('/vendors/stats', getVendorStats);
 
 export default router; 

@@ -9,39 +9,42 @@ import {
     Calendar, 
     User, 
     DollarSign,
-    Edit,
-    Trash2,
-    Filter,
     X,
+    Clock,
     CheckCircle,
     XCircle,
-    Clock,
     AlertCircle,
-    Plus
 } from 'lucide-react'
 import { 
     useGetAllProductsQuery, 
     useApproveProductMutation, 
-    useRejectProductMutation, 
-    useDeleteProductMutation 
+    useRejectProductMutation
 } from '../../../services/adminApi'
 import BaseModal from '../../ui/BaseModal'
+import { useAdminLogout } from '../../../hooks/useAdminLogout'
+import { 
+    formatCurrency, 
+    handleAdminError
+} from '../../../utils/adminUtils'
 
 function ProductsComp({ loaded, setLoaded }) {
     const [search, setSearch] = useState('')
     const [products, setProducts] = useState([])
     const [total, setTotal] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState('all')
+    const [statusFilter, setStatusFilter] = useState('pending')
     const [vendorFilter, setVendorFilter] = useState('all')
     const [rejectModal, setRejectModal] = useState({ active: false, product: null })
     const [rejectionReason, setRejectionReason] = useState('')
+    const [approveModal, setApproveModal] = useState({ active: false, product: null })
+    const [approvalFeedback, setApprovalFeedback] = useState('')
 
     const navigate = useRouter()
+    const { logout } = useAdminLogout()
 
     const { data, error, isLoading: queryLoading, refetch } = useGetAllProductsQuery({ 
         search, 
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        approvalStatus: statusFilter !== 'all' ? statusFilter : undefined,
         vendor: vendorFilter !== 'all' ? vendorFilter : undefined,
         page: currentPage,
         limit: 20
@@ -49,19 +52,6 @@ function ProductsComp({ loaded, setLoaded }) {
 
     const [approveProduct, { isLoading: approveLoading }] = useApproveProductMutation()
     const [rejectProduct, { isLoading: rejectLoading }] = useRejectProductMutation()
-    const [deleteProduct, { isLoading: deleteLoading }] = useDeleteProductMutation()
-
-    const logOut = async () => {
-        try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-        navigate.push('/admin/login')
-    }
 
     useEffect(() => {
         if (data) {
@@ -71,24 +61,26 @@ function ProductsComp({ loaded, setLoaded }) {
         }
         if (error) {
             setLoaded(true)
-            if (error.status === 401) {
-                logOut()
+            if ((error as any).status === 401) {
+                logout()
             }
         }
-    }, [data, error, setLoaded])
+    }, [data, error, setLoaded, logout])
 
     const handleApprove = async (product) => {
         try {
-            await approveProduct(product._id).unwrap()
+            const approvalData = {
+                productId: product._id,
+                feedback: approvalFeedback.trim() || undefined
+            }
+            await approveProduct(approvalData).unwrap()
             toast.success(`Product "${product.name}" approved successfully`)
+            setApproveModal({ active: false, product: null })
+            setApprovalFeedback('')
             refetch()
         } catch (error) {
-            console.error('Error approving product:', error)
-            if (error.status === 401) {
-                logOut()
-            } else {
-                toast.error('Failed to approve product')
-            }
+            const errorMessage = handleAdminError(error, logout, 'Failed to approve product')
+            if (errorMessage) toast.error(errorMessage)
         }
     }
 
@@ -108,33 +100,21 @@ function ProductsComp({ loaded, setLoaded }) {
             setRejectionReason('')
             refetch()
         } catch (error) {
-            console.error('Error rejecting product:', error)
-            if (error.status === 401) {
-                logOut()
-            } else {
-                toast.error('Failed to reject product')
-            }
+            const errorMessage = handleAdminError(error, logout, 'Failed to reject product')
+            if (errorMessage) toast.error(errorMessage)
         }
     }
 
-    const handleDelete = async (product) => {
-        if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
-            try {
-                await deleteProduct({ 
-                    id: product._id, 
-                    folderId: product.uni_id_1 + product.uni_id_2 
-                }).unwrap()
-                toast.success(`Product "${product.name}" deleted successfully`)
-                refetch()
-            } catch (error) {
-                console.error('Error deleting product:', error)
-                if (error.status === 401) {
-                    logOut()
-                } else {
-                    toast.error('Failed to delete product')
-                }
-            }
-        }
+
+
+        const openApproveModal = (product) => {
+        setApproveModal({ active: true, product })
+        setApprovalFeedback('')
+    }
+
+    const closeApproveModal = () => {
+        setApproveModal({ active: false, product: null })
+        setApprovalFeedback('')
     }
 
     const openRejectModal = (product) => {
@@ -146,49 +126,82 @@ function ProductsComp({ loaded, setLoaded }) {
         setRejectModal({ active: false, product: null })
         setRejectionReason('')
     }
+    const getPrimaryImage = (product) => {
+        if (product.images && product.images.length > 0) {
+          const primary = product.images.find(img => img.is_primary);
+          return primary ? primary.url : product.images[0].url;
+        }
+        return '/products/product.png';
+      };
 
     // Get unique vendors from products
     const vendors = [...new Set(products.map(product => product.vendorName || product.vendor).filter(Boolean))]
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount)
-    }
-
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'approved':
-                return 'text-green-600 bg-green-50'
-            case 'pending':
-                return 'text-yellow-600 bg-yellow-50'
-            case 'rejected':
-                return 'text-red-600 bg-red-50'
-            default:
-                return 'text-gray-600 bg-gray-50'
-        }
-    }
-
-    const getStatusIcon = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'approved':
-                return <CheckCircle size={16} />
-            case 'pending':
-                return <Clock size={16} />
-            case 'rejected':
-                return <XCircle size={16} />
-            default:
-                return <AlertCircle size={16} />
-        }
-    }
 
     if (!loaded) return <LoadingSpinner text="Loading products..." />
 
     return (
         <div className="space-y-6">
+            {/* Approval Modal */}
+            {approveModal.active && approveModal.product && (
+                <BaseModal
+                    isOpen={approveModal.active}
+                    onClose={closeApproveModal}
+                    title="Approve Product"
+                    size="md"
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="font-medium text-gray-900 mb-2">Product Details</h4>
+                            <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                                <p><span className="font-medium">Name:</span> {approveModal.product.name}</p>
+                                <p><span className="font-medium">Vendor:</span> {approveModal.product.vendorName || approveModal.product.vendor}</p>
+                                <p><span className="font-medium">Price:</span> {formatCurrency(approveModal.product.price)}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Approval Feedback (Optional)
+                            </label>
+                            <textarea
+                                value={approvalFeedback}
+                                onChange={(e) => setApprovalFeedback(e.target.value)}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                                placeholder="Add any feedback or notes for the vendor (optional)..."
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-gray-200">
+                            <button
+                                type="button"
+                                onClick={closeApproveModal}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleApprove(approveModal.product)}
+                                disabled={approveLoading}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                            >
+                                {approveLoading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Approving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve Product
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </BaseModal>
+            )}
+
             {/* Reject Product Modal */}
             {rejectModal.active && rejectModal.product && (
                 <BaseModal
@@ -268,7 +281,7 @@ function ProductsComp({ loaded, setLoaded }) {
                         <div>
                             <p className="text-sm text-gray-600">Approved</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => p.status === 'approved').length}
+                                {products.filter(p => p.adminApproved === true).length}
                             </p>
                         </div>
                     </div>
@@ -279,7 +292,7 @@ function ProductsComp({ loaded, setLoaded }) {
                         <div>
                             <p className="text-sm text-gray-600">Pending</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => p.status === 'pending').length}
+                                {products.filter(p => !p.adminApproved && !p.adminRejectionReason).length}
                             </p>
                         </div>
                     </div>
@@ -290,7 +303,7 @@ function ProductsComp({ loaded, setLoaded }) {
                         <div>
                             <p className="text-sm text-gray-600">Rejected</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {products.filter(p => p.status === 'rejected').length}
+                                {products.filter(p => p.adminApproved === false && p.adminRejectionReason).length}
                             </p>
                         </div>
                     </div>
@@ -404,10 +417,10 @@ function ProductsComp({ loaded, setLoaded }) {
                                     <tr key={key} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0">
+                                                <div className="h-12 w-12 flex-shrink-0">
                                                     <img 
-                                                        className="h-10 w-10 rounded-lg object-cover" 
-                                                        src={product.images?.[0] || '/placeholder-product.png'} 
+                                                        className="h-12 w-12 rounded-lg object-cover" 
+                                                        src={getPrimaryImage(product)} 
                                                         alt={product.name}
                                                     />
                                                 </div>
@@ -424,9 +437,29 @@ function ProductsComp({ loaded, setLoaded }) {
                                             {formatCurrency(product.price)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)}`}>
-                                                {getStatusIcon(product.status)}
-                                                <span className="ml-1">{product.status}</span>
+                                            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+                                                product.adminApproved === true 
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : product.adminApproved === false && product.adminRejectionReason
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                                {product.adminApproved === true ? (
+                                                    <>
+                                                        <CheckCircle className="h-3 w-3 mr-1" />
+                                                        Approved
+                                                    </>
+                                                ) : product.adminApproved === false && product.adminRejectionReason ? (
+                                                    <>
+                                                        <XCircle className="h-3 w-3 mr-1" />
+                                                        Rejected
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Clock className="h-3 w-3 mr-1" />
+                                                        Pending
+                                                    </>
+                                                )}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -434,6 +467,7 @@ function ProductsComp({ loaded, setLoaded }) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex items-center space-x-2">
+                                                {/* View Details - Always available */}
                                                 <button
                                                     onClick={() => navigate.push(`/admin/products/${product._id}`)}
                                                     className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
@@ -441,46 +475,46 @@ function ProductsComp({ loaded, setLoaded }) {
                                                 >
                                                     <Eye size={16} />
                                                 </button>
-                                                <button
-                                                    onClick={() => navigate.push(`/admin/products/${product._id}/edit`)}
-                                                    className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
-                                                    title="Edit Product"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                {product.status === 'pending' && (
+
+                                                {/* Approval Actions - Only for pending products */}
+                                                {!product.adminApproved && !product.adminRejectionReason && (
                                                     <>
                                                         <button
-                                                            onClick={() => handleApprove(product)}
+                                                            onClick={() => openApproveModal(product)}
                                                             disabled={approveLoading}
-                                                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors disabled:opacity-50"
+                                                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors disabled:opacity-50 flex items-center"
                                                             title="Approve Product"
                                                         >
                                                             <CheckCircle size={16} />
                                                         </button>
                                                         <button
                                                             onClick={() => openRejectModal(product)}
-                                                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                                                            disabled={rejectLoading}
+                                                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
                                                             title="Reject Product"
                                                         >
                                                             <XCircle size={16} />
                                                         </button>
                                                     </>
                                                 )}
-                                                <button
-                                                    onClick={() => handleDelete(product)}
-                                                    className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
-                                                    title="Delete Product"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+
+                                                {/* Show rejection reason for rejected products */}
+                                                {product.adminApproved === false && product.adminRejectionReason && (
+                                                    <button
+                                                        onClick={() => alert(`Rejection Reason: ${product.adminRejectionReason}`)}
+                                                        className="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-50 transition-colors"
+                                                        title="View Rejection Reason"
+                                                    >
+                                                        <AlertCircle size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                                         <div className="flex flex-col items-center">
                                             <Package className="h-12 w-12 text-gray-400 mb-4" />
                                             <p className="text-lg font-medium text-gray-900 mb-2">No products found</p>

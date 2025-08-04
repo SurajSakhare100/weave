@@ -124,18 +124,18 @@ export default function WholesalePage() {
 
   return (
     <MainLayout>
-      <section className="py-16 bg-[#faf5f2] text-black min-h-screen">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">Wholesale & Bulk Inquiry</h1>
-            <p className="text-lg text-gray-600">Request a Bulk Purchase or Wholesale Deal</p>
+      <section className="py-8 sm:py-12 lg:py-16 bg-[#faf5f2] text-black min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">Wholesale & Bulk Inquiry</h1>
+            <p className="text-base sm:text-lg text-gray-600">Request a Bulk Purchase or Wholesale Deal</p>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 {/* Left Column */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Business Name / Store Name *
@@ -145,13 +145,13 @@ export default function WholesalePage() {
                       name="businessName"
                       value={formData.businessName}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.businessName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter your business name"
                     />
                     {errors.businessName && (
-                      <p className="text-red-500 text-sm mt-1">{errors.businessName}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.businessName}</p>
                     )}
                   </div>
 
@@ -164,16 +164,16 @@ export default function WholesalePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="example@example.com"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       Note: Enter a valid email address (e.g., example@example.com).
                     </p>
                     {errors.email && (
-                      <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>
                     )}
                   </div>
 
@@ -185,7 +185,7 @@ export default function WholesalePage() {
                       name="quantity"
                       value={formData.quantity}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.quantity ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
@@ -195,7 +195,7 @@ export default function WholesalePage() {
                       ))}
                     </select>
                     {errors.quantity && (
-                      <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.quantity}</p>
                     )}
                   </div>
 
@@ -207,7 +207,7 @@ export default function WholesalePage() {
                       name="products"
                       value={formData.products}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.products ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
@@ -217,7 +217,7 @@ export default function WholesalePage() {
                       ))}
                     </select>
                     {errors.products && (
-                      <p className="text-red-500 text-sm mt-1">{errors.products}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.products}</p>
                     )}
                   </div>
 
@@ -230,19 +230,19 @@ export default function WholesalePage() {
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.city ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter your city"
                     />
                     {errors.city && (
-                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.city}</p>
                     )}
                   </div>
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Order Type
@@ -257,7 +257,7 @@ export default function WholesalePage() {
                           onChange={handleInputChange}
                           className="mr-3 text-pink-500 focus:ring-pink-500"
                         />
-                        <span className="text-gray-700">Bulk Purchase</span>
+                        <span className="text-gray-700 text-sm sm:text-base">Bulk Purchase</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -268,7 +268,7 @@ export default function WholesalePage() {
                           onChange={handleInputChange}
                           className="mr-3 text-pink-500 focus:ring-pink-500"
                         />
-                        <span className="text-gray-700">Wholesale Deal</span>
+                        <span className="text-gray-700 text-sm sm:text-base">Wholesale Deal</span>
                       </label>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export default function WholesalePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Mobile number *
                     </label>
-                    <p className="text-sm text-gray-500 mb-2">
+                    <p className="text-xs sm:text-sm text-gray-500 mb-2">
                       Note: Enter a 10-digit mobile number (e.g., 9876543210).
                     </p>
                     <input
@@ -285,19 +285,19 @@ export default function WholesalePage() {
                       name="mobile"
                       value={formData.mobile}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.mobile ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="9876543210"
                       maxLength={10}
                     />
                     {errors.mobile && (
-                      <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.mobile}</p>
                     )}
                   </div>
 
-                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
-                    <p className="text-sm text-pink-700 font-medium">
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 sm:p-4">
+                    <p className="text-xs sm:text-sm text-pink-700 font-medium">
                       Note: A minimum quantity of 50 units is required per order.
                     </p>
                   </div>
@@ -310,7 +310,7 @@ export default function WholesalePage() {
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                      className={`w-full border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base ${
                         errors.state ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
@@ -319,29 +319,29 @@ export default function WholesalePage() {
                       ))}
                     </select>
                     {errors.state && (
-                      <p className="text-red-500 text-sm mt-1">{errors.state}</p>
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.state}</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Additional Notes */}
-              <div className="border-t pt-6">
+              <div className="border-t pt-4 sm:pt-6">
                 <div className="space-y-2">
-                  <p className="text-pink-600 text-sm">
+                  <p className="text-pink-600 text-xs sm:text-sm">
                     Note: We accept bulk orders for weddings, customized orders, corporate gifts, and events, as well as wholesale inquiries.
                   </p>
-                  <p className="text-pink-600 text-sm">
+                  <p className="text-pink-600 text-xs sm:text-sm">
                     Worldwide shipping is available.
                   </p>
                 </div>
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-center pt-6">
+              <div className="flex justify-center pt-4 sm:pt-6">
                 <button
                   type="submit"
-                  className="bg-pink-500 text-white font-semibold py-3 px-8 rounded-lg hover:bg-pink-600 transition-colors text-lg"
+                  className="bg-pink-500 text-white font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg hover:bg-pink-600 transition-colors text-base sm:text-lg w-full sm:w-auto"
                 >
                   Continue
                 </button>

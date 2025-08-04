@@ -6,16 +6,19 @@ import { RootState } from '../../store/store';
 import { setProfile, updateProfile, setLoading, setError, clearError } from '../../features/vendor/vendorSlice';
 import { getVendorProfile, updateVendorProfile } from '../../services/vendorService';
 import { isVendorAuthenticated } from '../../utils/vendorAuth';
+import { useReapplyVendorMutation } from '../../services/adminApi';
 import { 
   User, 
   Mail, 
   Phone, 
   Building, 
-  CreditCard, 
   Save, 
   Edit, 
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  RefreshCw,
+  XCircle,
+  MapPin
 } from 'lucide-react';
 
 export default function VendorProfilePage() {
@@ -27,14 +30,14 @@ export default function VendorProfilePage() {
     name: '',
     email: '',
     number: '',
-    bankAccOwner: '',
-    bankName: '',
-    bankAccNumber: '',
-    bankIFSC: '',
-    bankBranchName: '',
-    bankBranchNumber: ''
+    businessName: '',
+    address: '',
+    city: '',
+    state: '',
+    pinCode: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
+  const [reapplyVendor, { isLoading: reapplyLoading }] = useReapplyVendorMutation();
 
   const loadProfile = useCallback(async () => {
     try {
@@ -47,12 +50,11 @@ export default function VendorProfilePage() {
         name: data.data.name || '',
         email: data.data.email || '',
         number: data.data.number || '',
-        bankAccOwner: data.data.bankAccOwner || '',
-        bankName: data.data.bankName || '',
-        bankAccNumber: data.data.bankAccNumber || '',
-        bankIFSC: data.data.bankIFSC || '',
-        bankBranchName: data.data.bankBranchName || '',
-        bankBranchNumber: data.data.bankBranchNumber || ''
+        businessName: data.data.businessName || '',
+        address: data.data.address || '',
+        city: data.data.city || '',
+        state: data.data.state || '',
+        pinCode: data.data.pinCode || ''
       });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -74,7 +76,7 @@ export default function VendorProfilePage() {
     loadProfile();
   }, [router, loadProfile]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -113,16 +115,46 @@ export default function VendorProfilePage() {
         name: profile.name || '',
         email: profile.email || '',
         number: profile.number || '',
-        bankAccOwner: profile.bankAccOwner || '',
-        bankName: profile.bankName || '',
-        bankAccNumber: profile.bankAccNumber || '',
-        bankIFSC: profile.bankIFSC || '',
-        bankBranchName: profile.bankBranchName || '',
-        bankBranchNumber: profile.bankBranchNumber || ''
+        businessName: profile.businessName || '',
+        address: profile.address || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        pinCode: profile.pinCode || ''
       });
     }
     setIsEditing(false);
     dispatch(clearError());
+  };
+
+  const handleReapply = async () => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(clearError());
+      
+      const reapplyData = {
+        name: formData.name,
+        businessName: formData.businessName,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pinCode: formData.pinCode
+      };
+
+      await reapplyVendor(reapplyData).unwrap();
+      
+      setSuccessMessage('Reapplication submitted successfully! Your application is now pending admin review.');
+      
+      // Reload profile to get updated status
+      await loadProfile();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || 'Failed to submit reapplication';
+      dispatch(setError(errorMessage));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   if (!profile) {
@@ -137,14 +169,15 @@ export default function VendorProfilePage() {
 
   return (
     <VendorLayout>
-      <section className="py-16 bg-gray-50 min-h-screen">
+      <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Profile Settings</h1>
-            <p className="text-gray-600">Manage your business information and bank details</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Vendor Profile</h1>
+            <p className="text-gray-600">Manage your business information and account settings</p>
           </div>
 
+          {/* Status Alerts */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
@@ -159,18 +192,121 @@ export default function VendorProfilePage() {
             </div>
           )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Profile Header */}
-            <div className="bg-gradient-to-r from-[#5A9BD8] to-blue-600 px-6 py-8 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">{profile.name}</h2>
-                  <p className="text-pink-100">Vendor Account</p>
+          {/* Application Status */}
+          {profile?.status === 'rejected' && (
+            <div className="mb-6 p-6 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start">
+                <XCircle className="h-6 w-6 text-red-500 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">Application Rejected</h3>
+                  <p className="text-red-700 mb-3">
+                    Your vendor application has been rejected. Please review the reason below and update your information before reapplying.
+                  </p>
+                  {profile?.adminRejectionReason && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-200 rounded">
+                      <p className="text-sm font-medium text-red-800 mb-1">Rejection Reason:</p>
+                      <p className="text-sm text-red-700">{profile.adminRejectionReason}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Update Information
+                    </button>
+                    {isEditing && (
+                      <button
+                        onClick={handleReapply}
+                        disabled={reapplyLoading || loading}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {reapplyLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Reapply
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {profile?.status === 'approved' && profile?.adminApproved && (
+            <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">Application Approved!</h3>
+                  <p className="text-green-700 mb-3">
+                    Congratulations! Your vendor application has been approved. You can now start selling your products on our platform.
+                  </p>
+                  {profile?.adminApprovedAt && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-200 rounded">
+                      <p className="text-sm font-medium text-green-800 mb-1">Approved On:</p>
+                      <p className="text-sm text-green-700">
+                        {new Date(profile.adminApprovedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                  {profile?.adminApprovalFeedback && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-200 rounded">
+                      <p className="text-sm font-medium text-green-800 mb-1">Admin Feedback:</p>
+                      <p className="text-sm text-green-700">{profile.adminApprovalFeedback}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => router.push('/vendor/products')}
+                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Building className="h-4 w-4 mr-2" />
+                      Start Adding Products
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {profile?.status === 'pending' && (
+            <div className="mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500 mr-3 mt-0.5"></div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-yellow-800 mb-2">Application Pending</h3>
+                  <p className="text-yellow-700">
+                    Your vendor application is currently under review by our admin team. You will be notified once a decision has been made.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Profile Information */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
                 {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-colors"
+                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
@@ -179,186 +315,162 @@ export default function VendorProfilePage() {
               </div>
             </div>
 
-            {/* Profile Form */}
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <div className="md:col-span-2">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <User className="h-5 w-5 mr-2 text-[#5A9BD8]" />
-                    Basic Information
-                  </h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <User className="h-5 w-5 mr-2 text-blue-600" />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name
+                    </label>
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
                     <input
                       type="tel"
                       name="number"
                       value={formData.number}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
+              </div>
 
-                {/* Bank Information */}
-                <div className="md:col-span-2 mt-8">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2 text-[#5A9BD8]" />
-                    Bank Account Details
-                  </h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Holder Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              {/* Business Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <Building className="h-5 w-5 mr-2 text-blue-600" />
+                  Business Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Name
+                    </label>
                     <input
                       type="text"
-                      name="bankAccOwner"
-                      value={formData.bankAccOwner}
+                      name="businessName"
+                      value={formData.businessName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank Name
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              {/* Address Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+                  Address Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
                     <input
                       type="text"
-                      name="bankName"
-                      value={formData.bankName}
+                      name="city"
+                      value={formData.city}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Number
-                  </label>
-                  <div className="relative">
-                    <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State
+                    </label>
                     <input
                       type="text"
-                      name="bankAccNumber"
-                      value={formData.bankAccNumber}
+                      name="state"
+                      value={formData.state}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    IFSC Code
-                  </label>
-                  <input
-                    type="text"
-                    name="bankIFSC"
-                    value={formData.bankIFSC}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Branch Name
-                  </label>
-                  <input
-                    type="text"
-                    name="bankBranchName"
-                    value={formData.bankBranchName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Branch Number
-                  </label>
-                  <input
-                    type="text"
-                    name="bankBranchNumber"
-                    value={formData.bankBranchNumber}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8] disabled:bg-gray-50 disabled:text-gray-500"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      PIN Code
+                    </label>
+                    <input
+                      type="text"
+                      name="pinCode"
+                      value={formData.pinCode}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               {isEditing && (
-                <div className="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center px-6 py-2 bg-[#5A9BD8] text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
@@ -377,7 +489,7 @@ export default function VendorProfilePage() {
             </form>
           </div>
         </div>
-      </section>
+      </div>
     </VendorLayout>
   );
 } 

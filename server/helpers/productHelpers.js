@@ -19,59 +19,7 @@ export default {
         }).limit(10);
     },
 
-    getMainSubCategories: () => {
-        return Category.aggregate([
-            { $unwind: "$mainSub" },
-            {
-                $project: {
-                    name: '$mainSub.name',
-                    category: '$mainSub.category',
-                    uni_id: '$mainSub.uni_id',
-                    slug: '$mainSub.slug'
-                }
-            }
-        ]);
-    },
 
-    searchMainSubCategory: (search) => {
-        return Category.aggregate([
-            { $unwind: '$mainSub' },
-            {
-                $project: {
-                    name: '$mainSub.name',
-                    uni_id: '$mainSub.uni_id',
-                    slug: '$mainSub.slug',
-                    category: "$mainSub.category"
-                }
-            },
-            {
-                $match: {
-                    name: { $regex: search, $options: 'i' }
-                }
-            }
-        ]);
-    },
-
-    getSubCategories: () => {
-        return Category.aggregate([
-            { $unwind: "$sub" },
-            {
-                $project: {
-                    uni_id: "$sub.uni_id",
-                    slug: "$sub.slug",
-                    name: "$sub.name",
-                    mainSubSlug: "$sub.mainSubSlug",
-                    mainSub: "$sub.mainSub",
-                    category: "$sub.category"
-                }
-            },
-            {
-                $sort: {
-                    mainSub: 1
-                }
-            }
-        ]);
-    },
 
     getOneCategory: (cateId) => {
         return Category.findById(cateId);

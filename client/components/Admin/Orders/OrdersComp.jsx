@@ -13,59 +13,85 @@ import {
     Package,
     Edit,
     Filter,
-    X,
-    CheckCircle,
-    XCircle
+    X
 } from 'lucide-react'
-import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from '../../../services/adminApi'
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation, useGetAdminOrderStatsQuery } from '../../../services/adminApi'
 import BaseModal from '../../ui/BaseModal'
+import OrderDetails from './OrderDetails'
+import Select from '../../ui/select'
+import { useAdminLogout } from '../../../hooks/useAdminLogout'
+import { 
+    formatCurrency, 
+    getOrderStatusColor, 
+    handleAdminError, 
+    confirmAction 
+} from '../../../utils/adminUtils'
 
 function OrdersComp({ loaded, setLoaded }) {
     const [search, setSearch] = useState('')
     const [orders, setOrders] = useState([])
     const [total, setTotal] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [statusFilter, setStatusFilter] = useState('all')
     const [vendorFilter, setVendorFilter] = useState('all')
     const [editModal, setEditModal] = useState({ active: false, order: null })
+    const [orderDetailsModal, setOrderDetailsModal] = useState({ active: false, order: null })
     const [rejectionReason, setRejectionReason] = useState('')
     const [selectedStatus, setSelectedStatus] = useState('')
 
     const navigate = useRouter()
+    const { logout } = useAdminLogout()
+
+    const limit = 10 // Orders per page
 
     const { data, error, isLoading: queryLoading, refetch } = useGetAllOrdersQuery({ 
         search, 
         status: statusFilter !== 'all' ? statusFilter : undefined,
         vendor: vendorFilter !== 'all' ? vendorFilter : undefined,
-        skip: 0 
+        page: currentPage,
+        limit: limit
     })
+    const { data: statsData, error: statsError, isLoading: statsLoading } = useGetAdminOrderStatsQuery()
     const [updateOrderStatus, { isLoading: updateLoading }] = useUpdateOrderStatusMutation()
-
-    const logOut = async () => {
-        try {
-            // Call logout endpoint to clear cookie
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-        navigate.push('/admin/login')
-    }
 
     useEffect(() => {
         if (data) {
-            setOrders(data.orders)
-            setTotal(data.total)
+            setOrders(data.orders || [])
+            setTotal(data.total || 0)
             setLoaded(true)
         }
-        if (isLoading) setLoaded(false)
-        if (error) setLoaded(true)
-    }, [data, isLoading, error, setLoaded])
+        if (queryLoading) setLoaded(false)
+        if (error) {
+            setLoaded(true)
+            if (error?.status === 401) {
+                logout()
+            }
+        }
+    }, [data, queryLoading, error, setLoaded, logout])
 
-    const handleLoadMore = () => {
-        refetch()
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [search, statusFilter, vendorFilter])
+
+    // Pagination handlers
+    const totalPages = Math.ceil(total / limit)
+    
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
+    }
+
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(prev => prev - 1)
+        }
+    }
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(prev => prev + 1)
+        }
     }
 
     const handleEditOrder = (order) => {
@@ -78,6 +104,14 @@ function OrdersComp({ loaded, setLoaded }) {
         setEditModal({ active: false, order: null })
         setRejectionReason('')
         setSelectedStatus('')
+    }
+
+    const handleViewOrderDetails = (order) => {
+        setOrderDetailsModal({ active: true, order })
+    }
+
+    const handleCloseOrderDetails = () => {
+        setOrderDetailsModal({ active: false, order: null })
     }
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -97,51 +131,78 @@ function OrdersComp({ loaded, setLoaded }) {
         }
     }
 
-    // Get unique vendors from orders
-    const vendors = [...new Set(orders.map(order => order.vendorName || order.vendor).filter(Boolean))]
+    // Get unique vendors from orders (with null check)
+    const vendors = orders && orders.length > 0 
+        ? [...new Set(orders.map(order => order.vendorName || order.vendor).filter(Boolean))]
+        : []
 
-    // Get unique statuses from orders
-    const statuses = [...new Set(orders.map(order => order.OrderStatus).filter(Boolean))]
+    // Get unique statuses from orders (with null check)
+    const statuses = orders && orders.length > 0 
+        ? [...new Set(orders.map(order => order.OrderStatus).filter(Boolean))]
+        : []
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount)
-    }
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'delivered':
-                return 'text-success-600 bg-success-50'
-            case 'pending':
-                return 'text-warning-600 bg-warning-50'
-            case 'cancelled':
-                return 'text-error-600 bg-error-50'
-            case 'return':
-                return 'text-secondary-600 bg-secondary-50'
-            default:
-                return 'text-gray-600 bg-gray-50'
-        }
-    }
 
     const getPaymentColor = (payType) => {
         switch (payType?.toLowerCase()) {
             case 'online':
-                return 'text-primary-600 bg-primary-50'
+            case 'card':
+            case 'upi':
+            case 'netbanking':
+                return 'bg-green-100 text-green-800 border-green-200'
             case 'cod':
-                return 'text-warning-600 bg-warning-50'
+            case 'cash on delivery':
+                return 'bg-orange-100 text-orange-800 border-orange-200'
+            case 'wallet':
+                return 'bg-blue-100 text-blue-800 border-blue-200'
             default:
-                return 'text-gray-600 bg-gray-50'
+                return 'bg-gray-100 text-gray-800 border-gray-200'
         }
     }
 
-    if (!loaded) return <LoadingSpinner text="Loading orders..." />
+    if (!loaded || queryLoading) return <LoadingSpinner text="Loading orders..." />
+
+    // Show error state if there's an error
+    if (error) {
+        return (
+            <div className="text-center py-8">
+                <p className="text-red-600 mb-4">Error loading orders: {error?.message || 'Unknown error'}</p>
+                <button 
+                    onClick={() => refetch()} 
+                    className="btn-primary"
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
+    // Show empty state if no orders
+    if (!orders || orders.length === 0) {
+        return (
+            <div className="text-center py-8">
+                <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">No orders found</p>
+                <button 
+                    onClick={() => refetch()} 
+                    className="btn-primary"
+                >
+                    Refresh
+                </button>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
+            {/* Order Details Modal */}
+            {orderDetailsModal.active && orderDetailsModal.order && (
+                <OrderDetails
+                    order={orderDetailsModal.order}
+                    onClose={handleCloseOrderDetails}
+                />
+            )}
+
             {/* Edit Order Modal */}
             {editModal.active && editModal.order && (
                 <BaseModal
@@ -158,9 +219,9 @@ function OrdersComp({ loaded, setLoaded }) {
                                 <p><span className="font-medium">Customer:</span> {editModal.order.customer}</p>
                                 <p><span className="font-medium">Amount:</span> {formatCurrency(editModal.order.price)}</p>
                                 <p><span className="font-medium">Current Status:</span> 
-                                    <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(editModal.order.OrderStatus)}`}>
-                                        {editModal.order.OrderStatus}
-                                    </span>
+                                                                    <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full border ${getOrderStatusColor(editModal.order.OrderStatus)}`}>
+                                    {editModal.order.OrderStatus}
+                                </span>
                                 </p>
                             </div>
                         </div>
@@ -254,12 +315,12 @@ function OrdersComp({ loaded, setLoaded }) {
                                 <div>
                                     <p className="text-sm text-gray-600">This Month</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {orders.filter(order => {
+                                        {orders ? orders.filter(order => {
                                             const orderDate = new Date(order.date)
                                             const now = new Date()
                                             return orderDate.getMonth() === now.getMonth() && 
                                                    orderDate.getFullYear() === now.getFullYear()
-                                        }).length}
+                                        }).length : 0}
                                     </p>
                                 </div>
                             </div>
@@ -270,12 +331,48 @@ function OrdersComp({ loaded, setLoaded }) {
                                 <div>
                                     <p className="text-sm text-gray-600">Total Revenue</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {formatCurrency(orders.reduce((sum, order) => sum + (order.price || 0), 0))}
+                                        {formatCurrency(orders ? orders.reduce((sum, order) => sum + (order.price || 0), 0) : 0)}
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                {/* Status Tabs */}
+                {statsData && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status Overview</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+                            {[
+                                { key: 'all', label: 'All Orders', count: statsData.statusCounts?.all || 0, color: 'bg-gray-100 text-gray-800 border-gray-200' },
+                                { key: 'pending', label: 'Pending', count: statsData.statusCounts?.pending || 0,color: 'bg-yellow-100 text-yellow-800 border-yellow-200'  },
+                                { key: 'processing', label: 'Processing', count: statsData.statusCounts?.processing || 0, color: 'bg-orange-100 text-orange-800 border-orange-200' },
+                                { key: 'shipped', label: 'Shipped', count: statsData.statusCounts?.shipped || 0, color: 'bg-blue-100 text-blue-800 border-blue-200' },
+                                { key: 'delivered', label: 'Delivered', count: statsData.statusCounts?.delivered || 0, color: 'bg-green-100 text-green-800 border-green-200' },
+                                { key: 'cancelled', label: 'Cancelled', count: statsData.statusCounts?.cancelled || 0, color: 'bg-red-100 text-red-800 border-red-200' },
+                                { key: 'returned', label: 'Returned', count: statsData.statusCounts?.returned || 0, color: 'bg-purple-100 text-purple-800 border-purple-200' },
+                                { key: 'refunded', label: 'Refunded', count: statsData.statusCounts?.refunded || 0, color: 'bg-indigo-100 text-indigo-800 border-indigo-200' }
+                            ].map((status) => (
+                                <button
+                                    key={status.key}
+                                    onClick={() => setStatusFilter(status.key)}
+                                    className={`p-3 rounded-lg text-center transition-all duration-200 border-2 ${
+                                        statusFilter === status.key 
+                                            ? `${status.color} border-current shadow-md transform scale-105` 
+                                            : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                                    }`}
+                                >
+                                    <div className={`text-2xl font-bold ${statusFilter === status.key ? '' : 'text-gray-900'}`}>
+                                        {status.count}
+                                    </div>
+                                    <div className={`text-xs font-medium mt-1 ${statusFilter === status.key ? '' : 'text-gray-600'}`}>
+                                        {status.label}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Search and Filters */}
                 <div className="mb-6 space-y-4">
@@ -296,30 +393,36 @@ function OrdersComp({ loaded, setLoaded }) {
 
                         {/* Status Filter */}
                         <div className="flex-1 max-w-xs">
-                            <select
+                            <Select
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="all">All Statuses</option>
-                                {statuses.map(status => (
-                                    <option key={status} value={status}>{status}</option>
-                                ))}
-                            </select>
+                                onChange={setStatusFilter}
+                                options={[
+                                    { value: 'all', label: 'All Statuses', count: statsData?.statusCounts?.all },
+                                    ...statuses.map(status => ({
+                                        value: status,
+                                        label: status,
+                                        count: statsData?.statusCounts?.[status.toLowerCase()]
+                                    }))
+                                ]}
+                                showCounts={true}
+                                placeholder="Select Status"
+                            />
                         </div>
 
                         {/* Vendor Filter */}
                         <div className="flex-1 max-w-xs">
-                            <select
+                            <Select
                                 value={vendorFilter}
-                                onChange={(e) => setVendorFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="all">All Vendors</option>
-                                {vendors.map(vendor => (
-                                    <option key={vendor} value={vendor}>{vendor}</option>
-                                ))}
-                            </select>
+                                onChange={setVendorFilter}
+                                options={[
+                                    { value: 'all', label: 'All Vendors' },
+                                    ...vendors.map(vendor => ({
+                                        value: vendor,
+                                        label: vendor
+                                    }))
+                                ]}
+                                placeholder="Select Vendor"
+                            />
                         </div>
 
                         {/* Clear Filters */}
@@ -340,57 +443,63 @@ function OrdersComp({ loaded, setLoaded }) {
                 </div>
 
                 {/* Orders Table */}
-                <div className="card overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Package className="h-5 w-5 mr-2 text-gray-600" />
+                            Orders ({total})
+                        </h3>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <Calendar size={16} className="mr-2" />
-                                            Date
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <Calendar size={14} className="text-gray-500" />
+                                            <span>Date</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <User size={16} className="mr-2" />
-                                            Customer
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <User size={14} className="text-gray-500" />
+                                            <span>Customer</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <User size={16} className="mr-2" />
-                                            Vendor
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <User size={14} className="text-gray-500" />
+                                            <span>Vendor</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <DollarSign size={16} className="mr-2" />
-                                            Amount
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <DollarSign size={14} className="text-gray-500" />
+                                            <span>Amount</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <CreditCard size={16} className="mr-2" />
-                                            Payment
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <CreditCard size={14} className="text-gray-500" />
+                                            <span>Payment</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center">
-                                            <Package size={16} className="mr-2" />
-                                            Status
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center space-x-1">
+                                            <Package size={14} className="text-gray-500" />
+                                            <span>Status</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Order ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {orders.length > 0 ? (
+                                {orders && orders.length > 0 ? (
                                     orders.map((order, key) => (
                                         <tr key={key} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -406,22 +515,22 @@ function OrdersComp({ loaded, setLoaded }) {
                                                 {formatCurrency(order.price)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentColor(order.payType)}`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full border ${getPaymentColor(order.payType)}`}>
                                                     {order.payType}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.OrderStatus)}`}>
-                                                    {order.OrderStatus}
-                                                </span>
+                                                                                            <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full border ${getOrderStatusColor(order.OrderStatus)}`}>
+                                                {order.OrderStatus}
+                                            </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                                                 {order.secretOrderId}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center justify-center space-x-2">
                                                     <button
-                                                        onClick={() => navigate.push(`/admin/orders/${order.secretOrderId}/${order.userId}`)}
+                                                        onClick={() => handleViewOrderDetails(order)}
                                                         className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
                                                         title="View Details"
                                                     >
@@ -453,23 +562,63 @@ function OrdersComp({ loaded, setLoaded }) {
                         </table>
                     </div>
 
-                    {/* Load More Button */}
-                    {orders.length < total && (
-                        <div className="px-6 py-4 border-t border-gray-200 text-center">
-                            <button
-                                onClick={handleLoadMore}
-                                disabled={queryLoading}
-                                className="btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {queryLoading ? (
-                                    <>
-                                        <div className="spinner mr-2"></div>
-                                        Loading...
-                                    </>
-                                ) : (
-                                    'Load More Orders'
-                                )}
-                            </button>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <div className="flex items-center text-sm text-gray-700">
+                                <span>
+                                    Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} orders
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={handlePrevPage}
+                                    disabled={currentPage === 1 || queryLoading}
+                                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Previous
+                                </button>
+                                
+                                <div className="flex items-center space-x-1">
+                                    {/* Page numbers */}
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+                                        
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => handlePageChange(pageNum)}
+                                                disabled={queryLoading}
+                                                className={`px-3 py-1 text-sm border rounded ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-blue-600 text-white border-blue-600'
+                                                        : 'border-gray-300 hover:bg-gray-50'
+                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                
+                                <button
+                                    onClick={handleNextPage}
+                                    disabled={currentPage === totalPages || queryLoading}
+                                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

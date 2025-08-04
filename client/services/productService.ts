@@ -44,9 +44,28 @@ export async function getProductById(id: string) {
   try {
     const res = await api.get(`/products/${id}`);
     return res.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch product by ID:', error);
-    throw new Error('Failed to fetch product');
+    
+    // Handle specific error cases
+    if (error.response?.status === 404) {
+      const reason = error.response?.data?.reason;
+      const message = error.response?.data?.message;
+      
+      if (reason === 'pending_approval') {
+        throw new Error('Product not available - pending approval');
+      } else if (message === 'Product not available') {
+        throw new Error('Product not available');
+      } else {
+        throw new Error('Product not found');
+      }
+    } else if (error.response?.status === 400) {
+      throw new Error('Invalid product ID');
+    } else if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else {
+      throw new Error('Failed to fetch product');
+    }
   }
 }
 

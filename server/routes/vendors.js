@@ -28,7 +28,9 @@ import {
   cancelScheduledProducts,
   publishScheduledProducts,
   updateVendorProduct,
-  acceptVendor
+  deleteVendorProduct,
+  acceptVendor,
+  reapplyVendor
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -60,10 +62,13 @@ router.get('/profile', protectVendorWithStatus, getVendorProfile);
 router.put('/profile', protectVendorWithStatus, updateVendorProfile);
 router.get('/dashboard', protectVendorWithStatus, getVendorDashboard);
 router.get('/earnings', protectVendorWithStatus, getVendorEarnings);
+router.post('/reapply', protectVendorWithStatus, reapplyVendor);
 
 // Vendor product routes (allow access but check approval status)
+router.get('/products', protectVendorWithStatus, validatePagination, getVendorProducts);
 router.post('/products', protectVendorWithStatus, handleMultipleUpload, createVendorProductController);
 router.put('/products/:id', protectVendorWithStatus, handleMultipleUpload, updateVendorProduct);
+router.delete('/products/:id', protectVendorWithStatus, validateId, deleteVendorProduct);
 router.get('/products/released', protectVendorWithStatus, validatePagination, getVendorReleasedProducts);
 router.get('/products/drafts', protectVendorWithStatus, validatePagination, getVendorDraftProducts);
 router.get('/products/scheduled', protectVendorWithStatus, validatePagination, getVendorScheduledProducts);

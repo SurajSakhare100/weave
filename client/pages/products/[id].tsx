@@ -11,7 +11,8 @@ import {
   ShoppingCart, 
   Star, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Clock
 } from 'lucide-react'
 import { Product, ProductWithReviews } from '@/types'
 import ProductCard from '@/components/products/ProductCard'
@@ -81,8 +82,13 @@ export default function ProductDetailPage() {
       
       // Handle specific error cases
       if (error instanceof Error) {
-        setError(error.message)
-        toast.error(error.message)
+        if (error.message.includes('not found') || error.message.includes('not available')) {
+          setError('This product is not available or has been removed.')
+          toast.error('Product not available')
+        } else {
+          setError(error.message)
+          toast.error(error.message)
+        }
       } else {
         setError('Failed to load product')
         toast.error('Failed to load product')
@@ -174,18 +180,78 @@ export default function ProductDetailPage() {
   }
 
   if (error || !product) {
+    // Determine if it's an approval issue or general not found
+    const isApprovalIssue = error && (
+      error.includes('pending approval') ||
+      error.includes('not available') ||
+      error === 'This product is not available or has been removed.'
+    );
+    
+    const isPendingApproval = error && error.includes('pending approval');
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Product Not Found</h2>
-          <p className="text-gray-600 mb-4">{error || 'The product you are looking for does not exist.'}</p>
-          <Link 
-            href="/products" 
-            className="bg-pink-500 text-white px-6 py-2 rounded-lg hover:bg-pink-600 transition-colors"
-          >
-            Browse Products
-          </Link>
+        <div className="text-center max-w-md mx-auto px-4">
+          {isApprovalIssue ? (
+            <>
+              <div className={`rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
+                isPendingApproval ? 'bg-blue-100' : 'bg-yellow-100'
+              }`}>
+                {isPendingApproval ? (
+                  <Clock className="h-8 w-8 text-blue-600" />
+                ) : (
+                  <AlertCircle className="h-8 w-8 text-yellow-600" />
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                {isPendingApproval ? 'Product Under Review' : 'Product Not Available'}
+              </h2>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {isPendingApproval 
+                  ? 'This product is currently under review by our team and will be available once approved. Please check back later or browse our other available products.'
+                  : 'This product is currently not available for viewing. It may be temporarily unavailable or has been removed by the seller.'
+                }
+              </p>
+              <div className="space-y-3">
+                <Link 
+                  href="/products" 
+                  className="block bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium"
+                >
+                  Browse Available Products
+                </Link>
+                <Link 
+                  href="/" 
+                  className="block text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Return to Home
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-red-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Product Not Found</h2>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {error || 'The product you are looking for does not exist or may have been removed.'}
+              </p>
+              <div className="space-y-3">
+                <Link 
+                  href="/products" 
+                  className="block bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium"
+                >
+                  Browse Products
+                </Link>
+                <Link 
+                  href="/" 
+                  className="block text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Return to Home
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     )

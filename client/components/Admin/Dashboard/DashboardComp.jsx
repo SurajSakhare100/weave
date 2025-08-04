@@ -13,116 +13,47 @@ import {
     AlertCircle,
     CheckCircle
 } from 'lucide-react'
-import { getApprovalStats, getDashboardStats } from '../../../services/adminApi';
+import { useGetApprovalStatsQuery, useGetDashboardStatsQuery } from '../../../services/adminApi';
+import { useAdminLogout } from '../../../hooks/useAdminLogout'
+import { formatCurrency, getOrderStatusColor } from '../../../utils/adminUtils'
 
 function DashboardComp() {
-    const [response, setResponse] = useState({
+    const navigate = useRouter()
+    const { logout } = useAdminLogout()
+
+    // RTK Query hooks
+    const { data: dashboardStats, isLoading: dashboardLoading, error: dashboardError } = useGetDashboardStatsQuery();
+    const { data: approvalStats, isLoading: approvalLoading, error: approvalError } = useGetApprovalStatsQuery();
+
+    const isLoading = dashboardLoading || approvalLoading;
+
+    // Handle errors
+    useEffect(() => {
+        if (dashboardError?.status === 401 || approvalError?.status === 401) {
+            logout();
+        }
+    }, [dashboardError, approvalError, logout]);
+
+    // Transform data for the component
+    const response = {
         total: {
-            totalDelivered: 0,
+            totalDelivered: dashboardStats?.totalOrders || 0,
             totalCancelled: 0,
             totalReturn: 0,
-            totalAmount: 0
+            totalAmount: dashboardStats?.totalRevenue || 0
         },
         Orders: []
-    })
-    const [approvalStats, setApprovalStats] = useState({
-        pendingVendors: 0,
-        pendingProducts: 0,
-        totalVendors: 0,
-        totalProducts: 0,
-        approvalRate: 0
-    })
-    const [isLoading, setIsLoading] = useState(true)
-
-    const navigate = useRouter()
-
-    const logOut = async () => {
-        try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/admin/logout`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-            navigate.push('/admin/login');
-        } catch (error) {
-            console.error('Logout error:', error);
-            navigate.push('/admin/login');
-        }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch approval stats
-                const approvalResponse = await getApprovalStats();
-                if (approvalResponse.success) {
-                    setApprovalStats(approvalResponse.stats);
-                }
-            } catch (error) {
-                console.error('Error fetching approval stats:', error);
-            }
-        };
+    const approvalData = {
+        pendingVendors: approvalStats?.pendingVendors || 0,
+        pendingProducts: approvalStats?.pendingProducts || 0,
+        totalVendors: approvalStats?.totalVendors || 0,
+        totalProducts: approvalStats?.totalProducts || 0,
+        approvalRate: 0
+    };
 
-        fetchData();
-    }, []);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const dashboardResponse = await getDashboardStats();
-                if (dashboardResponse.success) {
-                    setResponse({
-                        total: {
-                            totalDelivered: dashboardResponse.stats.totalOrders || 0,
-                            totalCancelled: 0,
-                            totalReturn: 0,
-                            totalAmount: dashboardResponse.stats.totalRevenue || 0
-                        },
-                        Orders: []
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
-                // Use fallback data
-                setResponse({
-                    total: {
-                        totalDelivered: 0,
-                        totalCancelled: 0,
-                        totalReturn: 0,
-                        totalAmount: 0
-                    },
-                    Orders: []
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchDashboardData();
-    }, []);
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount)
-    }
-
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'delivered':
-                return 'admin-badge-success'
-            case 'pending':
-                return 'admin-badge-warning'
-            case 'cancelled':
-                return 'admin-badge-danger'
-            case 'return':
-                return 'admin-badge-info'
-            default:
-                return 'admin-badge-info'
-        }
-    }
 
     if (isLoading) {
         return (
@@ -204,7 +135,7 @@ function DashboardComp() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium admin-text-secondary">Pending Vendors</p>
-                                <p className="text-2xl font-bold admin-text-primary">{approvalStats.pendingVendors}</p>
+                                <p className="text-2xl font-bold admin-text-primary">{approvalData.pendingVendors}</p>
                             </div>
                         </div>
                         <Link href="/admin/pending-vendors" className="mt-3 inline-flex items-center text-sm admin-text-primary hover:admin-text-important">
@@ -220,7 +151,7 @@ function DashboardComp() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium admin-text-secondary">Pending Products</p>
-                                <p className="text-2xl font-bold admin-text-primary">{approvalStats.pendingProducts}</p>
+                                <p className="text-2xl font-bold admin-text-primary">{approvalData.pendingProducts}</p>
                             </div>
                         </div>
                         <Link href="/admin/pending-products" className="mt-3 inline-flex items-center text-sm admin-text-primary hover:admin-text-important">
@@ -236,7 +167,7 @@ function DashboardComp() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium admin-text-secondary">Total Vendors</p>
-                                <p className="text-2xl font-bold admin-text-primary">{approvalStats.totalVendors}</p>
+                                <p className="text-2xl font-bold admin-text-primary">{approvalData.totalVendors}</p>
                             </div>
                         </div>
                     </div>
@@ -248,7 +179,7 @@ function DashboardComp() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium admin-text-secondary">Approval Rate</p>
-                                <p className="text-2xl font-bold admin-text-primary">{approvalStats.approvalRate}%</p>
+                                <p className="text-2xl font-bold admin-text-primary">{approvalData.approvalRate}%</p>
                             </div>
                         </div>
                     </div>
@@ -262,14 +193,14 @@ function DashboardComp() {
                             <Users className="h-8 w-8 admin-text-primary mr-3" />
                             <div>
                                 <p className="font-medium admin-text-primary">Review Vendors</p>
-                                <p className="text-sm admin-text-secondary">{approvalStats.pendingVendors} pending</p>
+                                <p className="text-sm admin-text-secondary">{approvalData.pendingVendors} pending</p>
                             </div>
                         </Link>
                         <Link href="/admin/pending-products" className="flex items-center p-4 admin-border-primary border rounded-lg hover:admin-bg-secondary transition-colors">
                             <Package className="h-8 w-8 admin-text-primary mr-3" />
                             <div>
                                 <p className="font-medium admin-text-primary">Review Products</p>
-                                <p className="text-sm admin-text-secondary">{approvalStats.pendingProducts} pending</p>
+                                <p className="text-sm admin-text-secondary">{approvalData.pendingProducts} pending</p>
                             </div>
                         </Link>
                         <Link href="/admin/vendors" className="flex items-center p-4 admin-border-primary border rounded-lg hover:admin-bg-secondary transition-colors">
@@ -326,7 +257,7 @@ function DashboardComp() {
                                                 {obj.payType}
                                             </td>
                                             <td>
-                                                <span className={`admin-badge ${getStatusColor(obj.OrderStatus)}`}>
+                                                <span className={`admin-badge ${getOrderStatusColor(obj.OrderStatus)}`}>
                                                     {obj.OrderStatus}
                                                 </span>
                                             </td>

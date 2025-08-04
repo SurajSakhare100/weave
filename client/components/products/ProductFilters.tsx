@@ -73,7 +73,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const minPriceValue = 0;
 
   return (
-    <aside className="w-1/5 pr-8">
+    <aside className="pr-8">
       <h2 className="text-xl font-semibold mb-4">Filters</h2>
       <button
         onClick={onClearFilters}

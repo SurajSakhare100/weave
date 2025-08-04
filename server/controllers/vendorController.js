@@ -7,31 +7,27 @@ import { createVendorProduct, updateVendorProduct as updateVendorProductHelper }
 
 
 export const getVendorProfile = asyncHandler(async (req, res) => {
-  try {
-    const vendor = await Vendor.findById(req.vendor._id).select('-password');
+  const vendor = await Vendor.findById(req.vendor._id).select('-password');
 
-    if (!vendor) {
-      res.status(404);
-      throw new Error('Vendor not found');
-    }
-
-    // Get approval status from middleware
-    const approvalStatus = req.vendorApprovalStatus || {
-      isApproved: vendor.adminApproved,
-      rejectionReason: vendor.adminRejectionReason,
-      needsApproval: !vendor.adminApproved
-    };
-
-    res.json({
-      success: true,
-      data: {
-        ...vendor.toObject(),
-        approvalStatus
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
   }
+
+  // Get approval status from middleware
+  const approvalStatus = req.vendorApprovalStatus || {
+    isApproved: vendor.adminApproved,
+    rejectionReason: vendor.adminRejectionReason,
+    needsApproval: !vendor.adminApproved
+  };
+
+  res.json({
+    success: true,
+    data: {
+      ...vendor.toObject(),
+      approvalStatus
+    }
+  });
 });
 
 
@@ -43,7 +39,18 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
     throw new Error('Vendor not found');
   }
 
-  const { name, email, phone, address, gstin, pan } = req.body;
+  const { name, email, number, businessName, address, city, state, pinCode } = req.body;
+
+  // Validate required fields
+  if (name && name.trim().length === 0) {
+    res.status(400);
+    throw new Error('Name cannot be empty');
+  }
+
+  if (email && email.trim().length === 0) {
+    res.status(400);
+    throw new Error('Email cannot be empty');
+  }
 
   // Check if email is being changed and if it's already taken
   if (email && email !== vendor.email) {
@@ -56,10 +63,12 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
 
   vendor.name = name || vendor.name;
   vendor.email = email || vendor.email;
-  vendor.phone = phone || vendor.phone;
+  vendor.number = number || vendor.number;
+  vendor.businessName = businessName || vendor.businessName;
   vendor.address = address || vendor.address;
-  vendor.gstin = gstin || vendor.gstin;
-  vendor.pan = pan || vendor.pan;
+  vendor.city = city || vendor.city;
+  vendor.state = state || vendor.state;
+  vendor.pinCode = pinCode || vendor.pinCode;
 
   const updatedVendor = await vendor.save();
 
@@ -69,12 +78,20 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
       _id: updatedVendor._id,
       name: updatedVendor.name,
       email: updatedVendor.email,
-      phone: updatedVendor.phone,
+      number: updatedVendor.number,
+      businessName: updatedVendor.businessName,
       address: updatedVendor.address,
-      gstin: updatedVendor.gstin,
-      pan: updatedVendor.pan,
-      isApproved: updatedVendor.isApproved,
-      createdAt: updatedVendor.createdAt
+      city: updatedVendor.city,
+      state: updatedVendor.state,
+      pinCode: updatedVendor.pinCode,
+      status: updatedVendor.status,
+      adminApproved: updatedVendor.adminApproved,
+      adminApprovedAt: updatedVendor.adminApprovedAt,
+      adminApprovedBy: updatedVendor.adminApprovedBy,
+      adminRejectionReason: updatedVendor.adminRejectionReason,
+      adminApprovalFeedback: updatedVendor.adminApprovalFeedback,
+      createdAt: updatedVendor.createdAt,
+      updatedAt: updatedVendor.updatedAt
     }
   });
 });
@@ -170,23 +187,28 @@ export const getVendorDashboard = asyncHandler(async (req, res) => {
 
 
 export const getVendors = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const skip = (page - 1) * limit;
+  const skip = parseInt(req.query.skip) || 0;
+  const limit = parseInt(req.query.limit) || 10;
 
   const { search, status } = req.query;
-
-  const filter = {};
+  const filter = { status: { $ne: 'deleted' } }; // Exclude deleted vendors
 
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { email: { $regex: search, $options: 'i' } },
+      { businessName: { $regex: search, $options: 'i' } }
     ];
   }
 
-  if (status) {
-    filter.isApproved = status === 'approved';
+  if (status && status !== 'all') {
+    if (status === 'approved') {
+      filter.status = 'approved';
+    } else if (status === 'pending') {
+      filter.status = 'pending';
+    } else if (status === 'rejected') {
+      filter.status = 'rejected';
+    }
   }
 
   const vendors = await Vendor.find(filter)
@@ -199,12 +221,9 @@ export const getVendors = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: vendors,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    data: {
+      vendors,
+      total
     }
   });
 });
@@ -233,7 +252,7 @@ export const updateVendor = asyncHandler(async (req, res) => {
     throw new Error('Vendor not found');
   }
 
-  const { name, email, phone, address, gstin, pan, isApproved } = req.body;
+  const { name, email, number, businessName, address, city, state, pinCode, adminApproved } = req.body;
 
   // Check if email is being changed and if it's already taken
   if (email && email !== vendor.email) {
@@ -246,11 +265,13 @@ export const updateVendor = asyncHandler(async (req, res) => {
 
   vendor.name = name || vendor.name;
   vendor.email = email || vendor.email;
-  vendor.phone = phone || vendor.phone;
+  vendor.number = number || vendor.number;
+  vendor.businessName = businessName || vendor.businessName;
   vendor.address = address || vendor.address;
-  vendor.gstin = gstin || vendor.gstin;
-  vendor.pan = pan || vendor.pan;
-  vendor.isApproved = isApproved !== undefined ? isApproved : vendor.isApproved;
+  vendor.city = city || vendor.city;
+  vendor.state = state || vendor.state;
+  vendor.pinCode = pinCode || vendor.pinCode;
+  vendor.adminApproved = adminApproved !== undefined ? adminApproved : vendor.adminApproved;
 
   const updatedVendor = await vendor.save();
 
@@ -260,11 +281,14 @@ export const updateVendor = asyncHandler(async (req, res) => {
       _id: updatedVendor._id,
       name: updatedVendor.name,
       email: updatedVendor.email,
-      phone: updatedVendor.phone,
+      number: updatedVendor.number,
+      businessName: updatedVendor.businessName,
       address: updatedVendor.address,
-      gstin: updatedVendor.gstin,
-      pan: updatedVendor.pan,
-      isApproved: updatedVendor.isApproved,
+      city: updatedVendor.city,
+      state: updatedVendor.state,
+      pinCode: updatedVendor.pinCode,
+      adminApproved: updatedVendor.adminApproved,
+      status: updatedVendor.status,
       createdAt: updatedVendor.createdAt
     }
   });
@@ -286,7 +310,11 @@ export const deleteVendor = asyncHandler(async (req, res) => {
     throw new Error(`Cannot delete vendor. Vendor has ${productCount} products.`);
   }
 
-  await Vendor.findByIdAndDelete(req.params.id);
+  // Mark vendor as deleted instead of actually deleting
+  await Vendor.findByIdAndUpdate(req.params.id, {
+    status: 'deleted',
+    adminApproved: false
+  });
 
   res.json({
     success: true,
@@ -295,29 +323,113 @@ export const deleteVendor = asyncHandler(async (req, res) => {
 });
 
 
+// @desc    Get vendor products (for vendor dashboard)
+// @route   GET /api/vendors/products
+// @access  Private (Vendor)
 export const getVendorProducts = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  try {
+    const vendorId = req.vendor._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const status = req.query.status || 'all';
+    const skip = (page - 1) * limit;
 
-  const products = await Product.find({ vendorId: req.params.id })
-    .populate('category', 'name')
-    .sort('-createdAt')
-    .skip(skip)
-    .limit(limit);
+    // Build search query
+    let searchQuery = {
+      vendorId,
+      ...(search && { name: { $regex: search, $options: 'i' } })
+    };
 
-  const total = await Product.countDocuments({ vendorId: req.params.id });
-
-  res.json({
-    success: true,
-    data: products,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    // Add status filter
+    if (status !== 'all') {
+      switch (status) {
+        case 'active':
+          searchQuery.available = true;
+          break;
+        case 'inactive':
+          searchQuery.available = false;
+          break;
+        case 'pending':
+          searchQuery.adminApproved = { $exists: false };
+          searchQuery.adminRejectionReason = { $exists: false };
+          break;
+        case 'approved':
+          searchQuery.adminApproved = true;
+          break;
+        case 'rejected':
+          searchQuery.adminApproved = false;
+          searchQuery.adminRejectionReason = { $exists: true };
+          break;
+        case 'draft':
+          searchQuery.available = 'draft';
+          break;
+      }
     }
-  });
+
+    // Get products with basic info
+    const products = await Product.find(searchQuery)
+      .populate('category', 'name')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
+
+    // Get total count for pagination
+    const total = await Product.countDocuments(searchQuery);
+
+    // Transform products to include proper image handling
+    const transformedProducts = products.map(product => {
+      // Get primary image from Cloudinary images array
+      let primaryImageUrl = '/products/product.png'; // fallback
+      let allImages = [];
+      
+      if (product.images && product.images.length > 0) {
+        // Use Cloudinary images
+        allImages = product.images.map(img => img.url);
+        const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+        primaryImageUrl = primaryImage.url;
+      } else if (product.files && product.files.length > 0) {
+        // Fallback to legacy files field
+        allImages = product.files;
+        primaryImageUrl = product.files[0];
+      }
+
+      return {
+        _id: product._id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        mrp: product.mrp,
+        category: product.category?.name || product.category,
+        categorySlug: product.categorySlug,
+        available: product.available,
+        adminApproved: product.adminApproved,
+        adminRejectionReason: product.adminRejectionReason,
+        images: allImages,
+        primaryImage: primaryImageUrl,
+        stock: product.stock,
+        colors: product.colors,
+        sizes: product.sizes,
+        tags: product.tags,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      };
+    });
+
+    res.json({
+      success: true,
+      data: transformedProducts,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get vendor products error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 
@@ -335,7 +447,7 @@ export const getVendorOrders = asyncHandler(async (req, res) => {
     const orders = await Order.find({
       'orderItems.productId': { $in: vendorProducts }
     })
-      .populate('orderItems.productId', 'name price images')
+      .populate('orderItems.productId', 'name price')
       .populate('user', 'name email')
       .sort('-createdAt')
       .skip(skip)
@@ -1568,7 +1680,34 @@ export const publishScheduledProducts = asyncHandler(async (req, res) => {
       modifiedCount: result.modifiedCount
     }
   });
-}); 
+});
+
+// @desc    Delete a vendor's product
+// @route   DELETE /api/vendors/products/:id
+// @access  Private (Vendor)
+export const deleteVendorProduct = asyncHandler(async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const productId = req.params.id;
+
+    // Check if product exists and belongs to vendor
+    const product = await Product.findOne({ _id: productId, vendorId });
+    if (!product) {
+      res.status(404);
+      throw new Error('Product not found or you do not have permission to delete it');
+    }
+
+    // Delete the product
+    await Product.deleteOne({ _id: productId, vendorId });
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
 
 // @desc    Update a vendor's product
 // @route   PUT /api/vendors/products/:id
@@ -1592,15 +1731,15 @@ export const updateVendorProduct = asyncHandler(async (req, res) => {
 // @route   POST /api/vendors/accept
 // @access  Private (Admin)
 export const acceptVendor = asyncHandler(async (req, res) => {
-  const { email, address } = req.body;
+  const { vendorId, feedback } = req.body;
 
-  if (!email) {
+  if (!vendorId) {
     res.status(400);
-    throw new Error('Email is required');
+    throw new Error('Vendor ID is required');
   }
 
-  // Find the vendor by email
-  const vendor = await Vendor.findOne({ email });
+  // Find the vendor by ID
+  const vendor = await Vendor.findById(vendorId);
 
   if (!vendor) {
     res.status(404);
@@ -1608,15 +1747,12 @@ export const acceptVendor = asyncHandler(async (req, res) => {
   }
 
   // Update vendor approval status
-  vendor.isApproved = true;
   vendor.adminApproved = true;
   vendor.adminApprovedAt = new Date();
   vendor.adminApprovedBy = req.admin?._id;
-
-  // Update address if provided
-  if (address) {
-    vendor.address = address;
-  }
+  vendor.adminApprovalFeedback = feedback || null;
+  vendor.adminRejectionReason = null;
+  vendor.status = 'approved';
 
   await vendor.save();
 
@@ -1627,8 +1763,65 @@ export const acceptVendor = asyncHandler(async (req, res) => {
       _id: vendor._id,
       name: vendor.name,
       email: vendor.email,
-      isApproved: vendor.isApproved,
-      adminApproved: vendor.adminApproved
+      adminApproved: vendor.adminApproved,
+      status: vendor.status
+    }
+  });
+}); 
+
+// @desc    Reapply for vendor approval
+// @route   POST /api/vendors/reapply
+// @access  Private (Vendor)
+export const reapplyVendor = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { 
+    name, 
+    businessName, 
+    address, 
+    city, 
+    state, 
+    pinCode
+  } = req.body;
+
+  const vendor = await Vendor.findById(vendorId);
+
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
+  }
+
+  // Check if vendor is currently rejected
+  if (vendor.status !== 'rejected') {
+    res.status(400);
+    throw new Error('Only rejected vendors can reapply');
+  }
+
+  // Update vendor information
+  vendor.name = name || vendor.name;
+  vendor.businessName = businessName || vendor.businessName;
+  vendor.address = address || vendor.address;
+  vendor.city = city || vendor.city;
+  vendor.state = state || vendor.state;
+  vendor.pinCode = pinCode || vendor.pinCode;
+  
+  // Reset status for reapplication
+  vendor.status = 'pending';
+  vendor.adminApproved = false;
+  vendor.adminApprovedAt = null;
+  vendor.adminApprovedBy = null;
+  vendor.adminRejectionReason = null;
+  vendor.adminApprovalFeedback = null;
+
+  await vendor.save();
+
+  res.json({
+    success: true,
+    message: 'Reapplication submitted successfully. Your application is now pending admin review.',
+    data: {
+      _id: vendor._id,
+      name: vendor.name,
+      email: vendor.email,
+      status: vendor.status
     }
   });
 }); 

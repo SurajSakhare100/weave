@@ -10,16 +10,6 @@ export async function getHeaderCategories() {
   return res.data;
 }
 
-export async function getMainSubCategories() {
-  const res = await api.get('/categories/main-sub');
-  return res.data;
-}
-
-export async function getSubCategories() {
-  const res = await api.get('/categories/sub');
-  return res.data;
-}
-
 export async function searchCategories(params: any) {
   const res = await api.get('/categories/search', { params });
   return res.data;
@@ -47,15 +37,5 @@ export async function updateCategory(id: string, data: any) {
 
 export async function deleteCategory(id: string) {
   const res = await api.delete(`/categories/${id}`);
-  return res.data;
-}
-
-export async function addMainSubCategory(id: string, data: any) {
-  const res = await api.post(`/categories/${id}/main-sub`, data);
-  return res.data;
-}
-
-export async function addSubCategory(id: string, data: any) {
-  const res = await api.post(`/categories/${id}/sub`, data);
   return res.data;
 } 

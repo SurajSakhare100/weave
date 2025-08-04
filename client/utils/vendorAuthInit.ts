@@ -1,18 +1,10 @@
 import { getVendorToken } from './vendorAuth';
-import { debugAuth } from './debugAuth';
 
-/**
- * Initialize vendor authentication on app startup
- * This should be called in _app.tsx or similar
- */
 export const initializeVendorAuth = () => {
   if (typeof window === 'undefined') return;
   
-  debugAuth();
-  
   const token = getVendorToken();
   if (token) {
-    // Token is automatically handled by the API interceptor now
     return { isAuthenticated: true, token };
   } else {
     return { isAuthenticated: false, token: null };

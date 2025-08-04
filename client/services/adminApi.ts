@@ -1,64 +1,4 @@
-import api from './api';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-// Admin approval API functions
-export const getPendingVendors = async (params: { skip?: number; limit?: number }) => {
-  const response = await api.get('/admin/vendors/pending', { 
-    params,
-    withCredentials: true // Include cookies
-  });
-  return response.data;
-};
-
-export const approveVendor = async (vendorId: string) => {
-  const response = await api.put(`/admin/vendors/${vendorId}/approve`, {}, {
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const rejectVendor = async (vendorId: string, rejectionReason: string) => {
-  const response = await api.put(`/admin/vendors/${vendorId}/reject`, { rejectionReason }, {
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const getPendingProducts = async (params: { skip?: number; limit?: number }) => {
-  const response = await api.get('/admin/products/pending', { 
-    params,
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const approveProduct = async (productId: string) => {
-  const response = await api.put(`/admin/products/${productId}/approve`, {}, {
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const rejectProduct = async (productId: string, rejectionReason: string) => {
-  const response = await api.put(`/admin/products/${productId}/reject`, { rejectionReason }, {
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const getApprovalStats = async () => {
-  const response = await api.get('/admin/approval-stats', {
-    withCredentials: true
-  });
-  return response.data;
-};
-
-export const getDashboardStats = async () => {
-  const response = await api.get('/admin/dashboard-stats', {
-    withCredentials: true
-  });
-  return response.data;
-};
 
 // RTK Query API slice for admin operations
 export const adminApi = createApi({
@@ -67,93 +7,54 @@ export const adminApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
     credentials: 'include',
   }),
-  tagTypes: ['Category', 'Vendor', 'Product', 'Order'],
+  tagTypes: ['Category', 'Vendor', 'Product', 'Order', 'OrderStats', 'Dashboard', 'Coupon'],
   endpoints: (builder) => ({
-    // Category endpoints
-    getAllTypesCategory: builder.query({
-      query: () => '/categories/all-types',
+    // ==================== DASHBOARD ENDPOINTS ====================
+    getDashboardStats: builder.query({
+      query: () => '/admin/dashboard-stats',
       transformResponse: (response: any) => {
         if (response.success && response.data) {
           return response.data;
         }
-        return { categories: [], mainSub: [], subCategory: [] };
+        return {
+          totalOrders: 0,
+          totalRevenue: 0,
+          totalProducts: 0,
+          totalVendors: 0,
+          recentOrders: [],
+          topProducts: [],
+          revenueChart: []
+        };
       },
-      providesTags: ['Category'],
+      providesTags: ['Dashboard'],
     }),
-    getOneCategory: builder.query({
-      query: (id) => `/categories/${id}`,
+
+    getApprovalStats: builder.query({
+      query: () => '/admin/approval-stats',
       transformResponse: (response: any) => {
         if (response.success && response.data) {
           return response.data;
         }
-        return null;
-      },
-      providesTags: (result, error, id) => [{ type: 'Category', id }],
-    }),
-    createCategory: builder.mutation({
-      query: (category) => {
-        // Check if the body is FormData
-        const isFormData = category instanceof FormData;
-        
         return {
-          url: '/categories',
-          method: 'POST',
-          body: category,
-          // Don't set Content-Type for FormData, let the browser set it automatically
-          ...(isFormData && { prepareHeaders: (headers) => {
-            headers.delete('Content-Type');
-            return headers;
-          }})
+          pendingVendors: 0,
+          pendingProducts: 0,
+          approvedVendors: 0,
+          approvedProducts: 0
         };
       },
-      invalidatesTags: ['Category'],
+      providesTags: ['Dashboard'],
     }),
-    updateCategory: builder.mutation({
-      query: ({ id, formData }) => {
-        // Check if the body is FormData
-        const isFormData = formData instanceof FormData;
-        
-        return {
-          url: `/categories/${id}`,
-          method: 'PUT',
-          body: formData,
-          // Don't set Content-Type for FormData, let the browser set it automatically
-          ...(isFormData && { prepareHeaders: (headers) => {
-            headers.delete('Content-Type');
-            return headers;
-          }})
-        };
-      },
-      invalidatesTags: (result, error, { id }) => [{ type: 'Category', id }, 'Category'],
-    }),
-    deleteCategory: builder.mutation({
-      query: ({ id, folderId }) => ({
-        url: `/categories/${id}`,
-        method: 'DELETE',
-        body: { folderId },
-      }),
-      invalidatesTags: ['Category'],
-    }),
-    deleteMainSubCategory: builder.mutation({
-      query: (data) => ({
-        url: `/categories/${data.id}/main-sub/${data.uni_id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Category'],
-    }),
-    deleteSubCategory: builder.mutation({
-      query: (data) => ({
-        url: `/categories/${data.id}/sub/${data.uni_id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Category'],
-    }),
-    
-    // Vendor endpoints
+
+    // ==================== VENDOR ENDPOINTS ====================
     getVendors: builder.query({
       query: (params) => ({
         url: '/vendors/admin/list',
-        params,
+        params: {
+          skip: params.skip || 0,
+          limit: params.limit || 10,
+          search: params.search || '',
+          status: params.status || 'all'
+        },
       }),
       transformResponse: (response: any) => {
         if (response.success && response.data) {
@@ -163,28 +64,105 @@ export const adminApi = createApi({
       },
       providesTags: ['Vendor'],
     }),
+
+    getVendorById: builder.query({
+      query: (id) => `/vendors/admin/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, id) => [{ type: 'Vendor', id }],
+    }),
+
+    getVendorStats: builder.query({
+      query: () => '/vendors/admin/stats',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return {
+          totalVendors: 0,
+          activeVendors: 0,
+          pendingVendors: 0,
+          suspendedVendors: 0
+        };
+      },
+      providesTags: ['Vendor'],
+    }),
+
     acceptVendor: builder.mutation({
       query: (vendorData) => ({
         url: '/vendors/accept',
         method: 'POST',
         body: vendorData,
       }),
-      invalidatesTags: ['Vendor'],
+      invalidatesTags: ['Vendor', 'Dashboard'],
     }),
+
+    updateVendor: builder.mutation({
+      query: ({ id, vendorData }) => ({
+        url: `/vendors/admin/${id}`,
+        method: 'PUT',
+        body: vendorData,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Vendor', id }, 'Vendor'],
+    }),
+
     deleteVendor: builder.mutation({
       query: ({ email, vendorId }) => ({
         url: `/vendors/admin/${vendorId}`,
         method: 'DELETE',
         body: { email },
       }),
-      invalidatesTags: ['Vendor'],
+      invalidatesTags: ['Vendor', 'Dashboard'],
     }),
 
-    // Order endpoints
-    getAllOrders: builder.query({
-      query: (params) => ({
-        url: '/orders/admin/all',
-        params,
+    rejectVendor: builder.mutation({
+      query: ({ vendorId, rejectionReason }) => ({
+        url: `/admin/vendors/${vendorId}/reject`,
+        method: 'PUT',
+        body: { rejectionReason },
+      }),
+      invalidatesTags: ['Vendor', 'Dashboard'],
+    }),
+
+    reapplyVendor: builder.mutation({
+      query: (vendorData) => ({
+        url: '/vendors/reapply',
+        method: 'POST',
+        body: vendorData,
+      }),
+      invalidatesTags: ['Vendor', 'Dashboard'],
+    }),
+
+    getVendorProducts: builder.query({
+      query: ({ vendorId, params }) => ({
+        url: `/vendors/admin/${vendorId}/products`,
+        params: {
+          skip: params.skip || 0,
+          limit: params.limit || 10,
+          status: params.status || 'all'
+        },
+      }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { products: [], total: 0 };
+      },
+      providesTags: (result, error, { vendorId }) => [{ type: 'Vendor', id: vendorId }],
+    }),
+
+    getVendorOrders: builder.query({
+      query: ({ vendorId, params }) => ({
+        url: `/vendors/admin/${vendorId}/orders`,
+        params: {
+          skip: params.skip || 0,
+          limit: params.limit || 10,
+          status: params.status || 'all'
+        },
       }),
       transformResponse: (response: any) => {
         if (response.success && response.data) {
@@ -192,48 +170,38 @@ export const adminApi = createApi({
         }
         return { orders: [], total: 0 };
       },
-      providesTags: ['Order'],
-    }),
-    getOrderById: builder.query({
-      query: (id) => `/orders/admin/${id}`,
-      transformResponse: (response: any) => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        return null;
-      },
-      providesTags: (result, error, id) => [{ type: 'Order', id }],
-    }),
-    updateOrderStatus: builder.mutation({
-      query: ({ id, status, rejectionReason }) => ({
-        url: `/orders/admin/${id}/status`,
-        method: 'PUT',
-        body: { status, ...(rejectionReason && { rejectionReason }) },
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, 'Order'],
-    }),
-    deleteOrder: builder.mutation({
-      query: (id) => ({
-        url: `/orders/admin/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Order'],
+      providesTags: (result, error, { vendorId }) => [{ type: 'Vendor', id: vendorId }],
     }),
 
-    // Product endpoints
+    // ==================== PRODUCT ENDPOINTS ====================
     getAllProducts: builder.query({
       query: (params) => ({
-        url: '/admin/products/all',
-        params,
+        url: '/admin/getProducts',
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 12,
+          search: params.search || '',
+          approvalStatus: params.approvalStatus || 'pending',
+          category: params.category || '',
+          vendor: params.vendor || ''
+        },
       }),
       transformResponse: (response: any) => {
         if (response.success && response.data) {
-          return response.data;
+          return {
+            products: response.data,
+            total: response.total,
+            currentPage: response.currentPage,
+            totalPages: response.totalPages,
+            pagination: response.pagination,
+            showNot: response.showNot
+          };
         }
         return { products: [], total: 0, totalPages: 1 };
       },
       providesTags: ['Product'],
     }),
+
     getProductById: builder.query({
       query: (id) => `/admin/products/${id}`,
       transformResponse: (response: any) => {
@@ -244,51 +212,286 @@ export const adminApi = createApi({
       },
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),
-    approveProduct: builder.mutation({
-      query: (productId) => ({
-        url: `/admin/products/${productId}/approve`,
-        method: 'PUT',
+
+    getPendingProducts: builder.query({
+      query: (params) => ({
+        url: '/admin/products/pending',
+        params: {
+          skip: params.skip || 0,
+          limit: params.limit || 10,
+        },
       }),
-      invalidatesTags: (result, error, productId) => [{ type: 'Product', productId }, 'Product'],
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { products: [], total: 0 };
+      },
+      providesTags: ['Product'],
     }),
+
+    approveProduct: builder.mutation({
+      query: ({ productId, feedback }) => ({
+        url: `/admin/products/approve`,
+        method: 'POST',
+        body: { productId, feedback },
+      }),
+      invalidatesTags: (result, error, { productId }) => [{ type: 'Product', id: productId }, 'Product', 'Dashboard'],
+    }),
+
     rejectProduct: builder.mutation({
       query: ({ productId, rejectionReason }) => ({
         url: `/admin/products/${productId}/reject`,
         method: 'PUT',
         body: { rejectionReason },
       }),
-      invalidatesTags: (result, error, { productId }) => [{ type: 'Product', productId }, 'Product'],
+      invalidatesTags: (result, error, { productId }) => [{ type: 'Product', id: productId }, 'Product', 'Dashboard'],
     }),
+
     deleteProduct: builder.mutation({
       query: ({ id, folderId }) => ({
         url: `/admin/products/${id}`,
         method: 'DELETE',
         body: { folderId },
       }),
-      invalidatesTags: ['Product'],
+      invalidatesTags: ['Product', 'Dashboard'],
     }),
+
+    // ==================== ORDER ENDPOINTS ====================
+    getAdminOrderStats: builder.query({
+      query: () => '/orders/admin-stats',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return {
+          statusCounts: {
+            all: 0,
+            pending: 0,
+            processing: 0,
+            shipped: 0,
+            delivered: 0,
+            cancelled: 0,
+            returned: 0,
+            refunded: 0
+          },
+          paymentCounts: {},
+          totalOrders: 0,
+          recentOrders: 0
+        };
+      },
+      providesTags: ['OrderStats'],
+    }),
+
+    getAllOrders: builder.query({
+      query: (params) => ({
+        url: '/orders',
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          search: params.search || '',
+          status: params.status || 'all',
+          vendor: params.vendor || '',
+          dateFrom: params.dateFrom || '',
+          dateTo: params.dateTo || ''
+        },
+      }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return {
+            orders: response.data,
+            total: response.pagination?.total || response.data.length
+          };
+        }
+        return { orders: [], total: 0 };
+      },
+      providesTags: ['Order'],
+    }),
+
+    getOrderById: builder.query({
+      query: (id) => `/orders/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, id) => [{ type: 'Order', id }],
+    }),
+
+    getOrderStats: builder.query({
+      query: () => '/orders/stats',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return {
+          totalOrders: 0,
+          totalRevenue: 0,
+          pendingOrders: 0,
+          deliveredOrders: 0,
+          cancelledOrders: 0
+        };
+      },
+      providesTags: ['Order'],
+    }),
+
+    updateOrderStatus: builder.mutation({
+      query: ({ id, status, rejectionReason }) => ({
+        url: `/orders/${id}/status`,
+        method: 'PUT',
+        body: { status, ...(rejectionReason && { rejectionReason }) },
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, 'Order', 'Dashboard'],
+    }),
+
+    updateOrderToDelivered: builder.mutation({
+      query: (id) => ({
+        url: `/orders/${id}/deliver`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, id) => [{ type: 'Order', id }, 'Order', 'Dashboard'],
+    }),
+
+    deleteOrder: builder.mutation({
+      query: (id) => ({
+        url: `/orders/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Order', 'Dashboard'],
+    }),
+
+    // ==================== CATEGORY ENDPOINTS ====================
+    getAllTypesCategory: builder.query({
+      query: () => '/admin/categories/all-types',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { categories: [] };
+      },
+      providesTags: ['Category'],
+    }),
+
+    getOneCategory: builder.query({
+      query: (id) => `/admin/categories/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, id) => [{ type: 'Category', id }],
+    }),
+
+    createCategory: builder.mutation({
+      query: (category) => {
+        const isFormData = category instanceof FormData;
+        
+        return {
+          url: '/admin/categories',
+          method: 'POST',
+          body: category,
+          ...(isFormData && { 
+            prepareHeaders: (headers) => {
+              headers.delete('Content-Type');
+              return headers;
+            }
+          })
+        };
+      },
+      invalidatesTags: ['Category'],
+    }),
+
+    updateCategory: builder.mutation({
+      query: ({ id, formData }) => {
+        const isFormData = formData instanceof FormData;
+        
+        return {
+          url: `/admin/categories/${id}`,
+          method: 'PUT',
+          body: formData,
+          ...(isFormData && { 
+            prepareHeaders: (headers) => {
+              headers.delete('Content-Type');
+              return headers;
+            }
+          })
+        };
+      },
+      invalidatesTags: (result, error, { id }) => [{ type: 'Category', id }, 'Category'],
+    }),
+
+    deleteCategory: builder.mutation({
+      query: ({ id, folderId }) => ({
+        url: `/admin/categories/${id}`,
+        method: 'DELETE',
+        body: { folderId },
+      }),
+      invalidatesTags: ['Category'],
+    }),
+
+
+
+    addHeaderCategory: builder.mutation({
+      query: (categoryData) => ({
+        url: '/admin/addHeaderCategory',
+        method: 'PUT',
+        body: categoryData,
+      }),
+      invalidatesTags: ['Category'],
+    }),
+
+
+
+    
+
+    
+
+  
   }),
 });
 
-// Export hooks
+// Export all hooks
 export const {
+  // Dashboard
+  useGetDashboardStatsQuery,
+  useGetApprovalStatsQuery,
+  
+  // Vendors
+  useGetVendorsQuery,
+  useGetVendorByIdQuery,
+  useGetVendorStatsQuery,
+  useAcceptVendorMutation,
+  useUpdateVendorMutation,
+  useDeleteVendorMutation,
+  useRejectVendorMutation,
+  useReapplyVendorMutation,
+  useGetVendorProductsQuery,
+  useGetVendorOrdersQuery,
+  
+  // Products
+  useGetAllProductsQuery,
+  useGetProductByIdQuery,
+  useGetPendingProductsQuery,
+  useApproveProductMutation,
+  useRejectProductMutation,
+  useDeleteProductMutation,
+  
+  // Orders
+  useGetAdminOrderStatsQuery,
+  useGetAllOrdersQuery,
+  useGetOrderByIdQuery,
+  useUpdateOrderStatusMutation,
+  useUpdateOrderToDeliveredMutation,
+  useDeleteOrderMutation,
+  
+  // Categories
   useGetAllTypesCategoryQuery,
   useGetOneCategoryQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
-  useDeleteMainSubCategoryMutation,
-  useDeleteSubCategoryMutation,
-  useGetVendorsQuery,
-  useAcceptVendorMutation,
-  useDeleteVendorMutation,
-  useGetAllOrdersQuery,
-  useGetOrderByIdQuery,
-  useUpdateOrderStatusMutation,
-  useDeleteOrderMutation,
-  useGetAllProductsQuery,
-  useGetProductByIdQuery,
-  useApproveProductMutation,
-  useRejectProductMutation,
-  useDeleteProductMutation,
+  useAddHeaderCategoryMutation,
+  
 } = adminApi; 

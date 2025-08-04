@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ProductsComp from '../../components/Admin/Product/ProductsComp';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import AdminProtected from '../../components/Admin/AdminProtected';
+import ProductsComp from '../../components/Admin/Product/ProductsComp';
 
 function AdminProductsPage() {
   const [loaded, setLoaded] = useState(false);

@@ -1,7 +1,9 @@
 import asyncHandler from 'express-async-handler';
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import Vendor from '../models/Vendor.js';
 import Coupon from '../models/Coupon.js';
 import userHelpers from '../helpers/userHelpers.js';
 
@@ -273,6 +275,86 @@ const getMyOrders = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Get order statistics (Admin)
+// @route   GET /api/orders/admin-stats
+// @access  Private/Admin
+const getAdminOrderStats = asyncHandler(async (req, res) => {
+  try {
+    // Get total counts for each status
+    const statusCounts = await Order.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get payment method counts
+    const paymentCounts = await Order.aggregate([
+      {
+        $group: {
+          _id: '$paymentMethod',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get total orders
+    const totalOrders = await Order.countDocuments();
+
+    // Get orders by date (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentOrders = await Order.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
+
+    // Format status counts
+    const formattedStatusCounts = {
+      all: totalOrders,
+      pending: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+      returned: 0,
+      refunded: 0
+    };
+
+    statusCounts.forEach(item => {
+      if (item._id && formattedStatusCounts.hasOwnProperty(item._id.toLowerCase())) {
+        formattedStatusCounts[item._id.toLowerCase()] = item.count;
+      }
+    });
+
+    // Format payment counts
+    const formattedPaymentCounts = {};
+    paymentCounts.forEach(item => {
+      if (item._id) {
+        formattedPaymentCounts[item._id.toLowerCase()] = item.count;
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        statusCounts: formattedStatusCounts,
+        paymentCounts: formattedPaymentCounts,
+        totalOrders,
+        recentOrders
+      }
+    });
+  } catch (error) {
+    console.error('Get order stats error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch order statistics',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
 // @desc    Get all orders (Admin)
 // @route   GET /api/orders
 // @access  Private/Admin
@@ -281,7 +363,7 @@ const getOrders = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
-    const { status, search, startDate, endDate, paymentStatus } = req.query;
+    const { status, search, startDate, endDate, paymentStatus, vendor } = req.query;
 
     // Build filter
     const filter = {};
@@ -311,9 +393,53 @@ const getOrders = asyncHandler(async (req, res) => {
       };
     }
 
+    // Vendor filtering - if vendor filter is specified
+    if (vendor && vendor !== 'all') {
+      try {
+        // Try to find vendor by name or ID
+        let vendorDoc;
+        if (mongoose.Types.ObjectId.isValid(vendor)) {
+          // If vendor is a valid ObjectId, search by ID
+          vendorDoc = await Vendor.findById(vendor);
+        } else {
+          // If vendor is a name, search by name or business name
+          vendorDoc = await Vendor.findOne({
+            $or: [
+              { name: { $regex: vendor, $options: 'i' } },
+              { businessName: { $regex: vendor, $options: 'i' } }
+            ]
+          });
+        }
+
+        if (vendorDoc) {
+          // Find products by this vendor
+          const vendorProductIds = await Product.find({ vendorId: vendorDoc._id }).distinct('_id');
+          if (vendorProductIds.length > 0) {
+            filter['orderItems.productId'] = { $in: vendorProductIds };
+          } else {
+            // If vendor has no products, return empty result
+            filter._id = { $in: [] };
+          }
+        } else {
+          // If vendor not found, return empty result
+          filter._id = { $in: [] };
+        }
+      } catch (error) {
+        console.error('Vendor filter error:', error);
+        // If there's an error, ignore vendor filter
+      }
+    }
+
     const orders = await Order.find(filter)
       .populate('user', 'firstName lastName email number')
-      .populate('orderItems.productId', 'name price category vendorId')
+      .populate({
+        path: 'orderItems.productId',
+        select: 'name price category vendorId',
+        populate: {
+          path: 'vendorId',
+          select: 'name businessName'
+        }
+      })
       .populate('couponCode', 'code discount type')
       .sort('-createdAt')
       .skip(skip)
@@ -321,9 +447,37 @@ const getOrders = asyncHandler(async (req, res) => {
 
     const total = await Order.countDocuments(filter);
 
+    // Transform orders to match frontend expectations (legacy format)
+    const transformedOrders = orders.map(order => {
+      // Get vendor info from order items
+      const vendorInfo = order.orderItems.find(item => 
+        item.productId?.vendorId
+      )?.productId?.vendorId;
+
+      return {
+        _id: order._id,
+        secretOrderId: order._id.toString(),
+        userId: order.user._id,
+        customer: `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || order.user.email,
+        vendorName: vendorInfo?.businessName || vendorInfo?.name,
+        vendor: vendorInfo?.businessName || vendorInfo?.name,
+        price: order.totalPrice,
+        date: order.createdAt,
+        payType: order.paymentMethod,
+        payStatus: order.isPaid ? 'paid' : 'pending',
+        OrderStatus: order.status,
+        OrderId: order._id.toString().slice(-8), // Last 8 characters as order ID
+        // Additional fields that might be needed
+        items: order.orderItems,
+        shippingAddress: order.shippingAddress,
+        isDelivered: order.isDelivered,
+        deliveredAt: order.deliveredAt
+      };
+    });
+
     res.json({
       success: true,
-      data: orders,
+      data: transformedOrders,
       pagination: {
         page,
         limit,
@@ -332,7 +486,12 @@ const getOrders = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Get orders error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch orders',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -877,6 +1036,7 @@ export {
   cancelOrder,
   updateOrderStatus,
   getOrderStats,
+  getAdminOrderStats,
   getVendorOrders,
   getVendorOrderById,
   updateVendorOrderStatus,

@@ -35,6 +35,20 @@ export const getProducts = asyncHandler(async (req, res) => {
       filter.status = 'active';
     }
 
+    // Admin approval filter - Only show approved products on public website
+    // For vendor products, they must be approved by admin
+    filter.$and = [
+      {
+        $or: [
+          { vendor: { $ne: true } }, // Non-vendor products (admin created)
+          { 
+            vendor: true,
+            adminApproved: true // Vendor products must be approved
+          }
+        ]
+      }
+    ];
+
     // Search filter
     if (search) {
       filter.$or = [
@@ -199,6 +213,16 @@ export const getProductById = asyncHandler(async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
+      });
+    }
+
+    // Check if product is approved for public access
+    // Vendor products must be approved by admin to be visible
+    if (product.vendor === true && !product.adminApproved) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not available',
+        reason: 'pending_approval'
       });
     }
 

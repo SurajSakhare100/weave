@@ -16,7 +16,7 @@ export default {
     },
 
     checkVendorAccept: async (email) => {
-        const vendor = await Vendor.findOne({ email, accept: true });
+        const vendor = await Vendor.findOne({ email, adminApproved: true });
         return !!vendor;
     },
     
@@ -34,7 +34,7 @@ export default {
     },
 
     getVendorAccepted: (email) => {
-        return Vendor.findOne({ email, accept: true });
+        return Vendor.findOne({ email, adminApproved: true });
     },
 
     getVendor: (id) => {

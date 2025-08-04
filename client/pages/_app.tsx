@@ -57,21 +57,10 @@ function CartHydrator() {
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
   useEffect(() => {
-    console.log('CartHydrator - Effect triggered:', { isAuthenticated, cartItemsLength: cartItems.length });
     
     if (isAuthenticated && cartItems.length === 0) {
-      console.log('CartHydrator - User authenticated and cart empty, fetching cart');
-      // Fetch cart when user is authenticated and cart is empty
-      dispatch(fetchCart()).catch((error) => {
-        console.error('CartHydrator - Failed to fetch cart on app init:', error);
-      });
-    } else {
-      console.log('CartHydrator - Skipping cart fetch:', { 
-        isAuthenticated, 
-        cartItemsLength: cartItems.length,
-        reason: !isAuthenticated ? 'not authenticated' : 'cart not empty'
-      });
-    }
+        dispatch(fetchCart() as any);
+    } 
   }, [dispatch, isAuthenticated, cartItems.length]);
   
   return null;
@@ -103,7 +92,23 @@ export default function App({ Component, pageProps }: AppProps) {
           <UserHydrator />
           <CartHydrator />
           <StyleManager />
-          <Toaster richColors position="top-right" />
+          <Toaster 
+            richColors 
+            position="top-right"
+            closeButton
+            duration={4000}
+            expand={true}
+            // maxToasts={5}
+            toastOptions={{
+              style: {
+                fontSize: '14px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                maxWidth: '400px',
+              },
+              className: 'mobile-friendly-toast',
+            }}
+          />
           <Component {...pageProps} />
         </PersistGate>
       </Provider>

@@ -3,13 +3,6 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { RootState } from '../store/store';
 import { getVendorToken } from '../utils/vendorAuth';
-import { debugAuth } from '../utils/debugAuth';
-
-/**
- * useRequireVendorAuth
- * Redirects to /vendor/login if vendor is not authenticated (Redux or cookie).
- * Returns isAuthenticated (boolean) for conditional rendering.
- */
 export function useRequireVendorAuth(redirect = true) {
   const { isAuthenticated: reduxAuthenticated } = useSelector((state: RootState) => state.vendor);
   const router = useRouter();
@@ -20,7 +13,6 @@ export function useRequireVendorAuth(redirect = true) {
   const loggedIn = reduxAuthenticated || !!token;
 
   useEffect(() => {
-    debugAuth();
     setIsInitialized(true);
   }, [reduxAuthenticated, token, loggedIn]);
 

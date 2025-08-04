@@ -219,25 +219,25 @@ const CartPage = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-white py-12">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8">
+      <div className="min-h-screen bg-white py-6 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
               { label: 'Cart', isCurrent: true }
             ]}
-            className="mb-8 text-lg"
+            className="mb-4 sm:mb-8 text-base sm:text-lg"
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Cart Items */}
-            <div className="flex flex-col gap-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Shopping Cart ({items.length} items)</h2>
+            <div className="flex flex-col gap-4 sm:gap-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Shopping Cart ({items.length} items)</h2>
                 {items.length > 0 && (
                   <Button
                     variant="outline"
                     onClick={handleClearCart}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 w-fit"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Clear Cart
@@ -255,45 +255,45 @@ const CartPage = () => {
               ))}
             </div>
             {/* Enhanced Order Summary */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Summary Card */}
-              <div className="bg-[#fff9f5] rounded-xl p-6 mb-2 relative">
-                <div className="flex items-center gap-3 mb-2">
+              <div className="bg-[#fff9f5] rounded-xl p-4 sm:p-6 mb-2 relative">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                   <div className="w-8 h-8 bg-[#6c4323] text-white rounded flex items-center justify-center font-bold text-xl">🧾</div>
-                  <span className="text-[#6c4323] font-bold text-lg">To Pay</span>
-                  <span className="text-[#6c4323] line-through text-lg">₹ {(itemTotal + discount).toLocaleString()}</span>
-                  <span className="text-[#6c4323] font-bold text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                  <span className="text-[#6c4323] font-bold text-base sm:text-lg">To Pay</span>
+                  <span className="text-[#6c4323] line-through text-sm sm:text-lg">₹ {(itemTotal + discount).toLocaleString()}</span>
+                  <span className="text-[#6c4323] font-bold text-base sm:text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
                   <button
-                    className="absolute top-6 right-6 p-1 bg-transparent border-none outline-none cursor-pointer"
+                    className="absolute top-4 sm:top-6 right-4 sm:right-6 p-1 bg-transparent border-none outline-none cursor-pointer"
                     onClick={() => setSummaryOpen((open) => !open)}
                     aria-label="Toggle summary details"
                   >
                     {summaryOpen ? (
-                      <ChevronUp className="h-7 w-7 text-[#8b7355] transition-transform duration-200" />
+                      <ChevronUp className="h-6 w-6 sm:h-7 sm:w-7 text-[#8b7355] transition-transform duration-200" />
                     ) : (
-                      <ChevronDown className="h-7 w-7 text-[#8b7355] transition-transform duration-200" />
+                      <ChevronDown className="h-6 w-6 sm:h-7 sm:w-7 text-[#8b7355] transition-transform duration-200" />
                     )}
                   </button>
                 </div>
-                <div className="text-[#3ca06b] font-semibold mb-4 text-base">₹ {discount} saved on the total!</div>
+                <div className="text-[#3ca06b] font-semibold mb-4 text-sm sm:text-base">₹ {discount} saved on the total!</div>
                 {summaryOpen && (
                   <div className="divide-y divide-[#f5e7df]">
-                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                    <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Item Total</span>
                       <span className="flex items-center gap-2 font-medium">
-                        <span className="line-through text-[#bcae9e]">₹ {(itemTotal + discount).toLocaleString()}</span>
-                        <span className="text-[#6c4323] font-bold">₹ {itemTotal.toLocaleString()}</span>
+                        <span className="line-through text-[#bcae9e] text-xs sm:text-sm">₹ {(itemTotal + discount).toLocaleString()}</span>
+                        <span className="text-[#6c4323] font-bold text-sm sm:text-base">₹ {itemTotal.toLocaleString()}</span>
                       </span>
                     </div>
-                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                    <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Delivery fee</span>
                       <span className="text-[#6c4323] font-bold">₹ {deliveryFee}</span>
                     </div>
-                    <div className="flex justify-between py-4 text-[#8b7355] text-base items-center">
+                    <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Cash/Pay on Delivery fee</span>
                       <span className="text-[#6c4323] font-bold">₹ 10</span>
                     </div>
-                    <div className="flex justify-between py-4 font-bold text-[#6c4323] text-lg items-center">
+                    <div className="flex justify-between py-3 sm:py-4 font-bold text-[#6c4323] text-base sm:text-lg items-center">
                       <span>Order Total</span>
                       <span>₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
                     </div>
@@ -302,10 +302,10 @@ const CartPage = () => {
               </div>
               
               {/* Checkout Button */}
-              <div className="w-fit mt-6">
+              <div className="w-full mt-4 sm:mt-6">
                 <Button
                   onClick={() => router.push('/checkout/address')}
-                  className="w-full bg-bg-button  text-white py-3 px-10 text-lg font-semibold"
+                  className="w-full bg-bg-button text-white py-3 px-6 sm:px-10 text-base sm:text-lg font-semibold"
                 >
                   Continue to checkout
                 </Button>

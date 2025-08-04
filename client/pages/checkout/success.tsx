@@ -45,31 +45,29 @@ export default function CheckoutSuccessPage() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sm:p-8 max-w-md w-full text-center">
           {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-white" />
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-600 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
             </div>
           </div>
 
           {/* Heading */}
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
             Congratulations!
           </h1>
 
           {/* Message */}
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <p className="text-gray-600 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
             Your order has been placed successfully!
           </p>
-
-       
 
           {/* Continue Shopping Button */}
           <Button
             onClick={handleContinueShopping}
-            className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white py-3 px-6 rounded-lg font-semibold"
+            className="w-full bg-[#cf1a53] hover:bg-[#cf1a53]/90 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base"
           >
             Continue shopping
           </Button>

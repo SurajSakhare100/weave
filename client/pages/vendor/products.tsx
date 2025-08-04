@@ -57,7 +57,7 @@ export default function VendorProductsPage() {
       
       const response = await getVendorProducts(params);
       
-      // Transform the backend response to match frontend expectations
+      // Backend now returns the correct structure
       const transformedData = {
         items: response.data || [],
         page: response.pagination?.page || 1,
@@ -88,8 +88,17 @@ export default function VendorProductsPage() {
 
 
 
-  const handleDeleteProduct = (product: Product) => {
-    deleteProduct(product._id)
+  const handleDeleteProduct = async (product: Product) => {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      try {
+        await deleteVendorProduct(product._id);
+        toast.success('Product deleted successfully');
+        loadProducts(products?.page || 1);
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Failed to delete product';
+        toast.error(errorMessage);
+      }
+    }
   };
 
   const handleModalSuccess = () => {
@@ -108,33 +117,17 @@ export default function VendorProductsPage() {
   const totalPages = products?.pages || 1;
   const totalProducts = products?.total || 0;
 
-  // Filter products based on status
-  const filteredProducts = productsList.filter(product => {
-    if (filterStatus === 'all') return true;
-    
-    switch (filterStatus) {
-      case 'active':
-        return product.available === 'true';
-      case 'inactive':
-        return product.available === 'false';
-      case 'draft':
-        return product.available === 'draft';
-      case 'pending':
-        return !product.adminApproved && !product.adminRejectionReason;
-      case 'approved':
-        return product.adminApproved;
-      case 'rejected':
-        return !product.adminApproved && product.adminRejectionReason;
-      default:
-        return true;
-    }
-  });
+  // Backend now handles filtering, so we don't need client-side filtering
+  const filteredProducts = productsList;
 
-  const getImageUrl = (images: { url: string; is_primary?: boolean }[] = []) => {
-    if (Array.isArray(images) && images.length > 0) {
-      const primary = images.find(img => img.is_primary && img.url);
-      if (primary && primary.url) return primary.url;
-      if (images[0].url) return images[0].url;
+  const getImageUrl = (product: any) => {
+    // Backend now provides primaryImage field
+    if (product.primaryImage) {
+      return product.primaryImage;
+    }
+    // Fallback to images array
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images[0];
     }
     return '/products/product.png';
   };
@@ -256,7 +249,7 @@ export default function VendorProductsPage() {
                     <div key={product._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative">
                         <Image
-                          src={getImageUrl(product.images)}
+                          src={getImageUrl(product)}
                           alt={product.name}
                           width={400}
                           height={192}
@@ -264,11 +257,11 @@ export default function VendorProductsPage() {
                         />
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            product.available === 'true' 
+                            product.available === true || product.available === 'true'
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {product.available === 'true' ? 'Active' : 'Inactive'}
+                            {product.available === true || product.available === 'true' ? 'Active' : 'Inactive'}
                           </span>
                         </div>
                         {/* Approval Status Badge */}
@@ -365,7 +358,7 @@ export default function VendorProductsPage() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <Image
-                                  src={getImageUrl(product.images)}
+                                  src={getImageUrl(product)}
                                   alt={product.name}
                                   width={80}
                                   height={80}
@@ -388,11 +381,11 @@ export default function VendorProductsPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                product.available === 'true' 
+                                product.available === true || product.available === 'true'
                                   ? 'bg-green-100 text-green-800' 
                                   : 'bg-red-100 text-red-800'
                               }`}>
-                                {product.available === 'true' ? 'Active' : 'Inactive'}
+                                {product.available === true || product.available === 'true' ? 'Active' : 'Inactive'}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

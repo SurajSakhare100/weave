@@ -5,11 +5,11 @@ import Wishlist from '../models/Wishlist.js';
 import Review from '../models/Review.js';
 import generateToken, { generateUserToken, generateVendorToken, generateAdminToken } from '../utils/generateToken.js';
 import asyncHandler from 'express-async-handler';
-import { sendEmail } from '../utils/emailService.js';
+import { sendTemplateEmail } from '../utils/emailService.js';
 import crypto from 'crypto';
 import Vendor from '../models/Vendor.js';
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js'; // Added missing import for Admin
+import Admin from '../models/Admin.js'; // Added missing import fo  r Admin
 
 // Generate refresh token
 const generateRefreshToken = (userId, userType = 'user') => {
@@ -146,15 +146,17 @@ const loginVendor = asyncHandler(async (req, res) => {
         name: vendor.name,
         email: vendor.email,
         number: vendor.number,
-        accept: vendor.accept,
+        businessName: vendor.businessName,
+        address: vendor.address,
+        city: vendor.city,
+        state: vendor.state,
+        pinCode: vendor.pinCode,
         adminApproved: vendor.adminApproved,
+        adminApprovedAt: vendor.adminApprovedAt,
+        adminApprovedBy: vendor.adminApprovedBy,
         adminRejectionReason: vendor.adminRejectionReason,
-        bankAccOwner: vendor.bankAccOwner,
-        bankName: vendor.bankName,
-        bankAccNumber: vendor.bankAccNumber,
-        bankIFSC: vendor.bankIFSC,
-        bankBranchName: vendor.bankBranchName,
-        bankBranchNumber: vendor.bankBranchNumber,
+        adminApprovalFeedback: vendor.adminApprovalFeedback,
+        status: vendor.status,
         createdAt: vendor.createdAt
       }
     });
@@ -173,12 +175,11 @@ const registerVendor = asyncHandler(async (req, res) => {
     email,
     password,
     number,
-    bankAccOwner,
-    bankName,
-    bankAccNumber,
-    bankIFSC,
-    bankBranchName,
-    bankBranchNumber
+    businessName,
+    address,
+    city,
+    state,
+    pinCode
   } = req.body;
 
   const vendorExists = await Vendor.findOne({ email });
@@ -193,14 +194,13 @@ const registerVendor = asyncHandler(async (req, res) => {
     email,
     password,
     number,
-    bankAccOwner,
-    bankName,
-    bankAccNumber,
-    bankIFSC,
-    bankBranchName,
-    bankBranchNumber,
-    accept: false, // Don't auto-approve vendors
-    adminApproved: false // Require admin approval
+    businessName,
+    address,
+    city,
+    state,
+    pinCode,
+    adminApproved: false, // Require admin approval
+    status: 'pending'
   });
 
   if (vendor) {
@@ -213,15 +213,13 @@ const registerVendor = asyncHandler(async (req, res) => {
         name: vendor.name,
         email: vendor.email,
         number: vendor.number,
-        accept: vendor.accept,
+        businessName: vendor.businessName,
+        address: vendor.address,
+        city: vendor.city,
+        state: vendor.state,
+        pinCode: vendor.pinCode,
         adminApproved: vendor.adminApproved,
-        adminRejectionReason: vendor.adminRejectionReason,
-        bankAccOwner: vendor.bankAccOwner,
-        bankName: vendor.bankName,
-        bankAccNumber: vendor.bankAccNumber,
-        bankIFSC: vendor.bankIFSC,
-        bankBranchName: vendor.bankBranchName,
-        bankBranchNumber: vendor.bankBranchNumber,
+        status: vendor.status,
         createdAt: vendor.createdAt
       }
     });
@@ -380,15 +378,15 @@ const forgotPassword = async (req, res) => {
 
   // Send reset email
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-  await sendEmail({
-    to: user.email,
-    subject: 'Reset your password',
-    template: 'passwordReset',
-    data: {
+  try {
+    await sendTemplateEmail('passwordReset', {
       name: user.firstName,
       resetUrl
-    }
-  });
+    }, user.email);
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    // Don't fail the request if email fails
+  }
 
   res.json({
     success: true,
@@ -480,15 +478,15 @@ const resendVerification = async (req, res) => {
 
   // Send verification email
   const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-  await sendEmail({
-    to: user.email,
-    subject: 'Verify your email address',
-    template: 'emailVerification',
-    data: {
+  try {
+    await sendTemplateEmail('emailVerification', {
       name: user.firstName,
       verificationUrl
-    }
-  });
+    }, user.email);
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    // Don't fail the request if email fails
+  }
 
   res.json({
     success: true,

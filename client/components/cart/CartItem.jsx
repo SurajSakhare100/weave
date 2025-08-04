@@ -44,53 +44,95 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
   };
 
   return (
-    <div className={`flex items-center rounded-2xl border-2 border-[#FFF6EF] gap-8 overflow-hidden ${isUpdating ? 'opacity-50' : ''}`}>
-      <div className="flex-shrink-0 flex items-center aspect-square justify-center bg-[#FFF6EF] h-full p-4" >
-        <Image 
-          src={productImage} 
-          alt={productName} 
-          width={120} 
-          height={120} 
-          className=" rounded-md object-contain"
-          onError={(e) => {
-            e.target.src = '/products/product.png';
-          }}
-        />
+    <div className={`flex flex-col sm:flex-row items-stretch sm:items-center rounded-xl sm:rounded-2xl border-2 border-[#FFF6EF] gap-4 sm:gap-6 lg:gap-8 overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 ${isUpdating ? 'opacity-50' : ''}`}>
+      {/* Product Image */}
+      <div className="flex-shrink-0 flex items-center justify-center bg-[#FFF6EF] p-3 sm:p-4 w-full sm:w-auto">
+        <div className="relative aspect-square w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
+          <Image 
+            src={productImage} 
+            alt={productName} 
+            fill
+            className="rounded-lg object-cover"
+            onError={(e) => {
+              e.target.src = '/products/product.png';
+            }}
+          />
+        </div>
       </div>
-      <div className="flex items-center justify-between gap-4 p-4 w-full">
-      <div className="">
-        <h3 className="font-bold text-lg ">{productName}</h3>
-        <p className="text-md font-bold ">₹ {item.price.toLocaleString('en-IN')}</p>
-        <p className="text-sm">Size: {productSize}</p>
-        <p className="text-sm">Color: {productColor}</p>
-      </div>
-      <div className="flex items-center border border-[#E75480] rounded-md px-4 py-1 gap-3">
-        {item.quantity > 1 ? (
-          <button 
-            onClick={() => handleQuantityChange(item.quantity - 1)}
-            className="text-[#E75480] hover:text-pink-600 disabled:opacity-50"
-            disabled={isUpdating}
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-        ) : (
-          <button 
-            onClick={handleRemove}
-            className="text-[#E75480] hover:text-pink-600 disabled:opacity-50"
-            disabled={isUpdating}
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
-        )}
-        <span className="text-[#E75480] font-semibold text-lg">{item.quantity}</span>
-        <button 
-          onClick={() => handleQuantityChange(item.quantity + 1)}
-          className="text-[#E75480] hover:text-pink-600 disabled:opacity-50"
-          disabled={isUpdating}
-        >
-          <Plus className="h-5 w-5" />
-        </button>
-      </div>
+
+      {/* Product Details */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 w-full">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-base sm:text-lg lg:text-xl text-gray-900 line-clamp-2 mb-1 sm:mb-2">
+            {productName}
+          </h3>
+          <p className="text-lg sm:text-xl font-bold text-[#E75480] mb-2">
+            ₹{item.price.toLocaleString('en-IN')}
+          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <span className="font-medium">Size:</span>
+              <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+                {productSize}
+              </span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="font-medium">Color:</span>
+              <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+                {productColor}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Quantity Controls */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+          {/* Quantity Controls */}
+          <div className="flex items-center border border-[#E75480] rounded-lg px-2 sm:px-3 py-1 sm:py-2 gap-2 sm:gap-3 bg-white">
+            {item.quantity > 1 ? (
+              <button 
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+                disabled={isUpdating}
+                aria-label="Decrease quantity"
+              >
+                <Minus className="h-4 w-4 sm:h-5 sm:w-5" />
+              </button>
+            ) : (
+              <button 
+                onClick={handleRemove}
+                className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+                disabled={isUpdating}
+                aria-label="Remove item"
+              >
+                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              </button>
+            )}
+            <span className="text-[#E75480] font-semibold text-base sm:text-lg min-w-[24px] text-center">
+              {item.quantity}
+            </span>
+            <button 
+              onClick={() => handleQuantityChange(item.quantity + 1)}
+              className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+              disabled={isUpdating}
+              aria-label="Increase quantity"
+            >
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          </div>
+
+          {/* Remove Button for Mobile */}
+          <div className="sm:hidden">
+            <button 
+              onClick={handleRemove}
+              className="text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors p-2 rounded-lg border border-red-200 hover:bg-red-50 min-w-[40px] min-h-[40px] flex items-center justify-center"
+              disabled={isUpdating}
+              aria-label="Remove item"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

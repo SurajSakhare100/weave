@@ -12,23 +12,29 @@ const VendorSchema = new mongoose.Schema({
   },
   password: { type: String, required: true },
   number: { type: String },
-  accept: { type: Boolean, default: false },
+  
   // Admin approval fields
   adminApproved: { type: Boolean, default: false },
   adminApprovedAt: { type: Date },
   adminApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
   adminRejectionReason: { type: String, trim: true },
+  adminApprovalFeedback: { type: String, trim: true },
+  status: { 
+    type: String, 
+    enum: ['pending', 'approved', 'rejected', 'deleted'], 
+    default: 'pending' 
+  },
+  
   // Business details
   businessName: { type: String, trim: true },
-  businessAddress: { type: String, trim: true },
-  gstin: { type: String, trim: true },
-  pan: { type: String, trim: true },
-  bankAccOwner: String,
-  bankName: String,
-  bankAccNumber: String,
-  bankIFSC: String,
-  bankBranchName: String,
-  bankBranchNumber: String,
+  
+  // Address information
+  address: { type: String, trim: true },
+  city: { type: String, trim: true },
+  state: { type: String, trim: true },
+  pinCode: { type: String, trim: true },
+  
+  // Note: Bank details removed since payments are handled offline
 }, { timestamps: true });
 
 VendorSchema.pre('save', async function (next) {
