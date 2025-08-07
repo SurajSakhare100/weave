@@ -23,7 +23,13 @@ import {
   deleteCoupon,
   getLayouts,
   updateLayout,
-  getVendorStats
+  getVendorStats,
+  getCustomers,
+  getCustomerById,
+  deleteCustomer,
+  updateCustomer,
+  getCustomerOrders,
+  getCustomerOrdersById
 } from '../controllers/adminController.js';
 import { protectAdmin } from '../middleware/auth.js';
 import { validatePagination } from '../middleware/validation.js';
@@ -76,5 +82,17 @@ router.put('/layouts/:id', updateLayout);
 
 // Vendor statistics
 router.get('/vendors/stats', getVendorStats);
+
+// Customer management routes
+router.get('/customers', validatePagination, getCustomers);
+router.get('/customers/:id', getCustomerById);
+router.delete('/customers/:id', deleteCustomer);
+router.put('/customers/:id', updateCustomer);
+router.get('/customers/:id/orders', getCustomerOrders);
+router.get('/customers/orders/:orderId', getCustomerOrdersById);
+
+
+
+
 
 export default router; 

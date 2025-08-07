@@ -127,3 +127,26 @@ export const calculatePagination = (total: number, currentPage: number, limit: n
     endIndex: Math.min(currentPage * limit, total)
   };
 }; 
+
+// Utility for admin badge class based on order status
+export const getOrderBadgeClass = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'delivered':
+      return 'admin-badge admin-badge-success';
+    case 'pending':
+      return 'admin-badge admin-badge-warning';
+    case 'cancelled':
+      return 'admin-badge admin-badge-danger';
+    case 'processing':
+      return 'admin-badge admin-badge-info';
+    case 'shipped':
+      return 'admin-badge admin-badge-info';
+    case 'returned':
+    case 'return':
+      return 'admin-badge admin-badge-info';
+    case 'refunded':
+      return 'admin-badge admin-badge-info';
+    default:
+      return 'admin-badge admin-badge-info';
+  }
+}; 

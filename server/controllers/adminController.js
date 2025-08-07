@@ -5,6 +5,9 @@ import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Coupon from '../models/Coupon.js';
 import Vendor from '../models/Vendor.js';
+import User from '../models/User.js';
+import Order from '../models/Order.js';
+import mongoose from 'mongoose';
 
 // Get pending vendors for approval
 export const getPendingVendors = asyncHandler(async (req, res) => {
@@ -869,4 +872,113 @@ export const getVendorStats = asyncHandler(async (req, res) => {
     res.status(500);
     throw new Error('Failed to get vendor stats');
   }
+}); 
+
+
+// ==================== CUSTOMER MANAGEMENT ====================
+
+// Get all customers
+export const getCustomers = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, search = '', sort = 'createdAt', order = 'desc' } = req.query;
+  const limitNum = parseInt(limit);
+  const skip = (page - 1) * limitNum;
+
+  let query = {};
+
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { phone: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const customers = await User.find(query)
+    .sort({ [sort]: order === 'asc' ? 1 : -1 })
+    .skip(skip)
+    .limit(limitNum)
+    .select('firstName lastName email number address city state zip country createdAt');
+  
+
+  const total = await User.countDocuments(query);
+  
+  res.json({
+    success: true,
+    data: {
+      customers,
+      total,
+      page,
+      limit
+    }
+  });
+}); 
+
+// Get customer by ID
+
+export const getCustomerById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const customer = await User.findById(id);
+  res.json({
+    success: true,
+    data: customer
+  });
+}); 
+
+// Delete customer
+export const deleteCustomer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await User.findByIdAndDelete(id);
+  res.json({
+    success: true,
+    message: 'Customer deleted successfully'
+  });
+}); 
+
+// Update customer
+export const updateCustomer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const customer = await User.findByIdAndUpdate(id, updateData, { new: true });
+  res.json({
+    success: true,
+    message: 'Customer updated successfully',
+    data: customer
+  });
+}); 
+
+// Get customer orders
+export const getCustomerOrders = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const orders = await Order.find({ user: id }).populate('orderItems.productId').populate('user', 'firstName lastName email number');
+  const total = await Order.countDocuments({ user: id });
+
+  res.json({
+    success: true,
+    data: {
+      orders: orders || [],
+      total: total || 0
+    }
+  });
+}); 
+
+// Get customer orders
+export const getCustomerOrdersById = asyncHandler(async (req, res) => {
+  const {orderId } = req.params;
+  const id=orderId;
+ 
+
+  const orders = await Order.findById(id)
+  const total = await Order.countDocuments({ user: id });
+  
+  await orders.populate('orderItems.productId');
+  await orders.populate('user', 'firstName lastName email number');
+  
+
+  res.json({
+    success: true,
+    data: {
+      orders: orders || [],
+      total: total || 0
+    }
+  });
 }); 

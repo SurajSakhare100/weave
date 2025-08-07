@@ -7,7 +7,7 @@ export const adminApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
     credentials: 'include',
   }),
-  tagTypes: ['Category', 'Vendor', 'Product', 'ProductStats', 'Order', 'OrderStats', 'Dashboard', 'Coupon'],
+  tagTypes: ['Category', 'Vendor', 'Product', 'ProductStats', 'Order', 'OrderStats', 'Dashboard', 'Coupon', 'Customer'],
   endpoints: (builder) => ({
     // ==================== DASHBOARD ENDPOINTS ====================
     getDashboardStats: builder.query({
@@ -477,14 +477,158 @@ export const adminApi = createApi({
     }),
 
 
+    getCustomers: builder.query({
+      query: () => '/admin/customers',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { customers: [] };
+      },
+      providesTags: ['Customer'],
+    }),
 
+    getCustomerById: builder.query({
+      query: (id) => `/admin/customers/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, id) => [{ type: 'Customer', id }],
+    }),
+
+    deleteCustomer: builder.mutation({
+      query: (id) => ({
+        url: `/admin/customers/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Customer'],
+    }),
     
+      updateCustomer: builder.mutation({
+        query: ({ id, customerData }) => ({
+          url: `/admin/customers/${id}`,
+          method: 'PUT',
+          body: customerData,
+        }),
+        invalidatesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+      }),
 
+      getCustomerOrdersById: builder.query({
+      query: (orderId) => `/admin/customers/orders/${orderId}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data.orders;
+        }
+        return { orders: {}, total: 0 };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerOrders: builder.query({
+      query: (id,) => `/admin/customers/${id}/orders`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { orders: [], total: 0 };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+
+    getCustomerProducts: builder.query({
+      query: (id) => `/admin/customers/${id}/products`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { products: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+
+    getCustomerStats: builder.query({
+      query: () => '/admin/customers/stats',
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { customers: [] };
+      },
+      providesTags: ['Customer'],
+    }),
+
+    getCustomerCoupons: builder.query({
+      query: (id) => `/admin/customers/${id}/coupons`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { coupons: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerAddresses: builder.query({
+      query: (id) => `/admin/customers/${id}/addresses`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { addresses: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerReviews: builder.query({
+      query: (id) => `/admin/customers/${id}/reviews`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { reviews: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerWishlist: builder.query({
+      query: (id) => `/admin/customers/${id}/wishlist`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { wishlist: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerCart: builder.query({
+      query: (id) => `/admin/customers/${id}/cart`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { cart: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
+    getCustomerAddress: builder.query({
+      query: (id) => `/admin/customers/${id}/address`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return { addresses: [] };
+      },
+      providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
+    }),
     
 
   
   }),
 });
+
+
+
+
+
 
 // Export all hooks
 export const {
@@ -528,5 +672,21 @@ export const {
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
   useAddHeaderCategoryMutation,
-  
+
+  // Customers
+  useGetCustomersQuery,
+  useGetCustomerByIdQuery,
+  useDeleteCustomerMutation,
+  useUpdateCustomerMutation,
+  // Removed invalid hooks: useGetAllCustomerOrdersQuery, useGetCustomerOrdersQuery
+  useGetCustomerProductsQuery,
+  useGetCustomerStatsQuery,
+  useGetCustomerCouponsQuery,
+  useGetCustomerAddressesQuery,
+  useGetCustomerReviewsQuery,
+  useGetCustomerWishlistQuery,
+  useGetCustomerCartQuery,
+  useGetCustomerAddressQuery,
+  useGetCustomerOrdersByIdQuery,
+  useGetCustomerOrdersQuery,
 } = adminApi; 
