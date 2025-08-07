@@ -78,28 +78,33 @@ export default function CustomerComp() {
                                 </td>
                             </tr>
                         ) : (
-                            customers?.customers.map((customer) => (
-                                <TableRow key={customer._id} className="hover:bg-gray-100 transition">
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.firstName} {customer.lastName}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.email}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.number}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.address}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.city}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.state}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.zip}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">{customer.country}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap">
-                                        {new Date(customer.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button variant="outline" title="View Details" className='admin-btn admin-btn-primary'>
-                                            <Link href={`/admin/customer/${customer._id}`}>
-                                                <Eye />
-                                            </Link>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                            customers?.customers.map((customer) => {
+                                const address = customer.addressInfo && Array.isArray(customer.addressInfo) && customer.addressInfo.length > 0
+                                    ? customer.addressInfo[0]
+                                    : null;
+                                return (
+                                    <TableRow key={customer._id} className="hover:bg-gray-100 transition">
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{customer.firstName} {customer.lastName}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{customer.email}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{customer.number}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{address ? address.address || '—' : '—'}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{address ? address.city || '—' : '—'}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{address ? address.state || '—' : '—'}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{address ? address.zip || '—' : '—'}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">{address ? address.country || '—' : '—'}</TableCell>
+                                        <TableCell className="px-6 py-4 whitespace-nowrap">
+                                            {new Date(customer.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button variant="outline" title="View Details" className='admin-btn admin-btn-primary'>
+                                                <Link href={`/admin/customer/${customer._id}`}>
+                                                    <Eye />
+                                                </Link>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>

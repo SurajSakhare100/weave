@@ -893,13 +893,29 @@ export const getCustomers = asyncHandler(async (req, res) => {
     ];
   }
 
-  const customers = await User.find(query)
-    .sort({ [sort]: order === 'asc' ? 1 : -1 })
-    .skip(skip)
-    .limit(limitNum)
-    .select('firstName lastName email number address city state zip country createdAt');
-  
-
+  const customers = await User.aggregate([
+    { $sort: { [sort]: order === 'asc' ? 1 : -1 } },
+    { $skip: skip },
+    { $limit: limitNum },
+    {
+      $lookup: {
+        from: 'addresses',
+        localField: '_id',
+        foreignField: 'userId',
+        as: 'addressInfo'
+      }
+    },
+    {
+      $project: {
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        number: 1,
+        createdAt: 1,
+        addressInfo: { $arrayElemAt: ['$addressInfo.saved', 0] }
+      }
+    }
+  ]);
   const total = await User.countDocuments(query);
   
   res.json({
