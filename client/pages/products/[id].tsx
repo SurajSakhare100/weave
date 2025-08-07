@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import { fetchCart } from '../../features/cart/cartSlice';
+import { Button } from '@/components/ui/button'
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -299,7 +300,7 @@ export default function ProductDetailPage() {
               {/* Title + Wishlist */}
               <div className="flex items-start justify-between">
                 <h1 className="text-2xl font-bold text-primary">{product.name}</h1>
-                <button
+                <Button
                   onClick={handleWishlistToggle}
                   className="p-2 rounded-full border hover:bg-gray-100"
                 >
@@ -308,7 +309,7 @@ export default function ProductDetailPage() {
                       inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'
                     }`}
                   />
-                </button>
+                </Button>
               </div>
 
               {/* Description */}

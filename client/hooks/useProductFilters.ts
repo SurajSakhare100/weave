@@ -26,6 +26,12 @@ interface UseProductFiltersReturn {
   handleAvailabilityToggle: () => void;
   handleCategoryClick: (slug: string) => void;
   toggleFilter: (key: string) => void;
+  openSortBottom: boolean;
+  toggleSortBottom: () => void;
+  sortOptions: Array<{
+    label: string;
+    value: string;
+  }>;
 }
 
 const useProductFilters = (): UseProductFiltersReturn => {
@@ -37,15 +43,17 @@ const useProductFilters = (): UseProductFiltersReturn => {
   const defaultMinPrice = router.query.minPrice ? Number(router.query.minPrice) : 0;
   const defaultMaxPrice = router.query.maxPrice ? Number(router.query.maxPrice) : 3000;
 
-  const [filters, setFilters] = useState({
+  const defaultFilters = {
+    sort: 'best-selling', // Add default sort value
     category: (router.query.category as string) || '',
     availability: (router.query.availability as string) || '',
     size: (router.query.size as string) || '',
     colors: (router.query.colors as string) || '',
     minPrice: defaultMinPrice.toString(),
     maxPrice: defaultMaxPrice.toString(),
-    sort: (router.query.sort as string) || '-createdAt'
-  });
+  };
+
+  const [filters, setFilters] = useState(defaultFilters);
 
   const [priceRange, setPriceRange] = useState({
     min: defaultMinPrice,
@@ -59,6 +67,19 @@ const useProductFilters = (): UseProductFiltersReturn => {
     price: false, 
     color: false 
   });
+
+  // Add state for bottom sort drawer
+  const [openSortBottom, setOpenSortBottom] = useState(false);
+
+  // Sort options array
+  const sortOptions = [
+    { label: 'Best Selling', value: 'best-selling' },
+    { label: 'Price, low to high', value: 'price-asc' },
+    { label: 'Price, high to low', value: 'price-desc' },
+    { label: 'Date, old to new', value: 'date-asc' },
+    { label: 'Date, new to old', value: 'date-desc' },
+    { label: 'Discounts', value: 'discount' }
+  ];
 
   const updateQuery = useCallback((newFilters: typeof filters) => {
     const query = { ...newFilters };
@@ -80,6 +101,11 @@ const useProductFilters = (): UseProductFiltersReturn => {
     const newFilters = { ...filters, [name]: value };
     setFilters(newFilters);
     updateQuery(newFilters);
+    
+    // Close sort drawer if sort was changed
+    if (name === 'sort') {
+      setOpenSortBottom(false);
+    }
   }, [filters, updateQuery]);
 
   const handleColorSwatchClick = useCallback((color: string) => {
@@ -148,6 +174,11 @@ const useProductFilters = (): UseProductFiltersReturn => {
     setOpenFilters(f => ({ ...f, [key]: !f[key] }));
   }, []);
 
+  // Toggle function for bottom sort drawer
+  const toggleSortBottom = useCallback(() => {
+    setOpenSortBottom(prev => !prev);
+  }, []);
+
   return {
     filters,
     priceRange,
@@ -162,7 +193,10 @@ const useProductFilters = (): UseProductFiltersReturn => {
     handleAvailabilityToggle,
     handleCategoryClick,
     toggleFilter,
+    openSortBottom,
+    toggleSortBottom,
+    sortOptions,
   };
 };
 
-export default useProductFilters; 
+export default useProductFilters;

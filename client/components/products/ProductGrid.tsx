@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronDown, SlidersHorizontal, AlignLeft } from 'lucide-react';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/index';
@@ -84,33 +84,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      {/* Sort Controls */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
-        <div className="flex items-center gap-2">
-          <span className="text-sm sm:text-base text-gray-600">Sort by:</span>
-          <select 
-            name="sort" 
-            value={filters.sort} 
-            onChange={onFilterChange} 
-            className="block w-full sm:w-48 pl-3 pr-10 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white"
-          >
-            <option value="-createdAt">Newest First</option>
-            <option value="createdAt">Oldest First</option>
-            <option value="price">Price: Low to High</option>
-            <option value="-price">Price: High to Low</option>
-            <option value="discount">Best Discount</option>
-            <option value="-averageRating">Highest Rated</option>
-          </select>
-        </div>
-        
-        <div className="text-sm sm:text-base text-gray-600">
-          Showing {displayedProducts.length} of {products.length} products
-        </div>
-      </div>
+    <div className="w-full max-w-7xl mx-auto pb-16 sm:pb-0"> {/* Added padding bottom for mobile */}
+     
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8">
         {displayedProducts.map((product: Product) => (
           <ProductCard key={product._id} product={product} />
         ))}
@@ -141,16 +119,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         </div>
       )}
 
-      {/* End of Results */}
-      {!hasMore && products.length > 0 && (
-        <div className="text-center py-8 border-t border-gray-200">
-          <p className="text-gray-500 text-sm sm:text-base">
-            You've reached the end of all products
-          </p>
-        </div>
-      )}
+     
     </div>
   );
 };
 
-export default ProductGrid; 
+export default ProductGrid;
