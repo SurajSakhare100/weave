@@ -103,6 +103,16 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
     setEditingReview(null);
   };
 
+
+  if(reviews.length === 0){
+    return (
+      <div className="rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-primary text-center">No reviews yet</h2>
+        <p className="text-gray-500 text-center">Be the first to review this product</p>
+      </div>
+    )
+  }
+
   return (
     <div className=" rounded-xl p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

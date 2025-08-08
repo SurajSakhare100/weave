@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import Image from 'next/image'
 import { addCartItem } from '../../features/cart/cartSlice'
 import { addToWishlist, removeFromWishlist } from '../../features/user/userSlice'
 import { RootState, AppDispatch } from '../../store/store'
@@ -8,7 +9,8 @@ import { getProductById, getSimilarProducts, getFrequentlyBoughtTogether, getCom
 import { 
   AlertCircle,
   Loader2,
-  Clock
+  Clock,
+  X
 } from 'lucide-react'
 import { Product, ProductWithReviews } from '@/types'
 import ProductCard from '@/components/products/ProductCard'
@@ -18,6 +20,8 @@ import { toast } from 'sonner'
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import { fetchCart } from '../../features/cart/cartSlice';
+import Link from 'next/link'
+import ComparisonTable from '@/components/products/ComparisonTable'
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -31,6 +35,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showReviewForm, setShowReviewForm] = useState(false)
+  const [compareProducts, setCompareProducts] = useState<(Product | ProductWithReviews)[]>([])
+  const [showCompareModal, setShowCompareModal] = useState(false)
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
@@ -151,6 +157,60 @@ export default function ProductDetailPage() {
     }
   }
 
+  const handleCompare = () => {
+    if (!product) {
+      toast.error('Product not available');
+      return;
+    }
+    
+    // Add current product to compare list if not already added
+    if (!compareProducts.find(p => p._id === product._id)) {
+      setCompareProducts(prev => [...prev, product]);
+    }
+    
+    setShowCompareModal(true);
+  }
+
+  const handleNextProduct = () => {
+    if (similarProducts.length === 0) {
+      toast.info('No similar products available');
+      return;
+    }
+    
+    const currentIndex = similarProducts.findIndex(p => p._id === product?._id);
+    // If current product is not in similar products, start from beginning
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % similarProducts.length;
+    
+    const nextProduct = similarProducts[nextIndex];
+    if (nextProduct && nextProduct._id) {
+      router.push(`/products/${nextProduct._id}`);
+    } else {
+      toast.error('Unable to navigate to next product');
+    }
+  }
+
+  const handlePreviousProduct = () => {
+    if (similarProducts.length === 0) {
+      toast.info('No similar products available');
+      return;
+    }
+    
+    const currentIndex = similarProducts.findIndex(p => p._id === product?._id);
+    // If current product is not in similar products, start from end
+    const prevIndex = currentIndex === -1 
+      ? similarProducts.length - 1 
+      : currentIndex === 0 
+        ? similarProducts.length - 1 
+        : currentIndex - 1;
+    
+    const prevProduct = similarProducts[prevIndex];
+    if (prevProduct && prevProduct._id) {
+      router.push(`/products/${prevProduct._id}`);
+    } else {
+      toast.error('Unable to navigate to previous product');
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -173,7 +233,7 @@ export default function ProductDetailPage() {
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
+        <div className="text-center  mx-auto px-4">
           {isApprovalIssue ? (
             <>
               <div className={`rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
@@ -249,6 +309,9 @@ export default function ProductDetailPage() {
             inWishlist={inWishlist}
             onWishlistToggle={handleWishlistToggle}
             onAddToCart={handleAddToCart}
+            onCompare={handleCompare}
+            onNext={similarProducts.length > 0 ? handleNextProduct : undefined}
+            onPrevious={similarProducts.length > 0 ? handlePreviousProduct : undefined}
           />
 
           {/* Frequently Bought Together */}
@@ -339,6 +402,76 @@ export default function ProductDetailPage() {
               }}
             />
           </div>
+
+          {/* Compare Modal */}
+          {showCompareModal && (
+            <div className=" fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            
+             {/* overlay */}
+            
+              <div className="bg-white rounded-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-[#5E3A1C]">Compare With Similar Items</h2>
+                    <button
+                      onClick={() => setShowCompareModal(false)}
+                      className="text-gray-500 hover:text-gray-700 text-2xl"
+                    >
+                      <X className="h-8 w-8 text-pink-500" />
+                    </button>
+                  </div>
+
+                  {/* Add Products to Compare */}
+                  {compareProducts.length < 4 && comparableProducts.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium text-[#5E3A1C] mb-4">
+                        Add products to compare ({compareProducts.length}/4)
+                      </h3>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {comparableProducts
+                          .filter(item => !compareProducts.find(p => p._id === item._id))
+                          .slice(0, 4 - compareProducts.length)
+                          .map((item) => (
+                          <div key={item._id} className="border rounded-lg p-3 bg-gray-50">
+                            <div className="relative aspect-square w-full mb-2">
+                              <Image
+                                src={item.images?.[0]?.url || '/products/product.png'}
+                                alt={item.name}
+                                fill
+                                className="object-contain rounded"
+                              />
+                            </div>
+                            <h4 className="text-sm font-medium text-[#5E3A1C] mb-2 line-clamp-2">
+                              {item.name}
+                            </h4>
+                            <button
+                              onClick={() => {
+                                if (compareProducts.length < 4) {
+                                  setCompareProducts(prev => [...prev, item]);
+                                }
+                              }}
+                              className="w-full px-3 py-1 text-sm bg-[#EE346C] text-white rounded hover:bg-[#D62A5A] transition-colors"
+                            >
+                              Add to Compare
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Comparison Table */}
+                  <ComparisonTable
+                    products={compareProducts}
+                    onRemoveProduct={(productId) => {
+                      setCompareProducts(prev => prev.filter(p => p._id !== productId));
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

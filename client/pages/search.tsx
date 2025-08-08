@@ -281,7 +281,7 @@ export default function SearchPage() {
           )}
 
           {/* Initial State - Show trending products */}
-          {!searched && !loading && (
+          {/* {!searched && !loading && (
             <div className="text-center py-8">
               <h2 className="text-2xl font-medium text-[#5E3A1C] mb-8">Trending</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -293,7 +293,7 @@ export default function SearchPage() {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </section>
     </MainLayout>

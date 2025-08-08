@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { Heart, Star } from 'lucide-react';
+import { Heart, Star, Share2, Copy, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { ProductWithReviews } from '@/types';
+import { toast } from 'sonner';
 
 interface ProductDetailsProps {
   product: ProductWithReviews;
   inWishlist: boolean;
   onWishlistToggle: () => void;
   onAddToCart: () => void;
+  onCompare?: () => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({
@@ -15,7 +19,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   inWishlist,
   onWishlistToggle,
   onAddToCart,
+  onCompare,
+  onNext,
+  onPrevious,
 }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const getPrimaryImage = () => {
     if (product.images && product.images.length > 0) {
       const primary = product.images.find(img => img.is_primary);
@@ -33,34 +42,197 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     return Math.round(((product.mrp - product.price) / product.mrp) * 100);
   };
 
+  const getCurrentImage = () => {
+    if (product.images && product.images.length > 0) {
+      return product.images[currentImageIndex]?.url || getPrimaryImage();
+    }
+    return getPrimaryImage();
+  };
+
+  const handlePreviousImage = () => {
+    if (product.images && product.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    }
+  };
+
+  const handleNextImage = () => {
+    if (product.images && product.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+    }
+  };
+
+  const handleShare = () => {
+    setShowShareOptions(!showShareOptions);
+  };
+
+  const handleCopyUrl = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      toast.success('Product URL copied to clipboard!');
+      setShowShareOptions(false);
+    } catch (error) {
+      toast.error('Failed to copy URL');
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out this ${product.name}`,
+          url: window.location.href,
+        });
+        setShowShareOptions(false);
+      } catch (error) {
+        console.log('Share canceled or failed');
+      }
+    } else {
+      handleCopyUrl();
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-12">
       {/* Left: Images */}
       <div className="lg:w-1/2">
         {/* Main Image */}
-        <div className="relative w-full bg-white flex items-center justify-center">
+        <div className="relative w-full h-[500px] bg-[#FFFBF9] flex items-center justify-center rounded-lg overflow-hidden">
           <Image
-            src={getPrimaryImage()}
+            src={getCurrentImage()}
             alt={product.name}
-            width={500}
-            height={500}
-            className="object-contain"
+            fill
+            className="object-contain sm:p-8 p-4 rounded-lg"
           />
+          
+          {/* Top Right Icons */}
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+            {/* Wishlist Icon */}
+            <button
+              onClick={onWishlistToggle}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md  transition-all"
+              title="Add to Wishlist"
+            >
+              <Heart
+                className={`h-5 w-5 ${
+                  inWishlist ? 'fill-[#EE346C] text-[#EE346C]' : 'text-[#5E3A1C]'
+                }`}
+              />
+            </button>
+
+            {/* Share Icon */}
+            <div className="relative">
+              <button
+                onClick={handleShare}
+                className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md  transition-all"
+                title="Share Product"
+              >
+                <Share2 className="h-5 w-5 text-[#5E3A1C]" />
+              </button>
+
+              {/* Share Options Dropdown */}
+              {showShareOptions && (
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-20 min-w-[200px]">
+                  <div className="text-sm font-medium text-[#5E3A1C] mb-2">Share this product</div>
+                  <button
+                    onClick={handleCopyUrl}
+                    className="flex items-center gap-2 w-full p-2 text-left text-sm text-[#5E3A1C] hover:bg-gray-50 rounded transition-colors"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy URL
+                  </button>
+                  <button
+                    onClick={handleNativeShare}
+                    className="flex items-center gap-2 w-full p-2 text-left text-sm text-[#5E3A1C] hover:bg-gray-50 rounded transition-colors"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share via...
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Compare Icon */}
+            {onCompare && (
+              <button
+                onClick={onCompare}
+                className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md  transition-all"
+                title="Compare Products"
+              >
+                <BarChart3 className="h-5 w-5 text-[#5E3A1C]" />
+              </button>
+            )}
+          </div>
+
+          {/* Image Navigation Arrows */}
+          {product.images && product.images.length > 1 && (
+            <>
+              <button
+                onClick={handlePreviousImage}
+                className="absolute bottom-4 right-1/2  transform -translate-y-1/2 bg-secondary backdrop-blur-sm p-2 rounded-full shadow-md  transition-all"
+                title="Previous Image"
+              >
+                <ChevronLeft className="h-5 w-5 text-white" />
+              </button>
+              
+              <button
+                onClick={handleNextImage}
+                className="absolute bottom-4 left-1/2 ml-3 transform -translate-y-1/2 bg-primary backdrop-blur-sm p-2 rounded-full shadow-md  transition-all mr-16"
+                title="Next Image"
+              >
+                <ChevronRight className="h-5 w-5 text-white " />
+              </button>
+            </>
+          )}
+
+          {/* Product Navigation Buttons */}
+          {/* <div className="absolute bottom-4 left-4 flex gap-2">
+            {onPrevious && (
+              <button
+                onClick={onPrevious}
+                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md  transition-all flex items-center gap-2"
+                title="Previous Product"
+              >
+                <ChevronLeft className="h-4 w-4 text-[#5E3A1C]" />
+                <span className="text-sm font-medium text-[#5E3A1C]">Previous</span>
+              </button>
+            )}
+            
+            {onNext && (
+              <button
+                onClick={onNext}
+                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md  transition-all flex items-center gap-2"
+                title="Next Product"
+              >
+                <span className="text-sm font-medium text-[#5E3A1C]">Next</span>
+                <ChevronRight className="h-4 w-4 text-[#5E3A1C]" />
+              </button>
+            )}
+          </div> */}
         </div>
 
         {/* Thumbnails */}
-        {product.images && product.images.length > 0 && (
+        {product.images && product.images.length > 1 && (
           <div className="flex gap-4 mt-4 justify-center">
             {product.images.map((img, idx) => (
-              <div key={img.public_id || idx} className="shrink-0 w-16 h-16 overflow-hidden">
+              <button
+                key={img.public_id || idx}
+                onClick={() => setCurrentImageIndex(idx)}
+                className={`shrink-0 w-16 h-16 overflow-hidden rounded-lg border-2 transition-all ${
+                  currentImageIndex === idx
+                    ? 'border-[#EE346C] ring-2 ring-[#EE346C]/20'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
                 <Image
                   src={img.url}
-                  alt={product.name}
+                  alt={`${product.name} - Image ${idx + 1}`}
                   width={64}
                   height={64}
                   className="object-cover w-full h-full"
                 />
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -68,24 +240,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
       {/* Right: Product Info */}
       <div className="flex-1 flex flex-col gap-6">
-        {/* Title + Wishlist */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-medium text-[#5E3A1C] mb-2">{product.name}</h1>
-            <p className="text-[#5E3A1C] text-sm font-medium">
-              {product.description || product.srtDescription || 'No description available'}
-            </p>
-          </div>
-          <button
-            onClick={onWishlistToggle}
-            className="p-2"
-          >
-            <Heart
-              className={`h-5 w-5 ${
-                inWishlist ? 'fill-[#EE346C] text-[#EE346C]' : 'text-[#5E3A1C]'
-              }`}
-            />
-          </button>
+        {/* Title */}
+        <div>
+          <h1 className="text-2xl font-medium text-[#5E3A1C] mb-2">{product.name}</h1>
+          <p className="text-[#5E3A1C] text-sm font-medium">
+            {product.description || product.srtDescription || 'No description available'}
+          </p>
         </div>
 
         {/* Star Rating */}
@@ -154,7 +314,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
           <div className="grid grid-cols-2 gap-y-4 text-sm">
             <div>
               <span className="text-[#5E3A1C]">Category</span>
-              <p className="text-[#5E3A1C] font-medium">{product.category?.name || 'Tote'}</p>
+              <p className="text-[#5E3A1C] font-medium">{product.category || 'Tote'}</p>
             </div>
             <div>
               <span className="text-[#5E3A1C]">Dimensions</span>

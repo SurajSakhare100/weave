@@ -74,22 +74,10 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 </Link>
               </div>
 
-              <div className="hidden md:flex items-center space-x-6 flex-1 text-sm justify-end text-secondary">
-                <form onSubmit={handleSearch} className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products..."
-                    className="w-64 px-4 py-2 border border-[#E7D9CC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E7D9CC] text-sm"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 hover:text-[#6c4323]"
-                  >
-                    <Search className="w-5 h-5" />
-                  </button>
-                </form>
+              <div className="hidden md:flex items-center space-x-2 flex-1 text-sm justify-end text-secondary">
+                <Link href="/search" className="p-2 hover:text-[#6c4323] transition-colors">
+                  <Search className="w-5 h-5" />
+                </Link>
                 <Link href="/cart" className="relative p-2 hover:text-[#6c4323] transition-colors">
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
@@ -135,17 +123,12 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 </Link>
                 <form onSubmit={handleSearch} className="w-full mb-4">
                   <div className="relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search products..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-                    />
+                         
                     <button
                       type="submit"
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#cf1a53]"
                       onClick={() => setIsMobileMenuOpen(false)}
+
                     >
                       <Search className="w-4 h-4" />
                     </button>
