@@ -18,7 +18,7 @@ import { useRouter } from 'next/router';
 
 function UserHydrator() {
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
+  const isAuthenticated = useSelector((state: RootState) => state?.user?.isAuthenticated);
 
   useEffect(() => {
     const hydrate = async () => {
@@ -53,7 +53,7 @@ function UserHydrator() {
 
 function CartHydrator() {
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
+  const isAuthenticated = useSelector((state: RootState) => state?.user?.isAuthenticated);
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
   useEffect(() => {

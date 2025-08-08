@@ -44,7 +44,7 @@ const useProductFilters = (): UseProductFiltersReturn => {
   const defaultMaxPrice = router.query.maxPrice ? Number(router.query.maxPrice) : 3000;
 
   const defaultFilters = {
-    sort: 'best-selling', // Add default sort value
+    sort: '-sales', // Default to best selling
     category: (router.query.category as string) || '',
     availability: (router.query.availability as string) || '',
     size: (router.query.size as string) || '',
@@ -73,16 +73,19 @@ const useProductFilters = (): UseProductFiltersReturn => {
 
   // Sort options array
   const sortOptions = [
-    { label: 'Best Selling', value: 'best-selling' },
-    { label: 'Price, low to high', value: 'price-asc' },
-    { label: 'Price, high to low', value: 'price-desc' },
-    { label: 'Date, old to new', value: 'date-asc' },
-    { label: 'Date, new to old', value: 'date-desc' },
-    { label: 'Discounts', value: 'discount' }
+    { label: 'Best Selling', value: '-sales' },
+    { label: 'Price, low to high', value: 'price' },
+    { label: 'Price, high to low', value: '-price' },
+    { label: 'Date, old to new', value: 'createdAt' },
+    { label: 'Date, new to old', value: '-createdAt' },
+    { label: 'Discounts', value: '-discount' }
   ];
 
   const updateQuery = useCallback((newFilters: typeof filters) => {
-    const query = { ...newFilters };
+    // Start with current query to preserve search and other params
+    const query = { ...router.query, ...newFilters };
+    
+    // Clean up empty filters
     Object.keys(query).forEach(key => {
       const filterKey = key as keyof typeof query;
       if (query[filterKey] === '' || query[filterKey] === null || query[filterKey] === undefined) {
@@ -151,11 +154,17 @@ const useProductFilters = (): UseProductFiltersReturn => {
       colors: '',
       minPrice: '0',
       maxPrice: '3000',
-      sort: '-createdAt'
+      sort: '-sales' // Reset to best selling
     };
     setFilters(newFilters);
     setPriceRange({ min: 0, max: 3000 });
-    router.push({ pathname: '/products' }, undefined, { shallow: true });
+    
+    // Preserve only the search query when clearing filters
+    const query = router.query.search ? { search: router.query.search } : {};
+    router.push({ 
+      pathname: '/products',
+      query
+    }, undefined, { shallow: true });
   }, [router]);
 
   const handleAvailabilityToggle = useCallback(() => {

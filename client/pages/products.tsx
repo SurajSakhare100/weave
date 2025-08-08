@@ -8,6 +8,7 @@ import { getCategories } from '@/services/categoryService';
 import { Product } from '@/types/index';
 import useProductFilters from '@/hooks/useProductFilters';
 import { Button } from '@/components/ui/button';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { AlignLeft, SlidersHorizontal, X } from 'lucide-react'; // Add X import
 
 interface Category {
@@ -88,6 +89,12 @@ const ProductsPage = () => {
     setLoading(true);
     setPage(1);
     setHasMore(true);
+    
+    // If there's a search query, update the title
+    if (router.query.search) {
+      document.title = `Search: ${router.query.search} - Weave`;
+    }
+    
     fetchProducts(1, false).finally(() => setLoading(false));
   }, [router.query]);
 
@@ -113,13 +120,20 @@ const ProductsPage = () => {
         <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           
 
-          {/* Results Count and View All */}
+          {/* Results Count and Search Query */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-medium">{totalProducts} Results</h2>
-            <a href="#" className="text-[#8B4513] hover:underline">View all</a>
+            {/* <div>
+              {router.query.search && (
+                <h1 className="text-xl font-medium mb-2">
+                  Search results for "{router.query.search}"
+                </h1>
+              )}
+              <h2 className="text-lg font-medium">{totalProducts} Results</h2>
+            </div> */}
+            
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8">
             {/* Desktop Filters */}
             <div className="hidden lg:block">
               <div className="sticky top-4">
@@ -143,7 +157,27 @@ const ProductsPage = () => {
             </div>
 
             {/* Product Grid */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-4">
+            <div className='flex flex-row gap-4 justify-between items-center'>
+            <div className='flex justify-between items-center'>
+              <h1 className='text-xl font-medium text-primary'>Tote Bags</h1>
+            </div>
+           
+            <div className="hidden sm:block">
+              <CustomSelect
+                value={filters.sort}
+                onChange={(value) => handleFilterChange({ target: { name: 'sort', value } } as any)}
+                options={[
+                  { value: '-sales', label: 'Best Selling' },
+                  { value: 'price', label: 'Price, low to high' },
+                  { value: '-price', label: 'Price, high to low' },
+                  { value: 'createdAt', label: 'Date, old to new' },
+                  { value: '-createdAt', label: 'Date, new to old' },
+                  { value: '-discount', label: 'Discounts' }
+                ]}
+              />
+            </div>
+            </div>
               <ProductGrid
                 products={products}
                 loading={loading}
@@ -187,26 +221,26 @@ const ProductsPage = () => {
             </div>
           </div>
 
-          {/* Sort Drawer - Left Side */}
+          {/* Sort Drawer - Bottom Sheet */}
           {openSort && (
             <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-              <div className="absolute top-0 left-0 bottom-0 w-[80%] max-w-md bg-white">
-                <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="text-lg font-medium text-gray-900">Sort by</h3>
+              <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl">
+                <div className="flex justify-between items-center p-4 border-b border-[#E7D9CC]">
+                  <h3 className="text-lg font-medium text-[#5E3A1C]">Sort By</h3>
                   <button onClick={toggleSort} className="p-2">
-                    <X className="w-6 h-6 text-gray-500" />
+                    <X className="w-6 h-6 text-[#5E3A1C]" />
                   </button>
                 </div>
                 
                 <div className="p-4">
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {[
-                      { label: 'Best Selling', value: 'best-selling' },
-                      { label: 'Price, low to high', value: 'price-asc' },
-                      { label: 'Price, high to low', value: 'price-desc' },
-                      { label: 'Date, old to new', value: 'date-asc' },
-                      { label: 'Date, new to old', value: 'date-desc' },
-                      { label: 'Discounts', value: 'discount' }
+                      { label: 'Best Selling', value: '-sales' },
+                      { label: 'Price, low to high', value: 'price' },
+                      { label: 'Price, high to low', value: '-price' },
+                      { label: 'Date, old to new', value: 'createdAt' },
+                      { label: 'Date, new to old', value: '-createdAt' },
+                      { label: 'Discounts', value: '-discount' }
                     ].map((option) => (
                       <button
                         key={option.value}
@@ -218,8 +252,8 @@ const ProductsPage = () => {
                         }}
                         className={`w-full text-left py-3 px-4 rounded-lg transition-colors ${
                           filters.sort === option.value
-                            ? 'bg-[#8B4513] text-white'
-                            : 'hover:bg-gray-50'
+                            ? 'bg-[#FFF4EC] text-[#5E3A1C]'
+                            : 'text-[#5E3A1C] hover:bg-[#FFF4EC]'
                         }`}
                       >
                         {option.label}

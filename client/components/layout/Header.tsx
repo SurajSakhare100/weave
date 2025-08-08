@@ -13,8 +13,8 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerce' }) => {
   const router = useRouter();
-  const { items } = useSelector((state: RootState) => state.cart);
-  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const items = useSelector((state: RootState) => state?.cart?.items ?? []);
+  const isAuthenticated = useSelector((state: RootState) => state?.user?.isAuthenticated ?? false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

@@ -1335,3 +1335,43 @@ export const deleteVendorReviewResponse = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 }); 
+
+
+export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const frequentlyBoughtTogether = await Product.find({
+      category: product.category,
+      _id: { $ne: product._id }
+    }).limit(4);
+
+    res.json({ success: true, data: frequentlyBoughtTogether });
+  } catch (error) {
+    console.error('Get frequently bought together error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+export const getComparableProducts = asyncHandler(async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const comparableProducts = await Product.find({
+      category: product.category,
+      _id: { $ne: product._id }
+    }).limit(4);
+
+    res.json({ success: true, data: comparableProducts });
+  } catch (error) {
+    console.error('Get comparable products error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+}); 

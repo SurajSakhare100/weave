@@ -51,11 +51,10 @@ export default function WishlistPage() {
   return (
     <MainLayout>
       <section className="py-8 sm:py-12 lg:py-16 bg-white min-h-screen">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 text-center">Wishlist</h1>
+        <div className="max-w-6xl px-4 sm:px-6">
+          <h1 className="text-lg sm:text-xl font-bold text-primary mb-6 sm:mb-8 ">Wishlist</h1>
           {products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20">
-              <span className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4">💖</span>
               <p className="text-base sm:text-lg text-gray-500 mb-3 sm:mb-4 text-center">No items in wishlist.</p>
               <Link href="/products" className="bg-pink-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-pink-600 transition text-sm sm:text-base">Browse Products</Link>
             </div>

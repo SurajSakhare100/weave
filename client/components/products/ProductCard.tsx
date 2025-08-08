@@ -133,7 +133,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             aria-label="Add to wishlist"
           >
             <Heart
-              className={`h-4 w-4 sm:h-6 sm:w-6 ${isInWishlist ? ' fill-[#FF4E8D] text-[#EE346C]' : 'text-[#EE346C]'}`}
+              className={`h-4 w-4 sm:h-5 sm:w-5 ${isInWishlist ? ' fill-[#FF4E8D] text-[#EE346C]' : 'text-[#EE346C]'}`}
             />
           </button>
         </div>

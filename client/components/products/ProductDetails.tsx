@@ -1,128 +1,188 @@
 import React from 'react';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
-import { addCartItem, fetchCart } from '@/features/cart/cartSlice';
-import { addToWishlist, removeFromWishlist } from '@/features/user/userSlice';
-import { AppDispatch, RootState } from '@/store/store';
-import { toast } from 'sonner';
+import Image from 'next/image';
+import { Heart, Star } from 'lucide-react';
+import { ProductWithReviews } from '@/types';
 
 interface ProductDetailsProps {
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    mrp?: number;
-    description?: string;
-    averageRating?: number;
-    totalReviews?: number;
-    stock?: number;
-    colors?: string[];
-    sizes?: string[];
-  };
+  product: ProductWithReviews;
+  inWishlist: boolean;
+  onWishlistToggle: () => void;
+  onAddToCart: () => void;
 }
 
-const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { wishlist } = useSelector((state: RootState) => state.user);
-  const isInWishlist = wishlist.includes(product._id);
-
-  const handleAddToCart = () => {
-    if (!product || !product._id) {
-      toast.error('Product not available');
-      return;
+const ProductDetails: React.FC<ProductDetailsProps> = ({
+  product,
+  inWishlist,
+  onWishlistToggle,
+  onAddToCart,
+}) => {
+  const getPrimaryImage = () => {
+    if (product.images && product.images.length > 0) {
+      const primary = product.images.find(img => img.is_primary);
+      return primary ? primary.url : product.images[0].url;
     }
-
-    if (!product.stock || product.stock === 0) {
-      toast.error('Product is out of stock');
-      return;
-    }
-
-    // Determine the size to use - prioritize product sizes, then default to 'M'
-    let selectedSize = 'M';
-    if (product.sizes && product.sizes.length > 0) {
-      selectedSize = product.sizes[0];
-    }
-
-    dispatch(addCartItem({
-      product,
-      quantity: 1,
-      variantSize: selectedSize
-    })).then(() => {
-      // Refresh cart to ensure UI is updated immediately
-      dispatch(fetchCart());
-      toast.success('Added to cart successfully!');
-    }).catch((error) => {
-      console.error('Failed to add to cart:', error);
-      toast.error('Failed to add to cart');
-    });
+    return '/products/product.png';
   };
 
-  const handleWishlistToggle = () => {
-    if (!product || !product._id) {
-      toast.error('Product not available');
-      return;
-    }
+  const getStarRating = (rating: number) => {
+    return Math.round(rating);
+  };
 
-    if (isInWishlist) {
-      dispatch(removeFromWishlist(product._id));
-      toast.success('Removed from wishlist');
-    } else {
-      dispatch(addToWishlist(product._id));
-      toast.success('Added to wishlist');
-    }
+  const calculateDiscount = () => {
+    if (!product) return 0;
+    return Math.round(((product.mrp - product.price) / product.mrp) * 100);
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-        <div className="flex items-center mt-2">
-          {[...Array(5)].map((_, i) => (
-            <Star 
-              key={i} 
-              className={`h-5 w-5 ${i < (product.averageRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-            />
-          ))}
-          <span className="ml-2 text-gray-600">({product.totalReviews || 0} reviews)</span>
+    <div className="flex flex-col lg:flex-row gap-12">
+      {/* Left: Images */}
+      <div className="lg:w-1/2">
+        {/* Main Image */}
+        <div className="relative w-full bg-white flex items-center justify-center">
+          <Image
+            src={getPrimaryImage()}
+            alt={product.name}
+            width={500}
+            height={500}
+            className="object-contain"
+          />
         </div>
-      </div>
 
-      <div className="flex items-baseline space-x-4">
-        <p className="text-3xl font-bold text-gray-900">₹{product.price}</p>
-        {product.mrp && product.mrp > product.price && (
-          <p className="text-xl text-gray-500 line-through">₹{product.mrp}</p>
+        {/* Thumbnails */}
+        {product.images && product.images.length > 0 && (
+          <div className="flex gap-4 mt-4 justify-center">
+            {product.images.map((img, idx) => (
+              <div key={img.public_id || idx} className="shrink-0 w-16 h-16 overflow-hidden">
+                <Image
+                  src={img.url}
+                  alt={product.name}
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {product.description && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
-          <p className="text-gray-600">{product.description}</p>
+      {/* Right: Product Info */}
+      <div className="flex-1 flex flex-col gap-6">
+        {/* Title + Wishlist */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-medium text-[#5E3A1C] mb-2">{product.name}</h1>
+            <p className="text-[#5E3A1C] text-sm font-medium">
+              {product.description || product.srtDescription || 'No description available'}
+            </p>
+          </div>
+          <button
+            onClick={onWishlistToggle}
+            className="p-2"
+          >
+            <Heart
+              className={`h-5 w-5 ${
+                inWishlist ? 'fill-[#EE346C] text-[#EE346C]' : 'text-[#5E3A1C]'
+              }`}
+            />
+          </button>
         </div>
-      )}
 
-      <div className="flex space-x-4">
-        <button
-          onClick={handleAddToCart}
-          className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-          disabled={!product.stock || product.stock === 0}
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span>{product.stock && product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
-        </button>
-        <button
-          onClick={handleWishlistToggle}
-          className={`p-3 rounded-lg border-2 transition-colors ${
-            isInWishlist 
-              ? 'border-red-500 bg-red-50 text-red-600' 
-              : 'border-gray-300 hover:border-gray-400'
-          }`}
-        >
-          <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
-        </button>
+        {/* Star Rating */}
+        <div className="flex items-center gap-1">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-4 w-4 ${
+                i < getStarRating(product.averageRating) ? 'text-[#FFB800] fill-[#FFB800]' : 'text-[#E7D9CC]'
+              }`}
+            />
+          ))}
+          <span className="ml-2 text-sm text-[#5E3A1C]">({product.totalReviews})</span>
+        </div>
+
+        {/* Colors */}
+        {product.colors && product.colors.length > 0 && (
+          <div>
+            <span className="text-[#5E3A1C] text-sm mb-2 block">Color: {product.colors[0]}</span>
+            <div className="flex gap-2">
+              {product.colors.map((color) => (
+                <span
+                  key={color}
+                  className="w-5 h-5 rounded-full border border-[#E7D9CC]"
+                  style={{ backgroundColor: color }}
+                ></span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Price Section */}
+        <div className="flex items-center gap-4">
+          <div className="text-[#5E3A1C] text-2xl font-medium">-{calculateDiscount()}% ₹{product.price}</div>
+          {product.mrp > product.price && (
+            <span className="text-sm text-[#5E3A1C] line-through">₹{product.mrp}</span>
+          )}
+        </div>
+
+        {/* Note */}
+        <div className="text-[#EE346C] text-sm">
+          Note: We offer worldwide shipping for all orders.
+        </div>
+        <div className="text-[#5E3A1C] text-sm">
+          Delivery expected within the next 3-4 business days to 🇮🇳
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4">
+          <button
+            onClick={onAddToCart}
+            className="flex-1 bg-white border border-[#E7D9CC] text-[#5E3A1C] h-12 rounded-lg font-medium hover:bg-[#FFF4EC] transition"
+          >
+            Add to Cart
+          </button>
+          <button
+            className="flex-1 bg-[#EE346C] text-white h-12 rounded-lg font-medium hover:bg-[#D62A5A] transition"
+          >
+            Buy Now
+          </button>
+        </div>
+
+        {/* Product Details */}
+        <div className="border-t border-[#E7D9CC] pt-6">
+          <h3 className="text-[#5E3A1C] font-medium mb-4">Product Details</h3>
+          <div className="grid grid-cols-2 gap-y-4 text-sm">
+            <div>
+              <span className="text-[#5E3A1C]">Category</span>
+              <p className="text-[#5E3A1C] font-medium">{product.category?.name || 'Tote'}</p>
+            </div>
+            <div>
+              <span className="text-[#5E3A1C]">Dimensions</span>
+              <p className="text-[#5E3A1C] font-medium">{product.productDetails?.dimensions || '12.7"W X 9.1"H'}</p>
+            </div>
+            <div>
+              <span className="text-[#5E3A1C]">Tags</span>
+              <p className="text-[#5E3A1C] font-medium">{product.tags?.join(', ') || 'Straw Weave'}</p>
+            </div>
+            <div>
+              <span className="text-[#5E3A1C]">View more</span>
+              <p className="text-[#5E3A1C] font-medium">→</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Return Policy */}
+        <div className="text-[#5E3A1C] text-sm">
+          Enjoy a worry-free shopping experience.
+          <div className="flex items-center gap-2 mt-2">
+            <span className="inline-flex items-center gap-1 border border-[#E7D9CC] px-3 py-1.5 rounded-lg text-[#5E3A1C]">
+              🛡️ 5 days Return & Exchange
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default ProductDetails; 
+export default ProductDetails;

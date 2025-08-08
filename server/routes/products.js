@@ -18,7 +18,9 @@ import {
   deleteReviewResponse,
   addVendorReviewResponse,
   updateVendorReviewResponse,
-  deleteVendorReviewResponse
+  deleteVendorReviewResponse,
+  getFrequentlyBoughtTogether,
+  getComparableProducts
 } from '../controllers/productController.js';
 import {
   validateProduct,
@@ -39,12 +41,19 @@ router.get('/category/:categorySlug', validatePriceRange, validatePagination, ge
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', validateId, getProductById);
 router.get('/:id/similar', validateId, getSimilarProducts);
+router.get('/:id/frequently-bought', validateId, getFrequentlyBoughtTogether);
+router.get('/:id/comparable', validateId, getComparableProducts);
 
 // Review routes (public read, authenticated write)
 router.get('/:id/reviews', validateId, getProductReviews);
 router.post('/:id/reviews', protectUser, validateId, createProductReview);
 router.put('/:id/reviews/:reviewId', protectUser, validateId, updateProductReview);
 router.delete('/:id/reviews/:reviewId', protectUser, validateId, deleteProductReview);
+
+router.get('/:id/comparable', validateId, getComparableProducts);
+
+router.get('/:id/similar', validateId, getSimilarProducts);
+router.get('/:id/frequently-bought', validateId, getFrequentlyBoughtTogether);
 
 // Review response routes
 router.post('/:id/reviews/:reviewId/responses', protectUser, validateId, addReviewResponse);

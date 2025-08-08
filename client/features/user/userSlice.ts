@@ -25,26 +25,59 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     login: (state, action: PayloadAction<{ email: string; user?: any }>) => {
-      state.isAuthenticated = true
-      state.email = action.payload.email
-      state.user = action.payload.user || null
+      if (!state) {
+        return {
+          ...initialState,
+          isAuthenticated: true,
+          email: action.payload.email,
+          user: action.payload.user || null
+        };
+      }
+      state.isAuthenticated = true;
+      state.email = action.payload.email;
+      state.user = action.payload.user || null;
     },
     logout: (state) => {
-      state.isAuthenticated = false
-      state.email = null
-      state.user = null
-      state.wishlist = []
+      if (!state) {
+        return initialState;
+      }
+      state.isAuthenticated = false;
+      state.email = null;
+      state.user = null;
+      state.wishlist = [];
     },
     updateUser: (state, action: PayloadAction<any>) => {
-      state.user = { ...state.user, ...action.payload }
+      if (!state) {
+        return {
+          ...initialState,
+          user: action.payload
+        };
+      }
+      state.user = { ...state.user, ...action.payload };
     },
     addToWishlist: (state, action: PayloadAction<string>) => {
+      if (!state) {
+        return {
+          ...initialState,
+          wishlist: [action.payload]
+        };
+      }
+      if (!state.wishlist) {
+        state.wishlist = [];
+      }
       if (!state.wishlist.includes(action.payload)) {
-        state.wishlist.push(action.payload)
+        state.wishlist.push(action.payload);
       }
     },
     removeFromWishlist: (state, action: PayloadAction<string>) => {
-      state.wishlist = state.wishlist.filter(id => id !== action.payload)
+      if (!state) {
+        return initialState;
+      }
+      if (!state.wishlist) {
+        state.wishlist = [];
+        return;
+      }
+      state.wishlist = state.wishlist.filter(id => id !== action.payload);
     },
   },
 })

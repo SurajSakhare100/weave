@@ -1,8 +1,23 @@
 import api from './api';
 
-export async function getProducts(params?: any) {
+interface ProductQueryParams {
+  search?: string;
+  category?: string;
+  availability?: string;
+  size?: string;
+  colors?: string;
+  minPrice?: string | number;
+  maxPrice?: string | number;
+  sort?: '-sales' | 'price' | '-price' | 'createdAt' | '-createdAt' | '-discount';
+  page?: number;
+  limit?: number;
+}
+
+export async function getProducts(params?: ProductQueryParams) {
   try {
+    console.log('Sending product request with params:', params);
     const res = await api.get('/products', { params });
+    console.log('Product response:', res.data);
     return res.data;
   } catch (error) {
     console.error('Failed to fetch products:', error);
@@ -76,6 +91,26 @@ export async function getSimilarProducts(id: string) {
   } catch (error) {
     console.error('Failed to fetch similar products:', error);
     throw new Error('Failed to fetch similar products');
+  }
+}
+
+export async function getFrequentlyBoughtTogether(id: string, limit: number = 4) {
+  try {
+    const res = await api.get(`/products/${id}/frequently-bought`, { params: { limit } });
+    return res.data;
+  } catch (error) {
+    console.error('Failed to fetch frequently bought together products:', error);
+    throw new Error('Failed to fetch frequently bought together products');
+  }
+}
+
+export async function getComparableProducts(id: string, limit: number = 4) {
+  try {
+    const res = await api.get(`/products/${id}/comparable`, { params: { limit } });
+    return res.data;
+  } catch (error) {
+    console.error('Failed to fetch comparable products:', error);
+    throw new Error('Failed to fetch comparable products');
   }
 }
 
