@@ -110,7 +110,7 @@ const ProductsPage = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           
 
           {/* Results Count and View All */}

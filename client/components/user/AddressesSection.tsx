@@ -134,10 +134,13 @@ export default function AddressesSection() {
   }
 
   return (
-    <div className="bg-white rounded-2xl  p-6">
+    <div className="bg-white rounded-2xl max-w-3xl p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-primary">
-          Addresses {" > "} Edit & add new address
+        <h2 className="text-xl font-bold text-primary">
+          Addresses {" > "} 
+          <span className="text-secondary font-medium">
+          Edit & add new address
+          </span>
         </h2>
       </div>
 
@@ -189,10 +192,10 @@ export default function AddressesSection() {
                   {/* Address Content */}
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-semibold text-primary text-lg">
+                      <h3 className="font-semibold text-primary text-xl">
                         {address.firstName} {address.lastName}
                         {address.isDefault && (
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-primary text-white rounded">
+                          <span className="ml-2 px-2 py-0.5 text-base bg-primary text-white rounded">
                             Default
                           </span>
                         )}
@@ -227,15 +230,14 @@ export default function AddressesSection() {
 
                     {/* Address Details */}
                     <div className="text-primary mb-4 border-b border-border-tertiary pb-4">
-                      <p className="text-sm">{address.address}</p>
                       {address.locality && (
-                        <p className="text-sm">{address.locality}</p>
+                        <p className="text-base">{address.address} , {address.locality}</p>
                       )}
-                      <p className="text-sm">
+                      <p className="text-base">
                         {address.city}, {address.state} - {address.pin}
                       </p>
-                      <p className="text-sm">{address.country}</p>
-                      <p className="text-sm">Phone: {address.number}</p>
+                      <p className="text-base">{address.country}</p>
+                      {/* <p className="text-base">Phone: {address.number}</p> */}
                     </div>
                   </div>
                 </div>

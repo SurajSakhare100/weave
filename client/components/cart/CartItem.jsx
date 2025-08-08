@@ -19,7 +19,7 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
   const productImage = item.item?.images?.[0]?.url || '/products/product.png';
   const productColor = item.item?.color || 'Pink';
   // Use variantSize from cart item, fallback to product sizes, then default to 'M'
-  const productSize = item.variantSize || 
+  const productSize = item.variantSize ||
     (item.item?.sizes && item.item.sizes.length > 0 ? item.item.sizes[0] : 'M');
 
   // Validate price and quantity
@@ -48,9 +48,9 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
       {/* Product Image */}
       <div className="flex-shrink-0 flex h-full items-center justify-center bg-[#FFF6EF] p-3 sm:p-4 w-auto">
         <div className="relative aspect-square w-24 h-24 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
-          <Image 
-            src={productImage} 
-            alt={productName} 
+          <Image
+            src={productImage}
+            alt={productName}
             fill
             className="rounded-lg object-cover"
             onError={(e) => {
@@ -88,9 +88,9 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
         {/* Quantity Controls */}
         <div className="flex   items-center self-end justify-between sm:justify-end gap-1.5 sm:gap-3">
           {/* Quantity Controls */}
-          <div className="flex items-center w-14 sm:w-auto h-5 px-1.5 py-2 rounded outline outline-[0.60px] outline-offset-[-0.60px] outline-tags inline-flex justify-center items-center gap-1.5 border border-[#EF3B6D] rounded-sm px-2 py-1.5 sm:px-3  sm:py-2 gap-1.5 sm:gap-3 bg-white">
+          <div className="flex items-center  sm:w-auto  rounded outline outline-[0.60px] outline-offset-[-0.60px] outline-tags inline-flex justify-center items-center gap-1.5 border border-[#EF3B6D] rounded-sm px-3 py-2 sm:px-3  sm:py-2 gap-1.5 sm:gap-3 bg-white">
             {/* Mobile: always show remove */}
-            <button 
+            <button
               onClick={handleRemove}
               className="block sm:hidden text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  rounded flex items-center justify-center"
               disabled={isUpdating}
@@ -100,18 +100,18 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
             </button>
             {/* Desktop/Tablet: decrement or remove */}
             {item.quantity > 1 ? (
-              <button 
+              <button
                 onClick={() => handleQuantityChange(item.quantity - 1)}
-                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  items-center justify-center"
+                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors   rounded  items-center justify-center"
                 disabled={isUpdating}
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             ) : (
-              <button 
+              <button
                 onClick={handleRemove}
-                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  items-center justify-center"
+                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors rounded  items-center justify-center"
                 disabled={isUpdating}
                 aria-label="Remove item"
               >
@@ -121,9 +121,9 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
             <span className="text-[#EF3B6D] font-semibold text-xs sm:text-lg  text-center">
               {item.quantity}
             </span>
-            <button 
+            <button
               onClick={() => handleQuantityChange(item.quantity + 1)}
-              className="text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  flex items-center justify-center"
+              className="text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors rounded  flex items-center justify-center"
               disabled={isUpdating}
               aria-label="Increase quantity"
             >

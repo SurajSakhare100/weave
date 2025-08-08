@@ -146,7 +146,7 @@ export default function PastOrdersSection() {
               day: 'numeric'
             });
             return (
-              <div key={order._id} className="w-fit ">
+              <div key={order._id} className="max-w-lg ">
                 {order.orderItems && order.orderItems.map((item, index) => {
                   if (!item.productId) {
                     return null;
@@ -157,7 +157,7 @@ export default function PastOrdersSection() {
                       <h1 className='text-primary mb-1 text-lg'>{formattedDate}</h1>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-2 border border-border-tertiary rounded-lg ">
                         {/* Product Image */}
-                        <div className="relative h-32 w-32 sm:h-40 sm:w-40 aspect-square bg-white rounded-lg rounded-tr-none overflow-hidden flex-shrink-0">
+                        <div className="relative h-32 w-32 p-4 sm:h-40 sm:w-40 aspect-square bg-white rounded-lg rounded-tr-none rounded-br-none rounded-br-none overflow-hidden flex-shrink-0">
                           <Image
                             src={
                               item.productId.images?.[0]?.url ||
@@ -166,24 +166,24 @@ export default function PastOrdersSection() {
                             }
                             alt={item.productId.name || item.name || "Product"}
                             fill
-                            className="object-cover h-full w-full"
+                            className="w-20 h-20 h-full w-full"
                           />
                         </div>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0 p-2">
-                          <h4 className="font-bold text-primary mb-1 text-sm sm:text-base">
+                          <h4 className="font-bold mb-1 text-sm sm:text-base text-primary truncate">
                             {item.productId.name || item.name || "Bag name"}
                           </h4>
-                          <p className="text-base sm:text-lg font-semibold text-primary mb-2">
+                          <p className="text-sm sm:text-base  font-semibold text-primary mb-2">
                             ₹{item.price || item.productId.price || 0}
                           </p>
-                          <div className="space-y-1 text-xs sm:text-sm text-[#6b7280]">
+                          <div className="space-y-1 text-xs  text-secondary text-[#6b7280]">
                             {item.variantSize && (
-                              <p>Size: {item.variantSize}</p>
+                              <p className=' text-secondary font-medium text-sm  sm:text-base  '>Size: {item.variantSize}</p>
                             )}
-                            <p>Color: Pink</p>
-                            <p>Quantity: {item.quantity || 1}</p>
+                            <p className=' text-secondary  font-medium text-sm  sm:text-base '>Color: Pink</p>
+                            <p className=' text-secondary  font-medium text-sm sm:text-base  '>Quantity: {item.quantity || 1}</p>
                           </div>
                         </div>
 
@@ -191,7 +191,7 @@ export default function PastOrdersSection() {
                           {/* Reorder Button */}
                           <button
                             onClick={() => handleReorder(order)}
-                            className="w-full sm:w-auto px-4 py-2 border border-[#EE346C] text-[#EE346C] rounded-lg hover:bg-[#EE346C] hover:text-white transition-colors font-medium flex-shrink-0 bg-white text-sm sm:text-base"
+                            className="w-full sm:w-auto px-3 py-2 border border-[#EE346C] text-[#EE346C] rounded-md hover:bg-[#EE346C] hover:text-white transition-colors font-medium flex-shrink-0 bg-white text-sm sm:text-base"
                           >
                             Reorder
                           </button>

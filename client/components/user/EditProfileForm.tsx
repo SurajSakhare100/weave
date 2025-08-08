@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, X, Check } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -63,9 +63,9 @@ export default function EditProfileForm({ user, onUpdate }: EditProfileFormProps
 
     return (
       <div className="mb-6">
-        <label className="block text-sm font-medium text-[#5E3A1C] mb-2">
+        <label className="block text-sm font-semibold text-[#8b7355] mb-2">
           {label}
-          {isReadOnly && <span className="text-xs text-gray-500 ml-2">(Read-only)</span>}
+          {isReadOnly && <span className="text-sm text-secondary ml-2">(Read-only)</span>}
         </label>
         <div className="flex gap-3">
           <div className="relative flex-1">
@@ -74,23 +74,23 @@ export default function EditProfileForm({ user, onUpdate }: EditProfileFormProps
               value={currentValue}
               onChange={(e) => handleInputChange(field, e.target.value)}
               disabled={!isEditing || isLoading || isReadOnly}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EE346C]/20 transition-colors ${
+              className={`w-full px-5 py-3.5 rounded-md text-[#6c4323] placeholder-[#bcae9e] outline outline-[1px] outline-offset-[-1px] transition-colors ${
                 isReadOnly
-                  ? 'border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed'
+                  ? 'outline-[#ead8c9] bg-white cursor-not-allowed'
                   : isEditing 
-                    ? 'border-[#EE346C] bg-white' 
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'outline-[#ead8c9] bg-white' 
+                    : 'outline-[#ead8c9] bg-white'
               }`}
               placeholder={label}
             />
             {!isReadOnly && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                 <button
                   type="button"
                   onClick={() => handleEdit(field)}
-                  className="p-1 rounded text-gray-400 hover:text-[#EE346C] hover:bg-[#EE346C]/10 transition-colors"
+                  className="p-1.5 rounded text-[#8b7355] hover:text-[#6c4323] hover:bg-[#f7eee7] transition-colors"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-5 h-5" />
                 </button>
               </div>
             )}
@@ -102,10 +102,10 @@ export default function EditProfileForm({ user, onUpdate }: EditProfileFormProps
                 type="button"
                 onClick={() => handleSave(field)}
                 disabled={isLoading || !hasChanges}
-                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                className={`sm:w-48 px-4 py-3 rounded-sm font-medium transition-colors ${
                   hasChanges && !isLoading
-                    ? 'bg-[#EE346C] text-white hover:bg-[#c2185b]'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-[#EF3B6D] text-white hover:bg-[#e22e61]'
+                    : 'bg-gray-300 text-gray-500 text-base cursor-not-allowed'
                 }`}
               >
                 Update
@@ -114,7 +114,7 @@ export default function EditProfileForm({ user, onUpdate }: EditProfileFormProps
                 type="button"
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="px-4 py-3 border border-[#EE346C] text-[#EE346C] rounded-lg font-medium hover:bg-[#EE346C] hover:text-white transition-colors"
+                className="sm:w-48 px-4 py-3 rounded-sm font-medium border border-[#EF3B6D] text-[#EF3B6D] rounded-lg font-medium hover:bg-[#EF3B6D] hover:text-white transition-colors"
               >
                 Cancel
               </button>
@@ -129,14 +129,14 @@ export default function EditProfileForm({ user, onUpdate }: EditProfileFormProps
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h2 className="text-2xl font-bold text-[#5E3A1C] mb-6">Edit Profile</h2>
+    <div className="bg-white rounded-2xl p-0">
+      <h2 className="text-3xl font-semibold text-[#6c4323] mb-4">Edit Profile</h2>
       
-      <form className="space-y-4">
+      <form className="space-y-6">
         {renderField('firstName', 'First Name')}
         {renderField('lastName', 'Last Name')}
         {renderField('email', 'Email Address', 'email')}
-        {renderField('phone', 'Phone Number', 'tel')}
+        {renderField('phone', 'Phone number', 'tel')}
       </form>
     </div>
   );

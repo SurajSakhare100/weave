@@ -23,7 +23,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, className }) => {
       <main className={cn("flex-1", className)}>
         {children}
       </main>
-      {/* <Footer /> */}
+      <Footer />
       
       {/* Toast Clear Button - Fixed Position */}
       <div className="fixed bottom-4 left-4 z-50">

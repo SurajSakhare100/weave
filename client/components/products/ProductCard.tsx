@@ -105,15 +105,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className="group bg-white  rounded-lg p-2.5 shadow-sm h-full flex flex-col gap-3">
+    <div className="group bg-white rounded-2xl p-3 sm:p-4  h-full flex flex-col gap-3 ">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
-        <div className="relative aspect-4/3 rounded-md  xs:p-2 w-full bg-[#FFF4EC] overflow-hidden">
+        <div className="relative aspect-4/3 rounded-xl xs:p-2 w-full bg-[#FFFBF8] overflow-hidden">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
             fill
-            className="object-cover aspect-4/3 rounded-md  p-2"
+            className="object-cover aspect-4/3 rounded-2xl  sm:p-6"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
@@ -129,30 +129,32 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Wishlist Heart Icon */}
           <button
             onClick={handleWishlistToggle}
-            className="absolute bg-[#FFF4EC] p-1 rounded-xl top-4 right-4 z-10"
+            className="absolute bg-[#FFF4EC] p-1.5 rounded-full top-2 right-2  z-10"
             aria-label="Add to wishlist"
           >
             <Heart
-              className={`h-2.5 w-2.5 sm:h-6 sm:w-6 ${isInWishlist ? ' fill-[#FF4E8D] text-[#EE346C]' : 'text-[#EE346C]'}`}
+              className={`h-4 w-4 sm:h-6 sm:w-6 ${isInWishlist ? ' fill-[#FF4E8D] text-[#EE346C]' : 'text-[#EE346C]'}`}
             />
           </button>
         </div>
       </Link>
 
       {/* Product Details */}
-      <div className=" flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {/* Product Name */}
-        <h3 className="text-sm font-medium text-gray-900">
+        <h3 className="text-base sm:text-xl font-semibold text-[#6c4323]">
           {product.name}
         </h3>
 
         {/* Color Swatches */}
-        <div className="flex gap-0.5 items-center">
+        <div className="flex gap-2 items-center">
           {(product.colors || defaultColors).slice(0, 6).map((color) => (
             <div
-              className={`flex  rounded-full items-center  p-0.5 justify-center ${selectedColor === color ? 'ring-1  ring-secondary' : ''}`} key={color}
-           >   <button
-                className={`w-2 h-2 rounded-full   `}
+              className={`flex rounded-full items-center justify-center ${selectedColor === color ? 'ring-2 ring-[#EF3B6D]' : ''}`}
+              key={color}
+            >
+              <button
+                className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full`}
               style={{ backgroundColor: color }}
                 onClick={() => setSelectedColor(color)}
                 aria-label={`Select color ${color}`}
@@ -161,15 +163,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           ))}
         </div>
 
-       
-
+        
         {/* Rating */}
+        <div className='flex flex-row justify-between gap-1'>
+        <span className="text-base sm:text-2xl font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
         <div className="flex items-center">
           <div className="flex text-yellow-400">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${
+                className={`h-3 w-3 sm:h-4 sm:w-4 ${
                   i < Math.floor(product.averageRating || 4.5)
                     ? 'fill-current'
                     : 'text-gray-300'
@@ -177,21 +180,30 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               />
             ))}
           </div>
-          <span className="text-gray-600 ml-1 text-sm">
+          <span className="text-gray-600 ml-1 text-xs sm:text-sm">
             ({product.totalReviews || 745})
           </span>
+        </div>
         </div>
 
         {/* Price and Add to Cart */}
         <div className="flex items-center justify-between mt-1">
-          <span className="text-sm xs:text-lg font-medium p-0.5">₹ {product.price}</span>
+          
           <button
             onClick={handleAddToCart}
-            className="text-[#FF4E8D] text-xs xs:text-sm font-medium border-1 tracking-wide border-[#FF4E8D] px-1.5 py-2 xs:px-4 xs:py-2 rounded-sm hover:bg-[#FF4E8D] hover:text-white transition-colors"
+            className="text-[#FF4E8D] text-xs xs:text-sm font-medium border border-[#FF4E8D] px-2 py-2 rounded-md hover:bg-[#FF4E8D] hover:text-white transition-colors sm:hidden"
           >
             Add to cart
           </button>
         </div>
+
+        {/* sm+ full-width Add button */}
+        <button
+          onClick={handleAddToCart}
+          className="hidden sm:block w-full text-[#FF4E8D] border border-[#FF4E8D] py-3 rounded-lg font-semibold hover:bg-[#FF4E8D] hover:text-white transition-colors"
+        >
+          Add to cart
+        </button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import RangeSlider from '@/components/ui/RangeSlider';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Category {
@@ -74,24 +75,24 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   return (
     <aside className="pr-8">
-      <h2 className="text-xl font-semibold mb-4">Filters</h2>
+      <h2 className="text-xl font-semibold mb-4 text-primary">Filters</h2>
       <button
         onClick={onClearFilters}
-        className="mb-4 border border-[#b59c8a] text-[#6c4323] rounded-md px-4 py-2 text-sm font-medium hover:bg-[#f5e7df] transition-colors"
+        className="mb-4 border border-[#b59c8a] text-primary rounded-md px-4 py-2 text-sm font-medium hover:bg-[#f5e7df] transition-colors"
       >
         Clear All Filters
       </button>
       <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between cursor-pointer mb-1" onClick={() => onToggleFilter('category')}>
-            <label className="block text-sm font-medium text-[#6c4323]">Product Category</label>
-            {openFilters.category ? <ChevronUp className="h-4 w-4 text-[#6c4323]" /> : <ChevronDown className="h-4 w-4 text-[#6c4323]" />}
+            <label className="block text-sm font-medium text-primary">Product Category</label>
+            {openFilters.category ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.category && (
             <div className="flex flex-col gap-1 mt-1">
               <button
                 type="button"
-                className={`text-left px-1 py-1 rounded-md text-base font-medium transition-all duration-150 ${!filters.category ? 'bg-[#f5e7df] text-[#6c4323] font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
+                className={`text-left px-1 py-1 rounded-md text-sm font-medium transition-all duration-150 ${!filters.category ? 'bg-[#f5e7df] text-primary font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
                 onClick={() => onCategoryClick('')}
               >
                 All
@@ -100,7 +101,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <button
                   key={cat._id}
                   type="button"
-                  className={`text-left px-1 py-1 rounded-md text-base font-medium transition-all duration-150 ${filters.category === cat.slug ? 'bg-[#f5e7df] text-[#6c4323] font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
+                  className={`text-left px-1 py-1 rounded-md text-sm font-medium transition-all duration-150 ${filters.category === cat.slug ? 'bg-[#f5e7df] text-primary font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
                   onClick={() => onCategoryClick(cat.slug)}
                 >
                   {cat.name}
@@ -112,8 +113,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
         <div>
           <div className="flex items-center justify-between cursor-pointer mb-1" onClick={() => onToggleFilter('availability')}>
-            <label className="block text-sm font-medium text-[#6c4323]">Availability</label>
-            {openFilters.availability ? <ChevronUp className="h-4 w-4 text-[#6c4323]" /> : <ChevronDown className="h-4 w-4 text-[#6c4323]" />}
+            <label className="block text-sm font-medium text-primary">Availability</label>
+            {openFilters.availability ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.availability && (
             <div className="flex items-center gap-3 mt-2">
@@ -129,15 +130,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   style={{ position: 'absolute', left: 2, top: 1 }}
                 />
               </button>
-              <span className="text-[#8b7355] text-base font-medium">In Stock</span>
+              <span className="text-[#8b7355] text-sm font-medium">In Stock</span>
             </div>
           )}
         </div>
 
         <div>
           <div className="flex items-center justify-between cursor-pointer mb-1" onClick={() => onToggleFilter('size')}>
-            <label className="block text-sm font-medium text-[#6c4323]">Size</label>
-            {openFilters.size ? <ChevronUp className="h-4 w-4 text-[#6c4323]" /> : <ChevronDown className="h-4 w-4 text-[#6c4323]" />}
+            <label className="block text-sm font-medium text-primary">Size</label>
+            {openFilters.size ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.size && (
             <div className="flex flex-col gap-1 mt-1">
@@ -145,7 +146,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <button
                   key={sizeOption}
                   type="button"
-                  className={`text-left px-1 py-1 rounded-md text-base font-medium transition-all duration-150 ${filters.size && filters.size.split(',').includes(sizeOption) ? 'bg-[#f5e7df] text-[#6c4323] font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
+                  className={`text-left px-1 py-1 rounded-md text-sm font-medium transition-all duration-150 ${filters.size && filters.size.split(',').includes(sizeOption) ? 'bg-[#f5e7df] text-primary font-bold' : 'text-[#8b7355] hover:bg-[#f5e7df]'}`}
                   onClick={() => onSizeClick(sizeOption)}
                 >
                   {sizeOption}
@@ -157,32 +158,28 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
         <div>
           <div className="flex items-center justify-between cursor-pointer mb-1" onClick={() => onToggleFilter('color')}>
-            <label className="block text-sm font-medium text-[#6c4323]">Color</label>
-            {openFilters.color ? <ChevronUp className="h-4 w-4 text-[#6c4323]" /> : <ChevronDown className="h-4 w-4 text-[#6c4323]" />}
+            <label className="block text-sm font-medium text-primary">Color</label>
+            {openFilters.color ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.color && (
             <div className="mt-2">
-              <div className="flex flex-wrap gap-2 items-center mb-2">
-                {COLOR_SWATCHES.map((colorItem) => (
-                  <button
-                    key={colorItem.name}
-                    type="button"
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150 relative ${filters.colors && filters.colors.split(',').includes(colorItem.name) ? 'border-[#cf1a53] scale-110' : 'border-[#e5e5e5] hover:border-[#b59c8a]'}`}
-                    style={{ backgroundColor: colorItem.hex }}
-                    onClick={() => onColorSwatchClick(colorItem.name)}
-                    aria-label={colorItem.name}
-                    title={colorItem.name}
-                  >
-                    {filters.colors && filters.colors.split(',').includes(colorItem.name) && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-3 h-3  rounded-full opacity-80"></div>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-              <div className="text-xs text-[#8b7355] mt-1">
-                Selected: {filters.colors ? filters.colors.split(',').join(', ') : 'None'}
+              <div className="flex flex-wrap gap-3 items-center">
+                {COLOR_SWATCHES.map((colorItem) => {
+                  const isSelected = !!(filters.colors && filters.colors.split(',').includes(colorItem.name));
+                  return (
+                    <button
+                      key={colorItem.name}
+                      type="button"
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        isSelected ? 'ring-2 ring-[#EF3B6D] ring-offset-2 scale-105' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: colorItem.hex }}
+                      onClick={() => onColorSwatchClick(colorItem.name)}
+                      aria-label={colorItem.name}
+                      title={colorItem.name}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -190,47 +187,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
         <div>
           <div className="flex items-center justify-between cursor-pointer mb-1" onClick={() => onToggleFilter('price')}>
-            <label className="block text-sm font-medium text-[#6c4323]">Price Range</label>
-            {openFilters.price ? <ChevronUp className="h-4 w-4 text-[#6c4323]" /> : <ChevronDown className="h-4 w-4 text-[#6c4323]" />}
+            <label className="block text-sm font-medium text-primary">Price Range</label>
+            {openFilters.price ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.price && (
             <div className="mb-2 flex flex-col gap-3">
               {/* Price Range Slider */}
-              <div className="relative">
-                <div className="h-2 bg-[#e5e5e5] rounded-lg relative">
-                  <div 
-                    className="absolute h-2 bg-[#6c4323] rounded-lg"
-                    style={{
-                      left: `${(priceRange.min / maxPriceValue) * 100}%`,
-                      right: `${100 - (priceRange.max / maxPriceValue) * 100}%`
-                    }}
-                  ></div>
-                </div>
-                <input
-                  type="range"
-                  min={minPriceValue}
-                  max={maxPriceValue}
-                  value={priceRange.min}
-                  onChange={e => {
-                    let min = Number(e.target.value);
-                    if (min > priceRange.max) min = priceRange.max;
-                    onPriceChange(min, priceRange.max);
-                  }}
-                  className="absolute top-0 w-full h-2 opacity-0 cursor-pointer"
-                />
-                <input
-                  type="range"
-                  min={minPriceValue}
-                  max={maxPriceValue}
-                  value={priceRange.max}
-                  onChange={e => {
-                    let max = Number(e.target.value);
-                    if (max < priceRange.min) max = priceRange.min;
-                    onPriceChange(priceRange.min, max);
-                  }}
-                  className="absolute top-0 w-full h-2 opacity-0 cursor-pointer"
-                />
-              </div>
+              <RangeSlider 
+                min={minPriceValue}
+                max={maxPriceValue}
+                valueMin={priceRange.min}
+                valueMax={priceRange.max}
+                onChange={(min, max) => onPriceChange(min, max)}
+              />
 
               {/* Price Input Fields */}
               <div className="flex items-center gap-2">
@@ -248,7 +217,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                       if (min < minPriceValue) min = minPriceValue;
                       onPriceChange(min, priceRange.max);
                     }}
-                    className="w-full text-center border-none outline-none text-[#6c4323] font-medium bg-transparent text-sm"
+                    className="w-full text-center border-none outline-none text-secondary font-medium bg-transparent text-sm"
                     placeholder="Min"
                   />
                 </div>
@@ -267,7 +236,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                       if (max > maxPriceValue) max = maxPriceValue;
                       onPriceChange(priceRange.min, max);
                     }}
-                    className="w-full text-center border-none outline-none text-[#6c4323] font-medium bg-transparent text-sm"
+                    className="w-full text-center border-none outline-none text-secondary font-medium bg-transparent text-sm"
                     placeholder="Max"
                   />
                 </div>
@@ -293,8 +262,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     onClick={() => onPriceChange(range.min, range.max)}
                     className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                       priceRange.min === range.min && priceRange.max === range.max
-                        ? 'bg-[#6c4323] text-white border-[#6c4323]'
-                        : 'bg-white text-[#6c4323] border-[#e5e5e5] hover:border-[#6c4323]'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-primary border-[#e5e5e5] hover:border-primary'
                     }`}
                   >
                     {range.label}

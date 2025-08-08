@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import React from 'react';
+import { X } from 'lucide-react';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -12,77 +12,49 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  loading = false
+  loading = false,
 }) => {
-  const [confirmText, setConfirmText] = useState('');
-
-  const handleConfirm = () => {
-    if (confirmText === 'DELETE') {
-      onConfirm();
-    }
-  };
-
-  const handleClose = () => {
-    setConfirmText('');
-    onClose();
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Delete Account</h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={loading}
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 h-full flex items-center justify-center text-primary p-4">
+      {/* Dim layer */}
+      <div className="fixed inset-0 bg-[#F0F0F0] opacity-20 z-10" />
 
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-red-100 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Are you sure?</h3>
-              <p className="text-sm text-gray-600">
-                This action cannot be undone. All your data will be permanently deleted.
-              </p>
-            </div>
-          </div>
+      {/* Gradient container to match Address modal */}
+      <div className="relative bg-gradient-to-b from-[#5E3A1C] to-[#FCFCFC] rounded-xl w-full max-w-md mx-auto h-full md:h-auto flex flex-col items-center justify-center gap-2 z-50 p-6 border border-border-border-tertiary">
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="self-end text-white hover:text-gray-200 transition-colors"
+          disabled={loading}
+          aria-label="Close"
+        >
+          <X className="h-6 w-6" />
+        </button>
 
-          <div className="mb-6">
-            <p className="text-sm text-gray-600 mb-3">
-              To confirm deletion, please type <strong>DELETE</strong> in the field below:
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl w-full">
+          <div className="px-8 pt-8 text-center">
+            <h2 className="text-3xl font-semibold text-[#6c4323]">Delete Weave account</h2>
+            <p className="mt-4 text-lg text-[#8b7355]">
+              Once deleted, you’ll lose access to the account and saved details.
             </p>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Type DELETE to confirm"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
           </div>
-
-          <div className="flex gap-3">
+          <div className="px-8 py-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
-              onClick={handleClose}
+              onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="w-full px-6 py-4 rounded-lg border border-[#EF3B6D] text-[#EF3B6D] font-semibold hover:bg-[#fde7ef] transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
-              onClick={handleConfirm}
-              disabled={confirmText !== 'DELETE' || loading}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onConfirm}
+              disabled={loading}
+              className="w-full px-6 py-4 rounded-lg bg-[#EF3B6D] text-white font-semibold hover:bg-[#e22e61] transition-colors disabled:opacity-50"
             >
-              {loading ? 'Deleting...' : 'Delete Account'}
+              {loading ? 'Processing...' : 'Proceed'}
             </button>
           </div>
         </div>
