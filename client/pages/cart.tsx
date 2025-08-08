@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { useRouter } from 'next/router';
 import MainLayout from "@/components/layout/MainLayout"
 import Breadcrumb from "@/components/ui/Breadcrumb"
+import MobilePageHeader from "@/components/ui/MobilePageHeader"
 import CartItem from '../components/cart/CartItem.jsx';
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -218,20 +219,21 @@ const CartPage = () => {
   }
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-white py-6 sm:py-12">
+      <MainLayout>
+        <MobilePageHeader title="Cart" />
+        <div className="min-h-screen bg-white pb-28 sm:pb-12 pt-2 sm:pt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
               { label: 'Cart', isCurrent: true }
             ]}
-            className="mb-4 sm:mb-8 text-base sm:text-lg"
+            className="hidden sm:block w-full mb-4 sm:mb-8 text-base sm:text-lg"
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Cart Items */}
             <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+              <div className="hidden sm:block flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Shopping Cart ({items.length} items)</h2>
                 {items.length > 0 && (
                   <Button
@@ -260,9 +262,11 @@ const CartPage = () => {
               <div className="bg-[#fff9f5] rounded-xl p-4 sm:p-6 mb-2 relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                   <div className="w-8 h-8 bg-[#6c4323] text-white rounded flex items-center justify-center font-bold text-xl">🧾</div>
+                  <div className='flex gap-2 items-center'>
                   <span className="text-[#6c4323] font-bold text-base sm:text-lg">To Pay</span>
                   <span className="text-[#6c4323] line-through text-sm sm:text-lg">₹ {(itemTotal + discount).toLocaleString()}</span>
-                  <span className="text-[#6c4323] font-bold text-base sm:text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                  <span className=" font-bold text-base sm:text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                  </div>
                   <button
                     className="absolute top-4 sm:top-6 right-4 sm:right-6 p-1 bg-transparent border-none outline-none cursor-pointer"
                     onClick={() => setSummaryOpen((open) => !open)}
@@ -275,7 +279,7 @@ const CartPage = () => {
                     )}
                   </button>
                 </div>
-                <div className="text-[#3ca06b] font-semibold mb-4 text-sm sm:text-base">₹ {discount} saved on the total!</div>
+                <div className=" font-semibold mb-4 text-sm sm:text-base text-feedback-success">₹ {discount} saved on the total!</div>
                 {summaryOpen && (
                   <div className="divide-y divide-[#f5e7df]">
                     <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
@@ -301,16 +305,33 @@ const CartPage = () => {
                 )}
               </div>
               
-              {/* Checkout Button */}
-              <div className="w-full mt-4 sm:mt-6">
-                <Button
-                  onClick={() => router.push('/checkout/address')}
-                  className="w-full bg-bg-button text-white py-3 px-6 sm:px-10 text-base sm:text-lg font-semibold"
-                >
-                  Continue to checkout
-                </Button>
-              </div>
+              {/* Spacer for sticky button on mobile */}
+              <div className="h-2 sm:h-0" />
             </div>
+          </div>
+          {/* Desktop/Tablet CTA below grid, centered */}
+          <div className="hidden sm:flex justify-center py-8">
+            <Button
+              onClick={() => router.push('/checkout/address')}
+              className="bg-[#EF3B6D] hover:bg-[#e22e61] text-white px-10 py-5 text-base font-semibold rounded-lg w-[320px]"
+            >
+              Continue to checkout
+            </Button>
+          </div>
+        </div>
+
+        {/* Sticky checkout bar (mobile) */}
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-gray-200 sm:hidden"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+        >
+          <div className="max-w-7xl mx-auto px-5 py-3 h-auto flex items-center justify-between">
+            <Button
+              onClick={() => router.push('/checkout/address')}
+              className="w-full h-full bg-[#EF3B6D] hover:bg-[#e22e61] text-white py-4 text-base font-semibold rounded-lg"
+            >
+              Continue to checkout
+            </Button>
           </div>
         </div>
       </div>

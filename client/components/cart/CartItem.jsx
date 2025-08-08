@@ -44,10 +44,10 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row items-stretch sm:items-center rounded-xl sm:rounded-2xl border-2 border-[#FFF6EF] gap-4 sm:gap-6 lg:gap-8 overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 ${isUpdating ? 'opacity-50' : ''}`}>
+    <div className={` flex flex-row items-center rounded-xl outline-none sm:rounded-2xl border-1 border-[#FFF6EF] gap-6 sm:gap-6 lg:gap-8 overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 ${isUpdating ? 'opacity-50' : ''}`}>
       {/* Product Image */}
-      <div className="flex-shrink-0 flex items-center justify-center bg-[#FFF6EF] p-3 sm:p-4 w-full sm:w-auto">
-        <div className="relative aspect-square w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
+      <div className="flex-shrink-0 flex h-full items-center justify-center bg-[#FFF6EF] p-3 sm:p-4 w-auto">
+        <div className="relative aspect-square w-24 h-24 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
           <Image 
             src={productImage} 
             alt={productName} 
@@ -61,24 +61,24 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
       </div>
 
       {/* Product Details */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 w-full">
+      <div className="flex flex-row items-start justify-between gap-3 sm:gap-4 py-3 sm:py-4 pr-4 w-full">
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-base sm:text-lg lg:text-xl text-gray-900 line-clamp-2 mb-1 sm:mb-2">
+          <h3 className="font-bold text-base sm:text-lg lg:text-xl text-[#6c4323] line-clamp-2 mb-1 sm:mb-2">
             {productName}
           </h3>
-          <p className="text-lg sm:text-xl font-bold text-[#E75480] mb-2">
+          <p className="text-lg sm:text-xl font-semibold text-[#6c4323] mb-2">
             ₹{item.price.toLocaleString('en-IN')}
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
+          <div className="flex flex-col sm:flex-row sm:items-center  sm:gap-4 text-sm text-[#8b7355]">
+            <span className="flex items-center ">
               <span className="font-medium">Size:</span>
-              <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+              <span className=" px-2 py-1 rounded text-xs font-medium">
                 {productSize}
               </span>
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center ga">
               <span className="font-medium">Color:</span>
-              <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+              <span className=" px-2 py-1 rounded text-xs font-medium">
                 {productColor}
               </span>
             </span>
@@ -86,52 +86,52 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
         </div>
 
         {/* Quantity Controls */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+        <div className="flex   items-center self-end justify-between sm:justify-end gap-1.5 sm:gap-3">
           {/* Quantity Controls */}
-          <div className="flex items-center border border-[#E75480] rounded-lg px-2 sm:px-3 py-1 sm:py-2 gap-2 sm:gap-3 bg-white">
+          <div className="flex items-center w-14 sm:w-auto h-5 px-1.5 py-2 rounded outline outline-[0.60px] outline-offset-[-0.60px] outline-tags inline-flex justify-center items-center gap-1.5 border border-[#EF3B6D] rounded-sm px-2 py-1.5 sm:px-3  sm:py-2 gap-1.5 sm:gap-3 bg-white">
+            {/* Mobile: always show remove */}
+            <button 
+              onClick={handleRemove}
+              className="block sm:hidden text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  rounded flex items-center justify-center"
+              disabled={isUpdating}
+              aria-label="Remove item"
+            >
+              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+            </button>
+            {/* Desktop/Tablet: decrement or remove */}
             {item.quantity > 1 ? (
               <button 
                 onClick={() => handleQuantityChange(item.quantity - 1)}
-                className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  items-center justify-center"
                 disabled={isUpdating}
                 aria-label="Decrease quantity"
               >
-                <Minus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             ) : (
               <button 
                 onClick={handleRemove}
-                className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+                className="hidden sm:flex text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  items-center justify-center"
                 disabled={isUpdating}
                 aria-label="Remove item"
               >
-                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             )}
-            <span className="text-[#E75480] font-semibold text-base sm:text-lg min-w-[24px] text-center">
+            <span className="text-[#EF3B6D] font-semibold text-xs sm:text-lg  text-center">
               {item.quantity}
             </span>
             <button 
               onClick={() => handleQuantityChange(item.quantity + 1)}
-              className="text-[#E75480] hover:text-pink-600 disabled:opacity-50 transition-colors p-1 sm:p-2 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+              className="text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors  sm:p-2 rounded  flex items-center justify-center"
               disabled={isUpdating}
               aria-label="Increase quantity"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Plus className="h-3 w-3 sm:h-5 sm:w-5" />
             </button>
           </div>
 
-          {/* Remove Button for Mobile */}
-          <div className="sm:hidden">
-            <button 
-              onClick={handleRemove}
-              className="text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors p-2 rounded-lg border border-red-200 hover:bg-red-50 min-w-[40px] min-h-[40px] flex items-center justify-center"
-              disabled={isUpdating}
-              aria-label="Remove item"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Removed separate mobile remove button; integrated into control pill */}
         </div>
       </div>
     </div>
