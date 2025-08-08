@@ -150,12 +150,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex gap-2 items-center">
           {(product.colors || defaultColors).slice(0, 6).map((color) => (
             <div
-              className={`flex rounded-full items-center justify-center ${selectedColor === color ? 'ring-2 ring-[#EF3B6D]' : ''}`}
               key={color}
             >
               <button
-                className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full`}
               style={{ backgroundColor: color }}
+              className={`w-2 h-2 sm:w-4 sm:h-4  rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+                selectedColor === color ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
+              }`}
                 onClick={() => setSelectedColor(color)}
                 aria-label={`Select color ${color}`}
               />

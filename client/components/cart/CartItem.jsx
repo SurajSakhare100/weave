@@ -67,9 +67,9 @@ const CartItem = ({ item, onQuantityChange, onRemove, isUpdating = false }) => {
             {productName}
           </h3>
           <p className="text-lg sm:text-xl font-semibold text-[#6c4323] mb-2">
-            ₹{item.price.toLocaleString('en-IN')}
+            ₹ { item.price.toLocaleString('en-IN')}
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-center  sm:gap-4 text-sm text-[#8b7355]">
+          <div className="flex flex-col text-sm text-[#8b7355]">
             <span className="flex items-center ">
               <span className="font-medium">Size:</span>
               <span className=" px-2 py-1 rounded text-xs font-medium">

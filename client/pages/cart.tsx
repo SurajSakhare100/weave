@@ -222,18 +222,18 @@ const CartPage = () => {
       <MainLayout>
         <MobilePageHeader title="Cart" />
         <div className="min-h-screen bg-white pb-28 sm:pb-12 pt-2 sm:pt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
               { label: 'Cart', isCurrent: true }
             ]}
-            className="hidden sm:block w-full mb-4 sm:mb-8 text-base sm:text-lg"
+            className=" w-full mb-4 sm:mb-8 text-base sm:text-2xl"
           />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          <div className="sm:w-7xl flex gap-6 sm:gap-8">
             {/* Cart Items */}
-            <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="hidden sm:block flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+            <div className="sm:w-lg flex flex-col gap-4 sm:gap-6">
+              {/* <div className="hidden sm:block flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Shopping Cart ({items.length} items)</h2>
                 {items.length > 0 && (
                   <Button
@@ -245,7 +245,7 @@ const CartPage = () => {
                     Clear Cart
                   </Button>
                 )}
-              </div>
+              </div> */}
               {items.filter(item => item && item.proId && item.item).map((item: CartItem) => (
                 <CartItem 
                   key={item.proId} 
@@ -257,7 +257,8 @@ const CartPage = () => {
               ))}
             </div>
             {/* Enhanced Order Summary */}
-            <div className="space-y-4 sm:space-y-6">
+           <div className='flex-1 justify-start max-w-md sm:max-w-3xl'> 
+           <div className="w-full  space-y-4 sm:space-y-6">
               {/* Summary Card */}
               <div className="bg-[#fff9f5] rounded-xl p-4 sm:p-6 mb-2 relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
@@ -308,9 +309,7 @@ const CartPage = () => {
               {/* Spacer for sticky button on mobile */}
               <div className="h-2 sm:h-0" />
             </div>
-          </div>
-          {/* Desktop/Tablet CTA below grid, centered */}
-          <div className="hidden sm:flex justify-center py-8">
+            <div className="hidden sm:flex justify-start py-8">
             <Button
               onClick={() => router.push('/checkout/address')}
               className="bg-[#EF3B6D] hover:bg-[#e22e61] text-white px-10 py-5 text-base font-semibold rounded-lg w-[320px]"
@@ -318,6 +317,11 @@ const CartPage = () => {
               Continue to checkout
             </Button>
           </div>
+           </div>
+            
+          </div>
+          {/* Desktop/Tablet CTA below grid, centered */}
+          
         </div>
 
         {/* Sticky checkout bar (mobile) */}

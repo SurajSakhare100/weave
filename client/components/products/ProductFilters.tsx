@@ -162,16 +162,16 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             {openFilters.color ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </div>
           {openFilters.color && (
-            <div className="mt-2">
-              <div className="flex flex-wrap gap-3 items-center">
+            <div className="mt-3">
+              <div className="flex flex-wrap gap-2 items-center">
                 {COLOR_SWATCHES.map((colorItem) => {
                   const isSelected = !!(filters.colors && filters.colors.split(',').includes(colorItem.name));
                   return (
                     <button
                       key={colorItem.name}
                       type="button"
-                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        isSelected ? 'ring-2 ring-[#EF3B6D] ring-offset-2 scale-105' : 'hover:scale-105'
+                      className={`w-4 h-4 sm:w-6 sm:h-6 m-1 p-1 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+                        isSelected ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
                       }`}
                       style={{ backgroundColor: colorItem.hex }}
                       onClick={() => onColorSwatchClick(colorItem.name)}

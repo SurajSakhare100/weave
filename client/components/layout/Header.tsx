@@ -38,31 +38,31 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
       </Head>
 
       <div className="bg-white" style={{ color: '#5E3A1C' }}>
-        <div className="bg-[#5E3A1C] text-white text-center py-2 text-base ">
+        <div className="bg-[#5E3A1C] text-white text-center py-2 text-sm ">
           Shipping available across the globe!
         </div>
         
-        <header className="bg-white shadow-sm sticky top-0 z-50">
+        <header className="bg-white sticky top-0 z-50 border-b ">
           <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-20">
-              <nav className="hidden md:flex text-sm items-center space-x-6 flex-1">
+              <nav className="hidden md:flex text-sm items-center space-x-8 flex-1 text-secondary">
                 <div className="relative group">
-                  <button className="flex items-center font-medium focus:outline-none">
+                  <button className="flex items-center font-medium focus:outline-none hover:text-[#6c4323]">
                     Shop <span className="ml-1">
-                      <ChevronDown />
+                      <ChevronDown className="h-4 w-4" />
                     </span>
                   </button>
                   <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all">
                     <Link href="/products" className="block px-4 py-2 hover:bg-gray-100">All Products</Link>
                   </div>
                 </div>
-                <Link href="/wholesale" className="font-medium hover:text-[#cf1a53] transition-colors">
+                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors">
                   Wholesale & Bulk Inquiry
                 </Link>
-                <Link href="/about" className="font-medium hover:text-[#cf1a53] transition-colors">
+                <Link href="/about" className="font-medium hover:text-[#6c4323] transition-colors">
                   About Us
                 </Link>
-                <Link href="/products" className="font-medium hover:text-[#cf1a53] transition-colors">
+                <Link href="/products" className="font-medium hover:text-[#6c4323] transition-colors">
                   Products
                 </Link>
               </nav>
@@ -74,40 +74,40 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 </Link>
               </div>
 
-              <div className="hidden md:flex items-center space-x-6 flex-1 text-sm justify-end">
+              <div className="hidden md:flex items-center space-x-6 flex-1 text-sm justify-end text-secondary">
                 <form onSubmit={handleSearch} className="relative">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search products..."
-                    className="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                    className="w-64 px-4 py-2 border border-[#E7D9CC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E7D9CC] text-sm"
                   />
                   <button
                     type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#cf1a53]"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 hover:text-[#6c4323]"
                   >
-                    <Search className="w-4 h-4" />
+                    <Search className="w-5 h-5" />
                   </button>
                 </form>
-                <Link href="/cart" className="relative p-2 hover:text-[#cf1a53] transition-colors">
-                  <ShoppingCart className="w-4 h-4" />
+                <Link href="/cart" className="relative p-2 hover:text-[#6c4323] transition-colors">
+                  <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
                 </Link>
-                <Link href="/user/wishlist" className="p-2 hover:text-[#cf1a53] transition-colors">
-                  <Heart className="w-4 h-4" />
+                <Link href="/user/wishlist" className="p-2 hover:text-[#6c4323] transition-colors">
+                  <Heart className="w-5 h-5" />
                 </Link>
                 {isAuthenticated && token ? (
-                  <Link href="/user/settings" className="p-2 hover:text-[#cf1a53] transition-colors">
-                    <User className="w-4 h-4" />
+                  <Link href="/user/settings" className="p-2 hover:text-[#6c4323] transition-colors">
+                    <User className="w-5 h-5" />
                   </Link>
                 ) : (
-                  <Link href="/login" className="p-2 hover:text-[#cf1a53] transition-colors">
-                    <User className="w-4 h-4" />
+                  <Link href="/login" className="p-2 hover:text-[#6c4323] transition-colors">
+                    <User className="w-5 h-5" />
                   </Link>
                 )}
               </div>
