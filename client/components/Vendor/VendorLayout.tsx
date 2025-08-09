@@ -42,6 +42,7 @@ const sidebarSections: SidebarSection[] = [
     label: 'Product',
     icon: Package,
     children: [
+      { label: 'All Products', icon: Package, href: '/vendor/products' },
       { label: 'Drafts', icon: FileText, href: '/vendor/products/drafts' },
       { label: 'Released', icon: Send, href: '/vendor/products/released' },
       { label: 'Reviews', icon: MessageCircle, href: '/vendor/products/reviews' },
@@ -73,16 +74,16 @@ const sidebarSections: SidebarSection[] = [
     icon: DollarSign,
     children: [
       { label: 'Earnings', icon: DollarSign, href: '/vendor/revenue/earnings' },
-      { label: 'Refunds', icon: DollarSign, href: '/vendor/revenue/refunds' },
-      { label: 'Payouts', icon: CreditCard, href: '/vendor/revenue/payouts' },
-      { label: 'Statements', icon: FileText, href: '/vendor/revenue/statements' },
+      // { label: 'Refunds', icon: DollarSign, href: '/vendor/revenue/refunds' },
+      // { label: 'Payouts', icon: CreditCard, href: '/vendor/revenue/payouts' },
+      // { label: 'Statements', icon: FileText, href: '/vendor/revenue/statements' },
     ],
   },
-  {
-    label: 'Discount',
-    icon: Percent,
-    href: '/vendor/discount',
-  },
+  // {
+  //   label: 'Discount',
+  //   icon: Percent,
+  //   href: '/vendor/discount',
+  // },
 ];
 
 interface VendorLayoutProps {

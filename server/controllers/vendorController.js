@@ -857,10 +857,8 @@ export const getVendorReviewAnalytics = asyncHandler(async (req, res) => {
 // @access  Private (Vendor)
 export const getVendorEarnings = asyncHandler(async (req, res) => {
   const vendorId = req.vendor._id;
-  console.log('Vendor ID:', vendorId);
   
   const vendorProductIds = await Product.find({ vendorId }).distinct('_id');
-  console.log('Vendor product IDs:', vendorProductIds);
 
   // Get all orders - handle both orderItems and order structures
   const orders = await Order.find({
@@ -869,7 +867,6 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
       { 'order.product': { $in: vendorProductIds } }
     ]
   });
-  console.log('Found orders:', orders.length);
 
   let totalEarnings = 0;
   let balance = 0;
@@ -973,7 +970,6 @@ export const getVendorEarnings = asyncHandler(async (req, res) => {
     earningsTable
   };
   
-  console.log('Earnings response data:', responseData);
   
   res.json({
     success: true,

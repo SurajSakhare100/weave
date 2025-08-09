@@ -9,6 +9,7 @@ import { getVendorDraftProducts, publishVendorProducts, deleteVendorProducts } f
 import { DraftProduct } from '@/types/vendor';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function VendorDraftsPage() {
   const router = useRouter();
@@ -148,12 +149,7 @@ export default function VendorDraftsPage() {
       <VendorLayout>
         <div className="flex items-center justify-center h-64 flex-col gap-4">
           <h1 className="text-2xl font-bold text-[#3475A6]">no drafts found</h1>
-          <Button 
-                variant="vendorPrimary"
-                onClick={() => loadProducts()}
-              >
-                Try Again
-              </Button>
+          <Link href="/vendor/products" className="text-blue-500 hover:text-blue-700">Go to products</Link>
         </div>
       </VendorLayout>
     );

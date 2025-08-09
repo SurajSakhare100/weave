@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { setProducts, setLoading, setError } from '../../features/vendor/vendorSlice';
-import { getVendorProducts } from '../../services/vendorService';
+import { deleteVendorProduct, getVendorProducts } from '../../services/vendorService';
 import { isVendorAuthenticated } from '../../utils/vendorAuth';
 import { AddProductModal, EditProductModal, DeleteProductModal } from '../../components/Vendor/ProductModals';
 import { Product } from '@/types/index';
@@ -20,10 +20,10 @@ import {
   AlertCircle,
   Filter,
   Grid,
-  List
+  List,
 } from 'lucide-react';
+import Link from 'next/link';
 import Image from 'next/image';
-import { deleteProduct } from '@/services/productService';
 
 export default function VendorProductsPage() {
   const router = useRouter();
@@ -160,7 +160,7 @@ export default function VendorProductsPage() {
           )}
 
           {/* Filters and Search */}
-          <div className="vendor-bg-primary rounded-xl shadow-sm p-6 border vendor-border-primary mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-6 border vendor-border-primary mb-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               {/* Search */}
               <form onSubmit={handleSearch} className="flex-1 max-w-md">
@@ -257,11 +257,11 @@ export default function VendorProductsPage() {
                         />
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            product.available === true || product.available === 'true'
+                              product.available === true
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {product.available === true || product.available === 'true' ? 'Active' : 'Inactive'}
+                                {product.available === true ? 'Active' : 'Inactive'}
                           </span>
                         </div>
                         {/* Approval Status Badge */}
@@ -269,7 +269,7 @@ export default function VendorProductsPage() {
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             product.adminApproved 
                               ? 'bg-green-100 text-green-800' 
-                              : product.adminRejectionReason
+                              : product.adminRejectionReason  
                               ? 'bg-red-100 text-red-800'
                               : 'bg-orange-100 text-orange-800'
                           }`}>
@@ -314,13 +314,13 @@ export default function VendorProductsPage() {
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                          <button
-                            onClick={() => router.push(`/products/${product._id}`)}
+                          <Link
+                            href={`/products/${product._id}`}
                             className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            title="View product"
+                            target="_blank"
                           >
                             <Eye className="h-4 w-4" />
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -366,7 +366,7 @@ export default function VendorProductsPage() {
                                 />
                                 <div>
                                   <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                  <div className="text-sm text-gray-500 line-clamp-1">{product.description}</div>
+                                  <div className="text-sm text-gray-500 line-clamp-1">{product.description?.slice(0, 20)}...</div>
                                 </div>
                               </div>
                             </td>
@@ -381,11 +381,11 @@ export default function VendorProductsPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                product.available === true || product.available === 'true'
+                                product.available === true
                                   ? 'bg-green-100 text-green-800' 
                                   : 'bg-red-100 text-red-800'
                               }`}>
-                                {product.available === true || product.available === 'true' ? 'Active' : 'Inactive'}
+                                  {product.available === true ? 'Active' : 'Inactive'}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -404,13 +404,13 @@ export default function VendorProductsPage() {
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
-                                <button
-                                  onClick={() => router.push(`/products/${product._id}`)}
+                                <Link
+                                  href={`/products/${product._id}`}
                                   className="text-gray-600 hover:text-gray-900"
-                                  title="View product"
+                                  target="_blank"
                                 >
                                   <Eye className="h-4 w-4" />
-                                </button>
+                                </Link>
                               </div>
                             </td>
                           </tr>

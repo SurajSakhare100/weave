@@ -19,7 +19,7 @@ export interface Product {
     pickup_location?: string
     return: boolean
     cancellation: boolean
-    images: ProductImage[] // Single source of truth for images
+    images: ProductImage[] //  Single source of truth for images
     variant: boolean
     variantDetails: Array<{
       size: string
@@ -59,7 +59,10 @@ export interface Product {
     primaryImage?: string;
     thumbnail?: string;
     discountPercentage?: number;
-    availableSizes?: string[]; // Virtual field for available sizes
+    availableSizes?: string[]; // 
+    adminApproved?: boolean;
+    adminRejectionReason?: string;
+    // Virtual field for available sizes
 }
 
 // Product image interface

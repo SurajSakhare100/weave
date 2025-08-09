@@ -57,12 +57,13 @@ router.get('/admin/:id/products', protectAdmin, validateId, validatePagination, 
 router.get('/admin/:id/orders', protectAdmin, validateId, validatePagination, getVendorOrders);
 router.post('/accept', protectAdmin, acceptVendor);
 
-// Vendor routes (allow access but check approval status)
+// Vendor routes (allow access but check approval status)a
 router.get('/profile', protectVendorWithStatus, getVendorProfile);
 router.put('/profile', protectVendorWithStatus, updateVendorProfile);
 router.get('/dashboard', protectVendorWithStatus, getVendorDashboard);
 router.get('/earnings', protectVendorWithStatus, getVendorEarnings);
 router.post('/reapply', protectVendorWithStatus, reapplyVendor);
+
 
 // Vendor product routes (allow access but check approval status)
 router.get('/products', protectVendorWithStatus, validatePagination, getVendorProducts);

@@ -122,7 +122,7 @@ const CountryItem: React.FC<{ country: { country: string; total: number }; index
         <span className="text-sm font-medium text-gray-900">{country.country}</span>
       </div>
       <span className="text-sm font-semibold text-gray-900">
-        ${country.total.toLocaleString()}
+         ₹ {country.total.toLocaleString()}
       </span>
     </div>
   );
@@ -276,11 +276,11 @@ const VendorRevenueEarnings: React.FC = () => {
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}m`;
+      return `₹${(amount / 1000000).toFixed(1)}m`;
     } else if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(0)}k`;
+      return `₹${(amount / 1000).toFixed(0)}k`;
     }
-    return `$${amount.toFixed(2)}`;
+    return `₹${amount.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -441,11 +441,11 @@ const VendorRevenueEarnings: React.FC = () => {
                       tick={{ fontSize: 12, fill: '#6b7280' }}
                       tickFormatter={(value) => {
                         if (value >= 1000000) {
-                          return `$${(value / 1000000).toFixed(1)}M`;
+                          return `₹${(value / 1000000).toFixed(1)}M`;
                         } else if (value >= 1000) {
-                          return `$${(value / 1000).toFixed(0)}K`;
+                          return `₹${(value / 1000).toFixed(0)}K`;
                         } else {
-                          return `$${value.toLocaleString()}`;
+                          return `₹${value.toLocaleString()}`;
                         }
                       }}
                     />
@@ -464,7 +464,7 @@ const VendorRevenueEarnings: React.FC = () => {
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
                       formatter={(value, name) => [
-                        name === 'totalSales' ? `$${value.toLocaleString()}` : value,
+                        name === 'totalSales' ? `₹${value.toLocaleString()}` : value,
                         name === 'totalSales' ? 'Total Sales' : 'Customer Cost'
                       ]}
                     />
@@ -555,7 +555,7 @@ const VendorRevenueEarnings: React.FC = () => {
                         {row.productSalesCount.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ${row.earnings.toFixed(2)}
+                       ₹ {row.earnings.toFixed(2)}
                       </td>
                     </tr>
                   ))
