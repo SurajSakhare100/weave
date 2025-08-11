@@ -213,6 +213,9 @@ export default function VendorDashboard() {
           const orderStatsResult = orderStatsResponse.value.data;
           orderStatsData = orderStatsResult.data;
         }
+
+
+        //
         
         // Process earnings data for charts
         let earningsData = null;

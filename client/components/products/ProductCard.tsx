@@ -105,15 +105,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className="group bg-white rounded-2xl p-3 sm:p-4  h-full flex flex-col gap-3 ">
+    <div className=" bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
-        <div className="relative aspect-4/3 rounded-xl xs:p-2 w-full bg-[#FFFBF8] overflow-hidden">
+        <div className="relative  w-full aspect-[4/3] w-full rounded-xl bg-[#FFFBF8] overflow-hidden">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
             fill
-            className="object-cover aspect-4/3 rounded-2xl  sm:p-6"
+            className="object-contain p-2 sm:p-4"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
@@ -121,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Stock Badge */}
           {stock > 0 && stock <= 5 && (
-            <div className="absolute top-4 left-4 bg-[#FF4E8D] text-white px-3 py-1 text-sm xs:text-base font-normal rounded">
+            <div className="absolute top-2 left-2 bg-[#FF4E8D] text-white px-2 py-0.5 text-[10px] xs:text-xs font-medium rounded">
               Only {stock} left
             </div>
           )}
@@ -129,7 +129,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Wishlist Heart Icon */}
           <button
             onClick={handleWishlistToggle}
-            className="absolute bg-[#FFF4EC] p-1.5 rounded-full top-2 right-2  z-10"
+            className="absolute bg-[#FFF4EC] p-1.5 rounded-full top-2 right-2 border border-[#E7D9CC] z-10"
             aria-label="Add to wishlist"
           >
             <Heart
@@ -140,9 +140,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Product Details */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1 sm:gap-2">
         {/* Product Name */}
-        <h3 className="text-base sm:text-xl font-semibold text-[#6c4323]">
+        <h3 className="sm:text-base   font-semibold  text-[#6c4323] line-clamp-1 sm:line-clamp-none">
           {product.name}
         </h3>
 
@@ -154,7 +154,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             >
               <button
               style={{ backgroundColor: color }}
-              className={`w-2 h-2 sm:w-4 sm:h-4  rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+              className={`w-2.5 h-2.5 sm:w-4 sm:h-4  rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
                 selectedColor === color ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
               }`}
                 onClick={() => setSelectedColor(color)}
@@ -164,12 +164,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           ))}
         </div>
 
-        
         {/* Rating */}
-        <div className='flex flex-row justify-between gap-1'>
-        <span className="text-base sm:text-2xl font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
         <div className="flex items-center">
-          <div className="flex text-yellow-400">
+          <div className="flex text-yellow-400 text-xs sm:text-sm  items-center">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
@@ -185,14 +182,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ({product.totalReviews || 745})
           </span>
         </div>
-        </div>
 
         {/* Price and Add to Cart */}
         <div className="flex items-center justify-between mt-1">
-          
+          <span className="texxst- sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
           <button
             onClick={handleAddToCart}
-            className="text-[#FF4E8D] text-xs xs:text-sm font-medium border border-[#FF4E8D] px-2 py-2 rounded-md hover:bg-[#FF4E8D] hover:text-white transition-colors sm:hidden"
+            className="text-[#FF4E8D] text-xs xs:text-sm font-medium border border-[#FF4E8D] px-3 py-2 rounded-lg hover:bg-[#FF4E8D] hover:text-white transition-colors sm:hidden"
           >
             Add to cart
           </button>

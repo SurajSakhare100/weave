@@ -133,7 +133,7 @@ const ProductsPage = () => {
             
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 xs:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-8">
             {/* Desktop Filters */}
             <div className="hidden lg:block">
               <div className="sticky top-4">

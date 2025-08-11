@@ -37,11 +37,9 @@ export default function UserSettingsPage() {
         
         // Set user profile from Redux store or API
         if (user) {
-          // Split the name into first and last name if available
-          const nameParts = user.name ? user.name.split(' ') : ['', ''];
           setUserProfile({
-            firstName: nameParts[0] || '',
-            lastName: nameParts.slice(1).join(' ') || '',
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
             email: user.email || '',
             phone: '' // Phone will be fetched from API if available
           });
@@ -198,9 +196,19 @@ export default function UserSettingsPage() {
     }
   };
 
+  const sectionTitleMap: { [key: string]: string } = {
+    'edit-profile': 'Edit Profile',
+    'addresses': 'Addresses',
+    'past-orders': 'Past orders',
+    'payments': 'Payments & refunds',
+    'profile': 'Profile',
+  };
+
+  const mobileTitle = sectionTitleMap[activeSection] || 'Settings';
+
   if (loading) {
     return (
-      <MainLayout>
+      <MainLayout mobileTitle={mobileTitle} tone="light">
         <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EE346C] mx-auto mb-4"></div>
@@ -212,7 +220,7 @@ export default function UserSettingsPage() {
   }
 
   return (
-    <MainLayout>
+    <MainLayout mobileTitle={mobileTitle}>
       <SettingsLayout 
         activeSection={activeSection}
         onSectionChange={setActiveSection}

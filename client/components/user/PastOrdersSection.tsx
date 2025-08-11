@@ -146,7 +146,7 @@ export default function PastOrdersSection() {
               day: 'numeric'
             });
             return (
-              <div key={order._id} className="max-w-lg ">
+              <div key={order._id} className="max-w-3xl">
                 {order.orderItems && order.orderItems.map((item, index) => {
                   if (!item.productId) {
                     return null;
@@ -154,44 +154,80 @@ export default function PastOrdersSection() {
 
                   return (
                     <div key={index}>
-                      <h1 className='text-primary mb-1 text-lg'>{formattedDate}</h1>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-2 border border-border-tertiary rounded-lg ">
-                        {/* Product Image */}
-                        <div className="relative h-32 w-32 p-4 sm:h-40 sm:w-40 aspect-square bg-white rounded-lg rounded-tr-none rounded-br-none rounded-br-none overflow-hidden flex-shrink-0">
+                      {/* Date visible on desktop only */}
+                      <h1 className='hidden sm:block text-primary mb-1 text-lg'>{formattedDate}</h1>
+
+                      {/* Mobile card */}
+                      <div className="sm:hidden mb-3">
+                        <div className="flex items-stretch gap-0 rounded-sm overflow-hidden border border-[#E7D9CC] bg-white ">
+                          <div className="relative w-20 h-20 bg-[#FFF4EC] flex-shrink-0">
+                            <Image
+                              src={
+                                item.productId.images?.[0]?.url ||
+                                item.productId.primaryImage ||
+                                "/products/product.png"
+                              }
+                              alt={item.productId.name || item.name || "Product"}
+                              fill
+                              className="object-cover aspect-square"
+                            />
+                          </div>
+                          <div className="flex-1 p-1 flex flex-col justify-between">
+                            <h4 className="text-[8px] font-extrabold text-[#6c4323] mb-0.5 truncate">
+                              {item.productId.name || item.name || 'Bag name'}
+                            </h4>
+                            <p className="text-[8px] font-semibold text-[#6c4323] mb-0.5">₹ {item.price || item.productId.price || 0}</p>
+                            <div className="text-[8px] text-secondary space-y-0.5">
+                              {item.variantSize && <p>Size: {item.variantSize}</p>}
+                              <p>Color: Pink</p>
+                              <p>Quantity: {item.quantity || 1}</p>
+                            </div>
+                            
+                          </div>
+                          <div className="self-end text-[10px] p-1 sm:p-2  ">
+                              <button
+                                onClick={() => handleReorder(order)}
+                                className="px-2 py-1  sm:px-4 sm:py-1.5 rounded-sm border border-[#EE346C] text-[#EE346C]  font-medium hover:bg-[#EE346C] hover:text-white transition "
+                              >
+                                Reorder
+                              </button>
+                            </div>
+                        </div>
+                      </div>
+
+                      {/* Desktop/Tablet card */}
+                      <div className="hidden sm:w-xl sm:flex flex-row items-center gap-4 mb-2 border border-border-tertiary rounded-lg">
+                        <div className="relative h-40 w-40 p-4 aspect-square bg-white rounded-l-lg overflow-hidden flex-shrink-0">
                           <Image
                             src={
                               item.productId.images?.[0]?.url ||
                               item.productId.primaryImage ||
-                                "/products/product.png"
+                              "/products/product.png"
                             }
                             alt={item.productId.name || item.name || "Product"}
                             fill
-                            className="w-20 h-20 h-full w-full"
+                            className="object-cover"
                           />
                         </div>
-
-                        {/* Product Details */}
                         <div className="flex-1 min-w-0 p-2">
-                          <h4 className="font-bold mb-1 text-sm sm:text-base text-primary truncate">
+                          <h4 className="font-bold mb-1 text-base text-primary truncate">
                             {item.productId.name || item.name || "Bag name"}
                           </h4>
-                          <p className="text-sm sm:text-base  font-semibold text-primary mb-2">
+                          <p className="text-base font-semibold text-primary mb-2">
                             ₹{item.price || item.productId.price || 0}
                           </p>
-                          <div className="space-y-1 text-xs  text-secondary text-[#6b7280]">
+                          <div className="space-y-1 text-sm text-[#6b7280]">
                             {item.variantSize && (
-                              <p className=' text-secondary font-medium text-sm  sm:text-base  '>Size: {item.variantSize}</p>
+                              <p className='font-medium'>Size: {item.variantSize}</p>
                             )}
-                            <p className=' text-secondary  font-medium text-sm  sm:text-base '>Color: Pink</p>
-                            <p className=' text-secondary  font-medium text-sm sm:text-base  '>Quantity: {item.quantity || 1}</p>
+                            <p className='font-medium'>Color: Pink</p>
+                            <p className='font-medium'>Quantity: {item.quantity || 1}</p>
                           </div>
                         </div>
-
-                        <div className='p-2 self-end w-full sm:w-auto'>
-                          {/* Reorder Button */}
+                        <div className='p-2 self-end w-auto'>
                           <button
                             onClick={() => handleReorder(order)}
-                            className="w-full sm:w-auto px-3 py-2 border border-[#EE346C] text-[#EE346C] rounded-md hover:bg-[#EE346C] hover:text-white transition-colors font-medium flex-shrink-0 bg-white text-sm sm:text-base"
+                            className="px-3 py-2 border border-[#EE346C] text-[#EE346C] rounded-md hover:bg-[#EE346C] hover:text-white transition-colors font-medium bg-white text-base"
                           >
                             Reorder
                           </button>

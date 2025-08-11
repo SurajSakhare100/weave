@@ -8,7 +8,7 @@ import {
   deleteUserAddress,
   setDefaultAddress,
 } from "@/services/userService"
-import { Edit, Plus, Trash2 } from "lucide-react"
+import { Edit, Plus, Trash2, Home as HomeIcon, Briefcase } from "lucide-react"
 
 interface Address {
   id: string
@@ -125,7 +125,7 @@ export default function AddressesSection() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl  p-6">
+      <div className="p-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EE346C]"></div>
         </div>
@@ -133,143 +133,143 @@ export default function AddressesSection() {
     )
   }
 
-  return (
-    <div className="bg-white rounded-2xl max-w-3xl p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-primary">
-          Addresses {" > "} 
-          <span className="text-secondary font-medium">
-          Edit & add new address
-          </span>
-        </h2>
-      </div>
+  const summarize = (a: Address) => {
+    const parts = [a.address, a.locality, `${a.city}, ${a.state} - ${a.pin}`, a.country]
+      .filter(Boolean)
+    return parts.join(' ')
+  }
 
-      <div className="space-y-4">
+  return (
+    <div className="">
+      {/* Mobile layout */}
+      <div className="sm:hidden px-2">
+        <h2 className="text-sm font-bold text-[#6c4323] mb-2">Saved Addresses ({addresses.length})</h2>
         {addresses.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plus className="w-8 h-8 text-gray-400" />
+          <div className="text-center py-4">
+            <p className="text-[#6c4323] text-xs">No addresses yet</p>
+            <div className="mt-2">
+              <Button onClick={handleAddNewClick} className="bg-[#EE346C] text-white text-xs">Add new address</Button>
             </div>
-            <h3 className="text-lg font-medium text-primary mb-2">
-              No addresses yet
-            </h3>
-            <p className="text-primary mb-6">
-              Add your first delivery address to get started.
-            </p>
-            <Button
-              onClick={handleAddNewClick}
-              className="bg-[#EE346C] hover:bg-[#c2185b] text-white"
-            >
-              Add Your First Address
-            </Button>
           </div>
         ) : (
-          addresses.map((address) => {
-            const isSelected = selectedAddressId === address.id
-            return (
-              <div
-                key={address.id}
-                className={`rounded-xl p-6 transition-all duration-200 ${
-                  isSelected ? "bg-bg-tertiary" : "bg-white"
-                }`}
-              >
-                <div className="flex items-start space-x-4">
-                  {/* Radio Button */}
-                  <div className="flex-shrink-0 mt-1">
+          <div className="divide-y divide-[#E7D9CC]">
+            {addresses.map((a) => {
+              const Icon = (a.addressType || 'Home').toLowerCase() === 'work' ? Briefcase : HomeIcon
+              return (
+                <div key={a.id} className="py-5">
+                  <div className="flex items-start gap-3">
+                    <Icon className="w-5 h-5 text-[#6c4323] mt-0.5" />
+                    <div>
+                      <p className="text-[#6c4323] font-semibold text-xs">{a.addressType || 'Home'}</p>
+                      <p className="text-[#6c4323]/90 leading-snug text-xs">{summarize(a)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-8 text-[#6c4323] text-xs">
+                    <button onClick={() => handleEditClick(a)} className="underline">Edit</button>
+                    <button onClick={() => handleDeleteAddress(a.id)} className="underline">Delete</button>
                     <button
-                      onClick={() => setSelectedAddressId(address.id)}
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        isSelected ? "border-primary" : "border-primary"
-                      }`}
-                      aria-label={`Select ${address.firstName} ${address.lastName}'s address`}
+                      onClick={() => (navigator as any).share ? (navigator as any).share({ title: 'Address', text: summarize(a) }) : navigator.clipboard.writeText(summarize(a))}
+                      className="underline"
                     >
-                      {isSelected && (
-                        <div className="w-2.5 h-2.5 bg-bg-selected rounded-full cursor-pointer"></div>
-                      )}
+                      Share
                     </button>
                   </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
-                  {/* Address Content */}
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-semibold text-primary text-xl">
-                        {address.firstName} {address.lastName}
-                        {address.isDefault && (
-                          <span className="ml-2 px-2 py-0.5 text-base bg-primary text-white rounded">
-                            Default
-                          </span>
-                        )}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEditClick(address)}
-                          className="p-1 text-gray-500 hover:text-button transition-colors"
-                          aria-label="Edit address"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAddress(address.id)}
-                          className="p-1 text-gray-500 hover:text-red-600 transition-colors"
-                          aria-label="Delete address"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        {!address.isDefault && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="ml-2 text-xs px-2 py-1"
-                            onClick={() => handleSetDefaultAddress(address.id)}
-                          >
-                            Set as Default
-                          </Button>
-                        )}
-                      </div>
+        {/* Add address CTA fixed at bottom */}
+        <div className="fixed bottom-4 left-4 right-4 z-40">
+          <Button onClick={handleAddNewClick} className="w-full py-4 rounded-lg bg-[#EE346C] hover:bg-[#D62A5A] text-white text-lg">
+            Add new address
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden sm:block bg-white rounded-2xl max-w-3xl p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-primary">
+            Addresses {" > "}
+            <span className="text-secondary font-medium"> Edit & add new address</span>
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          {addresses.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-primary mb-2">No addresses yet</h3>
+              <p className="text-primary mb-6">Add your first delivery address to get started.</p>
+              <Button onClick={handleAddNewClick} className="bg-[#EE346C] hover:bg-[#c2185b] text-white">Add Your First Address</Button>
+            </div>
+          ) : (
+            addresses.map((address) => {
+              const isSelected = selectedAddressId === address.id
+              return (
+                <div key={address.id} className={`rounded-xl p-6 transition-all duration-200 ${isSelected ? 'bg-bg-tertiary' : 'bg-white'}`}>
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 mt-1">
+                      <button
+                        onClick={() => setSelectedAddressId(address.id)}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-primary' : 'border-primary'}`}
+                        aria-label={`Select ${address.firstName} ${address.lastName}'s address`}
+                      >
+                        {isSelected && <div className="w-2.5 h-2.5 bg-bg-selected rounded-full cursor-pointer"></div>}
+                      </button>
                     </div>
-
-                    {/* Address Details */}
-                    <div className="text-primary mb-4 border-b border-border-tertiary pb-4">
-                      {address.locality && (
-                        <p className="text-base">{address.address} , {address.locality}</p>
-                      )}
-                      <p className="text-base">
-                        {address.city}, {address.state} - {address.pin}
-                      </p>
-                      <p className="text-base">{address.country}</p>
-                      {/* <p className="text-base">Phone: {address.number}</p> */}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-semibold text-primary text-xl">
+                          {address.firstName} {address.lastName}
+                          {address.isDefault && <span className="ml-2 px-2 py-0.5 text-base bg-primary text-white rounded">Default</span>}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <button onClick={() => handleEditClick(address)} className="p-1 text-gray-500 hover:text-button transition-colors" aria-label="Edit address">
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleDeleteAddress(address.id)} className="p-1 text-gray-500 hover:text-red-600 transition-colors" aria-label="Delete address">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          {!address.isDefault && (
+                            <Button size="sm" variant="outline" className="ml-2 text-xs px-2 py-1" onClick={() => handleSetDefaultAddress(address.id)}>
+                              Set as Default
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-primary mb-4 border-b border-border-tertiary pb-4">
+                        {address.locality && <p className="text-base">{address.address} , {address.locality}</p>}
+                        <p className="text-base">{address.city}, {address.state} - {address.pin}</p>
+                        <p className="text-base">{address.country}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          })
+              )
+            })
+          )}
+        </div>
+
+        {addresses.length > 0 && (
+          <div className="text-center mt-6">
+            <Button onClick={handleAddNewClick} variant="link" className="text-[#EE346C] hover:text-[#c2185b] font-medium">Add Delivery Address</Button>
+          </div>
         )}
       </div>
 
-      {addresses.length > 0 && (
-        <div className="text-center mt-6">
-          <Button
-            onClick={handleAddNewClick}
-            variant="link"
-            className="text-[#EE346C] hover:text-[#c2185b] font-medium"
-          >
-            Add Delivery Address
-          </Button>
-        </div>
-      )}
-
+      {/* Shared modal */}
       <AddressFormModal
         isOpen={showAddressModal}
         onClose={() => {
           setShowAddressModal(false)
           setEditingAddress(null)
         }}
-        onSubmit={
-          editingAddress
-            ? (address: Address) => handleEditAddress(address as any)
-            : (address: Address) => handleAddAddress(address as any)
-        }
+        onSubmit={editingAddress ? (address: Address) => handleEditAddress(address as any) : (address: Address) => handleAddAddress(address as any)}
         address={editingAddress || undefined}
       />
     </div>

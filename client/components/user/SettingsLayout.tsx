@@ -21,7 +21,7 @@ export default function SettingsLayout({ children, activeSection, onSectionChang
       <div className="mx-auto p-4 sm:px-8 sm:py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
-          <div className="lg:w-80 flex-shrink-0">
+          <div className="hidden lg:block lg:w-80 flex-shrink-0">
             <div className="rounded-2xl p-0">
               <h2 className="text-xl font-semibold text-[#6c4323] mb-4">Profile</h2>
               <nav className="divide-y divide-[#E7D9CC] border-b border-[#E7D9CC]">
@@ -65,7 +65,7 @@ export default function SettingsLayout({ children, activeSection, onSectionChang
             </div>
           </div>
 
-          <div className="flex-1 max-w-4xl">
+          <div className="flex-1 max-w-4xl w-full">
             {children}
           </div>
         </div>
