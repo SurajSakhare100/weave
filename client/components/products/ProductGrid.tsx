@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, AlertCircle, ChevronDown, SlidersHorizontal, AlignLeft } from 'lucide-react';
+import FullPageLoader from '@/components/ui/FullPageLoader';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/index';
@@ -42,16 +43,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="w-full flex justify-center items-center py-12 sm:py-16">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 sm:h-12 sm:w-12 animate-spin text-pink-500 mx-auto mb-4" />
-          <p className="text-gray-600 text-sm sm:text-base">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <FullPageLoader text="Loading products..." />;
 
   if (error) {
     return (
@@ -88,7 +80,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
      
 
       {/* Products Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 lg:[grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
         {displayedProducts.map((product: Product) => (
           <ProductCard key={product._id} product={product} />
         ))}

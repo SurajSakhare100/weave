@@ -1,4 +1,5 @@
 import MainLayout from '@/components/layout/MainLayout';
+import MobilePageHeader from '@/components/ui/MobilePageHeader';
 import { useState } from 'react';
 
 export default function WholesalePage() {
@@ -104,7 +105,6 @@ export default function WholesalePage() {
     }
 
     // Here you would typically send the data to your backend
-    console.log('Wholesale inquiry submitted:', formData);
     
     alert('Thank you for your wholesale inquiry! We will get back to you within 24 hours.');
     
@@ -124,6 +124,7 @@ export default function WholesalePage() {
 
   return (
     <MainLayout>
+      <MobilePageHeader title="Wholesale & Bulk Inquiry" />
       <section className="py-8 sm:py-12 lg:py-16 bg-[#faf5f2] text-black min-h-screen">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-8 sm:mb-12">

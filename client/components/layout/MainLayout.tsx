@@ -19,6 +19,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, className, mobileTitl
   const router = useRouter();
 
   const isUserRoute = router?.pathname?.startsWith('/user');
+  const isProductRoute =  router?.pathname === '/' || router?.pathname?.startsWith('/product');
   const isHomeRoute = router?.pathname === '/';
 
   const computeFallbackTitle = () => {
@@ -37,7 +38,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, className, mobileTitl
   return (
     <div className="min-h-screen w-full flex flex-col">
       {/* Header: visible on mobile only for home route, always on desktop */}
-      <div className={`${isHomeRoute ? '' : 'hidden sm:block'} sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75`}>
+      <div className={`${isProductRoute ? '' : 'hidden sm:block'} sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75`}>
         <Header />
       </div>
 

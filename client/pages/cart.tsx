@@ -223,6 +223,7 @@ const CartPage = () => {
         <MobilePageHeader title="Cart" />
         <div className="min-h-screen bg-white pb-28 sm:pb-12 pt-2 sm:pt-12">
         <div className="px-4 sm:px-6 lg:px-8">
+          <div className='hidden sm:block'>
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
@@ -230,7 +231,8 @@ const CartPage = () => {
             ]}
             className=" w-full mb-4 sm:mb-8 text-base sm:text-2xl"
           />
-          <div className="sm:w-7xl flex gap-6 sm:gap-8">
+          </div>
+          <div className="sm:w-7xl flex-col sm:flex-row flex gap-6 sm:gap-8">
             {/* Cart Items */}
             <div className="sm:w-lg flex flex-col gap-4 sm:gap-6">
               {/* <div className="hidden sm:block flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
@@ -257,10 +259,10 @@ const CartPage = () => {
               ))}
             </div>
             {/* Enhanced Order Summary */}
-           <div className='flex-1 justify-start max-w-md sm:max-w-3xl'> 
+           <div className='flex-col  sm:flex-1 justify-start sm:max-w-3xl w-full'> 
            <div className="w-full  space-y-4 sm:space-y-6">
               {/* Summary Card */}
-              <div className="bg-[#fff9f5] rounded-xl p-4 sm:p-6 mb-2 relative">
+              <div className="bg-[#fff9f5] w-full rounded-xl p-4 sm:p-6 mb-2 relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                   <div className="w-8 h-8 bg-[#6c4323] text-white rounded flex items-center justify-center font-bold text-xl">🧾</div>
                   <div className='flex gap-2 items-center'>

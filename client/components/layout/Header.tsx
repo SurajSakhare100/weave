@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
-import { ShoppingCart, User, Heart, Search, Menu, X, ArrowDownNarrowWide, ArrowDown, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Heart, Search, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { getUserToken } from '@/services/authService';
 import { RootState } from '@/store/store';
@@ -28,6 +28,17 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
     }
   };
 
+  // Prevent background scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isMobileMenuOpen]);
+
   return (
     <>
       <Head>
@@ -42,10 +53,11 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
           Shipping available across the globe!
         </div>
         
-        <header className="bg-white sticky top-0 z-50 border-b ">
-          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-20">
-              <nav className="hidden md:flex text-sm items-center space-x-8 flex-1 text-secondary">
+        <header className="bg-white sticky top-0 z-40 border-b ">
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Desktop header */}
+            <div className="hidden md:grid grid-cols-3 items-center h-20">
+              <nav className="text-sm items-center gap-6 xl:gap-8 text-secondary flex">
                 <div className="relative group">
                   <button className="flex items-center font-medium focus:outline-none hover:text-[#6c4323]">
                     Shop <span className="ml-1">
@@ -56,7 +68,10 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                     <Link href="/products" className="block px-4 py-2 hover:bg-gray-100">All Products</Link>
                   </div>
                 </div>
-                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors">
+                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors xl:hidden">
+                  Wholesale
+                </Link>
+                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors hidden xl:inline">
                   Wholesale & Bulk Inquiry
                 </Link>
                 <Link href="/about" className="font-medium hover:text-[#6c4323] transition-colors">
@@ -67,14 +82,14 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 </Link>
               </nav>
 
-              <div className="">
+              <div className="justify-self-center">
                 <Link href="/" className="flex flex-row items-center space-y-1 gap-1">
                   <img src="/landing/navLogo.png" alt="Weave Logo" className="h-9 w-auto" />
                   <img src="/landing/navImage.png" alt="Weave Logo" className="h-8 w-auto" />
                 </Link>
               </div>
 
-              <div className="hidden md:flex items-center space-x-2 flex-1 text-sm justify-end text-secondary">
+              <div className="items-center space-x-2 text-sm justify-end text-secondary flex">
                 <Link href="/search" className="p-2 hover:text-[#6c4323] transition-colors">
                   <Search className="w-5 h-5" />
                 </Link>
@@ -99,65 +114,98 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                   </Link>
                 )}
               </div>
+            </div>
 
+            {/* Mobile header */}
+            <div className="md:hidden flex items-center justify-between h-14">
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 hover:text-[#cf1a53] transition-colors"
+                aria-label="Open menu"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 text-[#5E3A1C]"
               >
-                {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                <Menu className="w-5 h-5" />
               </button>
+
+              <Link href="/" className="flex flex-row items-center gap-1">
+                <img src="/landing/navLogo.png" alt="Weave Logo" className="h-7 w-auto" />
+                <img src="/landing/navImage.png" alt="Weave Logo" className="h-6 w-auto" />
+              </Link>
+
+              <div className="flex items-center gap-3 text-[#5E3A1C]">
+                <Link href="/search" aria-label="Search" className="p-1">
+                  <Search className="w-5 h-5" />
+                </Link>
+                <Link href="/cart" aria-label="Cart" className="relative p-1">
+                  <ShoppingCart className="w-5 h-5" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Link>
+                {isAuthenticated && token ? (
+                  <Link href="/user/settings" aria-label="Account" className="p-1">
+                    <User className="w-5 h-5" />
+                  </Link>
+                ) : (
+                  <Link href="/login" aria-label="Login" className="p-1">
+                    <User className="w-5 h-5" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 
           {isMobileMenuOpen && (
-            <div className="md:hidden bg-white border-t border-gray-200">
-              <div className="px-4 py-2 space-y-1">
-                <Link href="/products" className="block px-3 py-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                  Shop
-                </Link>
-                <Link href="/wholesale" className="block px-3 py-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                  Wholesale & Bulk Inquiry
-                </Link>
-                <Link href="/about" className="block px-3 py-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                  About Us
-                </Link>
-                <form onSubmit={handleSearch} className="w-full mb-4">
-                  <div className="relative">
-                         
-                    <button
-                      type="submit"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#cf1a53]"
-                      onClick={() => setIsMobileMenuOpen(false)}
+            <>
+              {/* overlay */}
+              <div
+                className="md:hidden fixed inset-0 z-[50] bg-black/40"
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-hidden="true"
+              />
 
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                  </div>
-                </form>
-                <div className="flex space-x-4">
-                  <Link href="/cart" className="relative p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <ShoppingCart className="w-4 h-4" />
-                    {cartItemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {cartItemCount}
-                      </span>
-                    )}
-                  </Link>
-                  <Link href="/user/wishlist" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Heart className="w-4 h-4" />
-                  </Link>
-                  {isAuthenticated && token ? (
-                    <Link href="/user/settings" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      <User className="w-4 h-4" />
-                    </Link>
-                  ) : (
-                    <Link href="/login" className="p-2 hover:text-[#cf1a53] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      <User className="w-4 h-4" />
-                    </Link>
-                  )}
-                </div>
+              {/* drawer */}
+              <div className="md:hidden fixed inset-y-0 left-0 z-[60] bg-white h-screen w-[90%] overflow-y-auto shadow-lg transition-transform transform translate-x-0">
+              <div className="flex items-center justify-between h-14 px-4 border-b">
+                <button
+                  aria-label="Close menu"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-[#5E3A1C]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            </div>
+              <div className="px-4">
+                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/products'); setIsMobileMenuOpen(false); }}>
+                  <span>Shop</span>
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push({ pathname: '/products', query: { sort: '-discount' } }); setIsMobileMenuOpen(false); }}>
+                  <span>Sale</span>
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
+                  <span>About Us</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/wholesale'); setIsMobileMenuOpen(false); }}>
+                  <span>Wholesale & Export Inquiry</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push(isAuthenticated && token ? '/user/settings' : '/login'); setIsMobileMenuOpen(false); }}>
+                  <span>My Account</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="absolute left-0 right-0 bottom-6 px-6">
+                <Link href="/user/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[#5E3A1C]">
+                  <Heart className="w-6 h-6" />
+                  <span className="underline text-lg">View Wishlist</span>
+                </Link>
+              </div>
+              </div>
+            </>
           )}
         </header>
       </div>

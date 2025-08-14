@@ -9,7 +9,7 @@ import { Product } from '@/types/index';
 import useProductFilters from '@/hooks/useProductFilters';
 import { Button } from '@/components/ui/button';
 import CustomSelect from '@/components/ui/CustomSelect';
-import { AlignLeft, SlidersHorizontal, X } from 'lucide-react'; // Add X import
+import { AlignLeft, SlidersHorizontal, X, Search } from 'lucide-react'; // Add X & Search import
 
 interface Category {
   _id: string;
@@ -27,6 +27,7 @@ const ProductsPage = () => {
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
   const [openSort, setOpenSort] = useState(false); // Add state for sort drawer
+  const [searchInput, setSearchInput] = useState<string>('');
   const router = useRouter();
 
   const {
@@ -60,6 +61,12 @@ const ProductsPage = () => {
     };
     fetchCategories();
   }, []);
+
+  // Sync local search input with URL query
+  useEffect(() => {
+    const currentSearch = (router.query.search as string) || '';
+    setSearchInput(currentSearch);
+  }, [router.query.search]);
 
   const fetchProducts = async (pageNum: number = 1, append: boolean = false) => {
     const query = { 
@@ -114,6 +121,24 @@ const ProductsPage = () => {
 
   const toggleSort = () => setOpenSort(!openSort); // Toggle function for sort drawer
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = { ...router.query } as Record<string, any>;
+    if (searchInput && searchInput.trim()) {
+      query.search = searchInput.trim();
+    } else {
+      delete query.search;
+    }
+    router.push({ pathname: '/products', query }, undefined, { shallow: true });
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    const query = { ...router.query } as Record<string, any>;
+    delete query.search;
+    router.push({ pathname: '/products', query }, undefined, { shallow: true });
+  };
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-white">
@@ -133,9 +158,50 @@ const ProductsPage = () => {
             
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-8">
+          {/* Mobile Search + Trending */}
+          <div className="sm:hidden">
+            <form onSubmit={handleSearchSubmit} className="relative mb-4">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b59c8a]">
+                  <Search className="w-5 h-5" />
+                </span>
+                <input
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search For Bag"
+                  className="w-full rounded-2xl border border-[#E7D9CC] bg-white pl-10 pr-10 py-3 text-sm text-[#6c4323] placeholder-[#b59c8a] focus:outline-none focus:ring-2 focus:ring-[#FFB7C9]"
+                />
+                {searchInput ? (
+                  <button type="button" onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b59c8a]">
+                    <X className="w-5 h-5" />
+                  </button>
+                ) : null}
+              </div>
+            </form>
+            {categories && categories.length > 0 && (
+              <div className="mb-6">
+                <div className="text-[#6c4323] text-base font-semibold mb-2">Trending Searches</div>
+                <div className="flex flex-wrap gap-2">
+                  {categories.slice(0, 6).map((cat) => (
+                    <button
+                      key={cat._id}
+                      onClick={() => {
+                        setSearchInput(cat.name);
+                        router.push({ pathname: '/products', query: { ...router.query, search: cat.name } }, undefined, { shallow: true });
+                      }}
+                      className="px-4 py-2 rounded-full border border-[#E7D9CC] bg-white text-[#6c4323] text-sm"
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-row gap-6 sm:gap-8">
             {/* Desktop Filters */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block lg:w-1/5">
               <div className="sticky top-4">
                 <ProductFilters
                   categories={categories}
@@ -157,7 +223,7 @@ const ProductsPage = () => {
             </div>
 
             {/* Product Grid */}
-            <div className="lg:col-span-4">
+            <div className="w-full lg:w-4/5">
             <div className='flex flex-row gap-4 justify-between items-center'>
             <div className='flex justify-between items-center'>
               <h1 className='text-xl font-medium text-primary'>Tote Bags</h1>

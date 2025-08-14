@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCartItem, fetchCart } from '@/features/cart/cartSlice';
@@ -38,6 +38,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.colors ? product.colors[0] : null
   );
 
+  const resolvedSize = React.useMemo(() => {
+    if (product.sizes && product.sizes.length > 0) {
+      return product.sizes[0];
+    }
+    if (product.currVariantSize) {
+      return product.currVariantSize;
+    }
+    return 'M';
+  }, [product.sizes, product.currVariantSize]);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -46,24 +56,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       return;
     }
 
-    if (!product.available) {
+    if (!product.available || stock <= 0) {
       toast.error('Product is not available');
       return;
-    }
-
-    let selectedSize = 'M';
-    if (selectedColor && product.sizes && product.sizes.includes(selectedColor)) {
-      selectedSize = selectedColor;
-    } else if (product.sizes && product.sizes.length > 0) {
-      selectedSize = product.sizes[0];
-    } else if (product.currVariantSize) {
-      selectedSize = product.currVariantSize;
     }
 
     dispatch(addCartItem({
       product,
       quantity: 1,
-      variantSize: selectedSize
+      variantSize: resolvedSize
     })).then(() => {
       // Refresh cart to ensure UI is updated immediately
       dispatch(fetchCart());
@@ -105,10 +106,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className=" bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3">
+    <div className=" bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
-        <div className="relative  w-full aspect-[4/3] w-full rounded-xl bg-[#FFFBF8] overflow-hidden">
+        <div className="relative  w-full aspect-[4/3] rounded-xl bg-[#FFFBF8] overflow-hidden">
           <Image
             src={getPrimaryImage()}
             alt={product.name}
@@ -121,7 +122,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Stock Badge */}
           {stock > 0 && stock <= 5 && (
-            <div className="absolute top-2 left-2 bg-[#FF4E8D] text-white px-2 py-0.5 text-[10px] xs:text-xs font-medium rounded">
+            <div className="absolute top-2 left-2 bg-[#FF4E8D] text-white px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded">
               Only {stock} left
             </div>
           )}
@@ -185,10 +186,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price and Add to Cart */}
         <div className="flex items-center justify-between mt-1">
-          <span className="texxst- sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
+          <span className="text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
           <button
             onClick={handleAddToCart}
-            className="text-[#FF4E8D] text-xs xs:text-sm font-medium border border-[#FF4E8D] px-3 py-2 rounded-lg hover:bg-[#FF4E8D] hover:text-white transition-colors sm:hidden"
+            disabled={!product.available || stock <= 0}
+            className={`text-[#FF4E8D] text-xs sm:text-sm font-medium border border-[#FF4E8D] px-3 py-2 rounded-lg transition-colors sm:hidden ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
           >
             Add to cart
           </button>
@@ -197,7 +199,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* sm+ full-width Add button */}
         <button
           onClick={handleAddToCart}
-          className="hidden sm:block w-full text-[#FF4E8D] border border-[#FF4E8D] py-3 rounded-lg font-semibold hover:bg-[#FF4E8D] hover:text-white transition-colors"
+          disabled={!product.available || stock <= 0}
+          className={`hidden sm:block w-full text-[#FF4E8D] border border-[#FF4E8D] py-3 rounded-lg font-semibold transition-colors ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
         >
           Add to cart
         </button>

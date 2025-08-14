@@ -7,7 +7,7 @@ const Hero: React.FC = () => {
     <section className="hero-section relative h-screen flex flex-col justify-between items-center text-white">
       
       {/* Top content (can include headings if needed later) */}
-      <div className="flex-1 flex items-center justify-center w-full">
+      <div className="flex-1 flex items-end pb-8 justify-center w-full">
         <div className="text-center px-4 sm:px-6 lg:px-8">
           <Link 
             href="/products" 

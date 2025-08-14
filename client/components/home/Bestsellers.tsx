@@ -3,6 +3,7 @@ import { getProducts } from '@/services/productService';
 import { Product } from '@/types/index';
 import ProductCard from '@/components/products/ProductCard';
 import { Loader2 } from 'lucide-react';
+import FullPageLoader from '@/components/ui/FullPageLoader';
 
 const Bestsellers: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,7 +12,8 @@ const Bestsellers: React.FC = () => {
   useEffect(() => {
     const fetchBestsellers = async () => {
       try {
-        const res = await getProducts({ sort: '-totalReviews', limit: '8' });
+        // Use a valid sort field and correct type for limit
+        const res = await getProducts({ sort: '-sales', limit: 4 });
         if (res.success) {
           setProducts(res.data);
         }
@@ -25,18 +27,7 @@ const Bestsellers: React.FC = () => {
     fetchBestsellers();
   }, []);
 
-  if (loading) {
-    return (
-      <section className="py-16 " style={{ backgroundColor: '#F9F9F9' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#5E3A1C]">Bestsellers</h2>
-          <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-          </div>
-        </div>
-      </section>
-    );
-  }
+  if (loading) return <FullPageLoader text="Loading bestsellers..." />;
 
   return (
     <section className="py-16 " style={{ backgroundColor: '#F9F9F9' }}>

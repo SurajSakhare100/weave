@@ -1,16 +1,16 @@
 import React from 'react';
 
 const items = [
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
-  { label: 'Tropical Essentials', icon: './landing/image-3.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
+  { label: 'Tropical Essentials', icon: './landing/footer.png' },
 ];
 
 const CategoryScroller = () => {

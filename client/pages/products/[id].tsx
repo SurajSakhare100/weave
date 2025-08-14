@@ -12,6 +12,7 @@ import {
   Clock,
   X
 } from 'lucide-react'
+import FullPageLoader from '@/components/ui/FullPageLoader'
 import { Product, ProductWithReviews } from '@/types'
 import ProductCard from '@/components/products/ProductCard'
 import ProductDetails from '@/components/products/ProductDetails'
@@ -211,16 +212,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-pink-500 mx-auto mb-4" />
-          <p className="text-gray-600">Loading product...</p>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <FullPageLoader text="Loading product..." />
 
   if (error || !product) {
     const isApprovalIssue = error && (
@@ -302,7 +294,7 @@ export default function ProductDetailPage() {
   return (
     <MainLayout>
       <div className="bg-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Main Product Section */}
           <ProductDetails
             product={product}
@@ -318,7 +310,7 @@ export default function ProductDetailPage() {
           {frequentlyBought.length > 0 && (
             <div className="mt-16">
               <h2 className="text-xl font-medium text-[#5E3A1C] mb-6">Frequently Bought Together</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="flex flex-row overflow-x-auto gap-4">
                 {frequentlyBought.map((item) => (
                   <ProductCard key={item._id} product={item} />
                 ))}
@@ -330,7 +322,7 @@ export default function ProductDetailPage() {
           {similarProducts.length > 0 && (
             <div className="mt-16">
               <h2 className="text-xl font-medium text-[#5E3A1C] mb-6">Related Products</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="w-full flex flex-row  overflow-x-auto gap-4">
                 {similarProducts.map((item) => (
                   <ProductCard key={item._id} product={item} />
                 ))}
@@ -342,7 +334,7 @@ export default function ProductDetailPage() {
           {comparableProducts.length > 0 && (
             <div className="mt-16">
               <h2 className="text-xl font-medium text-[#5E3A1C] mb-6">Compare With Similar Items</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="w-full flex flex-row  overflow-x-auto gap-4">
                 {comparableProducts.map((item) => (
                   <ProductCard key={item._id} product={item} />
                 ))}

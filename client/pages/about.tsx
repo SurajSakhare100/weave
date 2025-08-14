@@ -1,8 +1,10 @@
 import MainLayout from '@/components/layout/MainLayout';
+import MobilePageHeader from '@/components/ui/MobilePageHeader';
 
 export default function AboutPage() {
   return (
     <MainLayout>
+      <MobilePageHeader title="About Weave" />
       <section className="py-8 sm:py-12 lg:py-16 bg-[#faf5f2] min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 text-center">About Weave</h1>

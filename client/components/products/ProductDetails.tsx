@@ -214,7 +214,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
         {/* Thumbnails */}
         {product.images && product.images.length > 1 && (
-          <div className="flex gap-4 mt-4 justify-center">
+          <div className="flex gap-4 mt-4 justify-start overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {product.images.map((img, idx) => (
               <button
                 key={img.public_id || idx}
