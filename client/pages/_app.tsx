@@ -15,6 +15,7 @@ import { checkTokenFormat } from '../utils/clearOldTokens';
 import { Toaster } from 'sonner';
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { useRouter } from 'next/router';
+import { montserrat } from '@/lib/fonts'
 
 function UserHydrator() {
   const dispatch = useDispatch();
@@ -86,32 +87,34 @@ function StyleManager() {
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ErrorBoundary>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <UserHydrator />
-          <CartHydrator />
-          <StyleManager />
-          <Toaster 
-            richColors 
-            position="top-right"
-            closeButton
-            duration={4000}
-            expand={true}
-            // maxToasts={5}
-            toastOptions={{
-              style: {
-                fontSize: '14px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                maxWidth: '400px',
-              },
-              className: 'mobile-friendly-toast',
-            }}
-          />
-          <Component {...pageProps} />
-        </PersistGate>
-      </Provider>
-    </ErrorBoundary>
+    <main className={`${montserrat.variable} font-sans`}>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            <UserHydrator />
+            <CartHydrator />
+            <StyleManager />
+            <Toaster 
+              richColors 
+              position="top-right"
+              closeButton
+              duration={4000}
+              expand={true}
+              // maxToasts={5}
+              toastOptions={{
+                style: {
+                  fontSize: '14px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  maxWidth: '400px',
+                },
+                className: 'mobile-friendly-toast',
+              }}
+            />
+            <Component {...pageProps} />
+          </PersistGate>
+        </Provider>
+      </ErrorBoundary>
+    </main>
   );
 }

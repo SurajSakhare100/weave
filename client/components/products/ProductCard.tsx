@@ -106,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className=" bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
+    <div className="min-w-[320px] bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
         <div className="relative  w-full aspect-[4/3] rounded-xl bg-[#FFFBF8] overflow-hidden">

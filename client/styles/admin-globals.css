@@ -7,7 +7,7 @@
 :root {
   /* Admin Color Palette */
   --admin-primary: #5A9BD8;
-  --admin-primary-dark: #3475A6;
+  --admin-primary-dark: #3475A6; 
   --admin-primary-light: #7BB3E8;
   --admin-primary-lighter: #EAF4FF;
   
@@ -80,7 +80,7 @@
 
 /* Admin Global Styles */
 .admin-theme body {
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Nunito Sans';
   background-color: var(--admin-bg-secondary);
   color: var(--admin-text-primary);
   line-height: 1.6;

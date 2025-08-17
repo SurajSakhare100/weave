@@ -10,6 +10,7 @@ const Bestsellers: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     const fetchBestsellers = async () => {
       try {
         // Use a valid sort field and correct type for limit

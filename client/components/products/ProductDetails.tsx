@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Heart, Star, Share2, Copy, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Heart, Star, Share2, Copy, ChevronLeft, ChevronRight, BarChart3, ChevronDown } from 'lucide-react';
 import { ProductWithReviews } from '@/types';
 import { toast } from 'sonner';
 
@@ -25,6 +25,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const getPrimaryImage = () => {
     if (product.images && product.images.length > 0) {
       const primary = product.images.find(img => img.is_primary);
@@ -96,7 +97,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   return (
     <div className="flex flex-col lg:flex-row gap-12">
       {/* Left: Images */}
-      <div className="lg:w-1/2">
+      <div className="lg:max-w-3xl w-full">
         {/* Main Image */}
         <div className="relative w-full h-[500px] bg-[#FFFBF9] flex items-center justify-center rounded-lg overflow-hidden">
           <Image
@@ -152,6 +153,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                 </div>
               )}
             </div>
+
+
 
             {/* Compare Icon */}
             {onCompare && (
@@ -239,7 +242,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
       </div>
 
       {/* Right: Product Info */}
-      <div className="flex-1 flex flex-col gap-6">
+      <div className="flex-1 flex flex-col gap-6 lg:max-w-xl">
         {/* Title */}
         <div>
           <h1 className="text-2xl font-medium text-[#5E3A1C] mb-2">{product.name}</h1>
@@ -269,7 +272,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               {product.colors.map((color) => (
                 <span
                   key={color}
-                  className="w-5 h-5 rounded-full border border-[#E7D9CC]"
+                  className="w-5 h-5 sm:w-9 sm:h-9 rounded-full border border-[#E7D9CC]"
                   style={{ backgroundColor: color }}
                 ></span>
               ))}
@@ -279,9 +282,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
         {/* Price Section */}
         <div className="flex items-center gap-4">
-          <div className="text-[#5E3A1C] text-2xl font-medium">-{calculateDiscount()}% ₹{product.price}</div>
+          <div className="text-[#B04848] text-2xl font-medium">-{calculateDiscount()}</div>
           {product.mrp > product.price && (
-            <span className="text-sm text-[#5E3A1C] line-through">₹{product.mrp}</span>
+            <span className="text-sm text-[#5E3A1C] line-through ">₹{product.mrp}</span>
           )}
         </div>
 
@@ -311,33 +314,75 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         {/* Product Details */}
         <div className="border-t border-[#E7D9CC] pt-6">
           <h3 className="text-[#5E3A1C] font-medium mb-4">Product Details</h3>
-          <div className="grid grid-cols-2 gap-y-4 text-sm">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-sm">
             <div>
-              <span className="text-[#5E3A1C]">Category</span>
-              <p className="text-[#5E3A1C] font-medium">{product.category || 'Tote'}</p>
+              <span className="text-[#9B7C62]">Product Weight</span>
+              <p className="text-[#5E3A1C] font-medium mt-1">{product.productDetails?.weight || '—'}</p>
             </div>
             <div>
-              <span className="text-[#5E3A1C]">Dimensions</span>
-              <p className="text-[#5E3A1C] font-medium">{product.productDetails?.dimensions || '12.7"W X 9.1"H'}</p>
+              <span className="text-[#9B7C62]">Dimensions</span>
+              <p className="text-[#5E3A1C] font-medium mt-1">{product.productDetails?.dimensions || '—'}</p>
             </div>
             <div>
-              <span className="text-[#5E3A1C]">Tags</span>
-              <p className="text-[#5E3A1C] font-medium">{product.tags?.join(', ') || 'Straw Weave'}</p>
+              <span className="text-[#9B7C62]">Capacity</span>
+              <p className="text-[#5E3A1C] font-medium mt-1">{product.productDetails?.capacity || '—'}</p>
             </div>
             <div>
-              <span className="text-[#5E3A1C]">View more</span>
-              <p className="text-[#5E3A1C] font-medium">→</p>
+              <span className="text-[#9B7C62]">Materials</span>
+              <p className="text-[#5E3A1C] font-medium mt-1">{product.productDetails?.materials || '—'}</p>
+            </div>
+            <div>
+              <span className="text-[#9B7C62]">Product Category</span>
+              <p className="text-[#5E3A1C] font-medium mt-1">{product.category || '—'}</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowMoreDetails(v => !v)}
+            className="mt-4 inline-flex items-center gap-2 text-[#5E3A1C] font-medium"
+          >
+            <span>View {showMoreDetails ? 'less' : 'more'}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${showMoreDetails ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showMoreDetails && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-sm">
+              {product.tags && product.tags.length > 0 && (
+                <div>
+                  <span className="text-[#9B7C62]">Tags</span>
+                  <p className="text-[#5E3A1C] font-medium mt-1">{product.tags.join(', ')}</p>
+                </div>
+              )}
+              {product.keyFeatures && product.keyFeatures.length > 0 && (
+                <div className="sm:col-span-2">
+                  <span className="text-[#9B7C62]">Key Features</span>
+                  <ul className="mt-2 list-disc pl-5 text-[#5E3A1C] space-y-1">
+                    {product.keyFeatures.map((feature, idx) => (
+                      <li key={idx} className="font-medium">{feature}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {product.vendorId && (typeof product.vendorId === 'object') && (
+                <div>
+                  <span className="text-[#9B7C62]">Vendor</span>
+                  <p className="text-[#5E3A1C] font-medium mt-1">{(product.vendorId as any).name}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Return Policy */}
         <div className="text-[#5E3A1C] text-sm">
-          Enjoy a worry-free shopping experience.
-          <div className="flex items-center gap-2 mt-2">
-            <span className="inline-flex items-center gap-1 border border-[#E7D9CC] px-3 py-1.5 rounded-lg text-[#5E3A1C]">
-              🛡️ 5 days Return & Exchange
-            </span>
+          <p className="text-base font-medium mb-2">Enjoy a worry-free shopping experience.</p>
+          <div className="mt-2">
+            <div className="flex items-center gap-2 border border-[#E7D9CC] rounded-lg px-4 py-3 bg-[#FFFBF9]">
+              <span className="text-lg">🧾</span>
+              <span className="font-medium">5 days Return & Exchange</span>
+            </div>
           </div>
         </div>
       </div>

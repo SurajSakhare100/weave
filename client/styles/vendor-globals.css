@@ -80,7 +80,7 @@
 
 /* Vendor Global Styles */
 .vendor-theme body {
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Nunito Sans';
   background-color: var(--vendor-bg-secondary);
   color: var(--vendor-text-primary);
   line-height: 1.6;
