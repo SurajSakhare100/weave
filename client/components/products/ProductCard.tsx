@@ -106,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className="min-w-[320px] bg-white rounded-2xl p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
+    <div className=" bg-white rounded-lg p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
         <div className="relative  w-full aspect-[4/3] rounded-xl bg-[#FFFBF8] overflow-hidden">
@@ -141,9 +141,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Product Details */}
-      <div className="flex flex-col gap-1 sm:gap-2">
+      <div className="flex flex-col gap-1 sm:gap-3.5">
         {/* Product Name */}
-        <h3 className="sm:text-base   font-semibold  text-[#6c4323] line-clamp-1 sm:line-clamp-none">
+        <h3 className="sm:text-base font-medium self-stretch  text-[#6c4323] line-clamp-none  sm:leading-snug">
           {product.name}
         </h3>
 
@@ -152,10 +152,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {(product.colors || defaultColors).slice(0, 6).map((color) => (
             <div
               key={color}
+              className='flex items-center justify-center'
             >
               <button
               style={{ backgroundColor: color }}
-              className={`w-2.5 h-2.5 sm:w-4 sm:h-4  rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+              className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
                 selectedColor === color ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
               }`}
                 onClick={() => setSelectedColor(color)}
@@ -166,6 +167,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Rating */}
+       <div className='flex items-center justify-between'>
+       
+        <span className="hidden sm:block text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
         <div className="flex items-center">
           <div className="flex text-yellow-400 text-xs sm:text-sm  items-center">
             {[...Array(5)].map((_, i) => (
@@ -183,11 +187,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ({product.totalReviews || 745})
           </span>
         </div>
+       </div>
 
         {/* Price and Add to Cart */}
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
+       
+      </div>
+      <div className="flex items-center justify-between ">
+          <span className="block sm:hidden text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
           <button
+          
             onClick={handleAddToCart}
             disabled={!product.available || stock <= 0}
             className={`text-[#FF4E8D] text-xs sm:text-sm font-medium border border-[#FF4E8D] px-3 py-2 rounded-lg transition-colors sm:hidden ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
@@ -204,7 +212,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         >
           Add to cart
         </button>
-      </div>
     </div>
   );
 };

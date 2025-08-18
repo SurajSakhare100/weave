@@ -63,14 +63,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, className, mobileTitl
         <Footer />
       </div>
 
-      {/* Toast Clear Button - Fixed Position */}
-      <div className="fixed bottom-4 left-4 z-50">
-        <ToastClearButton
-          variant="ghost"
-          size="sm"
-          className="bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200"
-        />
-      </div>
+     
     </div>
   );
 };

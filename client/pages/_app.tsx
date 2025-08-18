@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
-import "@/styles/vendor-globals.css";
-import "@/styles/admin-globals.css";
+// import "@/styles/vendor-globals.css";
+// import "@/styles/admin-globals.css";
 import type { AppProps } from "next/app";
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'

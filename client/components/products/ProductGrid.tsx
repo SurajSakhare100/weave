@@ -80,7 +80,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
      
 
       {/* Products Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4  mb-8 justify-between xl:grid-cols-4">
         {displayedProducts.map((product: Product) => (
           <ProductCard key={product._id} product={product} />
         ))}

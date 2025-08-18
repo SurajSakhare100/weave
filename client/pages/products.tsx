@@ -172,7 +172,7 @@ const ProductsPage = () => {
                   className="w-full rounded-2xl border border-[#E7D9CC] bg-white pl-10 pr-10 py-3 text-sm text-[#6c4323] placeholder-[#b59c8a] focus:outline-none focus:ring-2 focus:ring-[#FFB7C9]"
                 />
                 {searchInput ? (
-                  <button type="button" onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b59c8a]">
+                  <button type="button" onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 ">
                     <X className="w-5 h-5" />
                   </button>
                 ) : null}
@@ -311,10 +311,10 @@ const ProductsPage = () => {
                       <button
                         key={option.value}
                         onClick={() => {
+                          // Remove immediate closing
                           handleFilterChange({ 
                             target: { name: 'sort', value: option.value }
                           } as any);
-                          toggleSort();
                         }}
                         className={`w-full text-left py-3 px-4 rounded-lg transition-colors ${
                           filters.sort === option.value
@@ -326,6 +326,22 @@ const ProductsPage = () => {
                       </button>
                     ))}
                   </div>
+                  
+                  {/* New section: Apply Sort button */}
+                  <div className="mt-6 flex gap-3 p-4">
+                    <button
+                      onClick={toggleSort}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={toggleSort}
+                      className="flex-1 px-4 py-2 bg-[#EE346C] text-white rounded-lg hover:bg-[#D62A5A]"
+                    >
+                      Apply Sort
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -333,8 +349,8 @@ const ProductsPage = () => {
 
           {/* Mobile Filter Modal */}
           {openFilters.mobile && (
-            <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-              <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
+            <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-hidden">
+              <div className="absolute top-0 left-0 w-4/5 h-full bg-white rounded-r-2xl p-6 max-h-screen overflow-y-auto transform transition-transform duration-300 ease-in-out">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Filters</h3>
                   <Button
