@@ -10,6 +10,7 @@ import MobilePageHeader from "@/components/ui/MobilePageHeader"
 import CartItem from '../components/cart/CartItem.jsx';
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { calculateCartSummary } from '../utils/cartCalculations';
 
 interface CartItem {
   proId: string;
@@ -154,17 +155,10 @@ const CartPage = () => {
     }
   };
 
-  // Calculate totals with better error handling
-  const itemTotal = items.reduce((sum, item) => {
-    if (!item || typeof item.price !== 'number' || typeof item.quantity !== 'number') {
-      return sum;
-    }
-    return sum + (item.price * item.quantity);
-  }, 0);
+  // Use the new cart summary calculation
+  const cartSummary = calculateCartSummary(items);
   
-  const deliveryFee = 40;
-  const discount = 0; // 10% discount for demo
-  const totalAmount = Math.max(0, itemTotal + deliveryFee - discount);
+  const { subtotal, mrpTotal, shipping, discount, total } = cartSummary;
 
   if (!isAuthenticated) {
     return (
@@ -267,8 +261,8 @@ const CartPage = () => {
                   <div className="w-8 h-8 bg-[#6c4323] text-white rounded flex items-center justify-center font-bold text-xl">🧾</div>
                   <div className='flex gap-2 items-center'>
                   <span className="text-[#6c4323] font-bold text-base sm:text-lg">To Pay</span>
-                  <span className="text-[#6c4323] line-through text-sm sm:text-lg">₹ {(itemTotal + discount).toLocaleString()}</span>
-                  <span className=" font-bold text-base sm:text-lg">₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                  <span className="text-[#6c4323] line-through text-sm sm:text-lg">₹ {mrpTotal.toLocaleString()}</span>
+                  <span className=" font-bold text-base sm:text-lg">₹ {total.toLocaleString()}</span>
                   </div>
                   <button
                     className="absolute top-4 sm:top-6 right-4 sm:right-6 p-1 bg-transparent border-none outline-none cursor-pointer"
@@ -282,27 +276,27 @@ const CartPage = () => {
                     )}
                   </button>
                 </div>
-                <div className=" font-semibold mb-4 text-sm sm:text-base text-feedback-success">₹ {discount} saved on the total!</div>
+                <div className=" font-semibold mb-4 text-sm sm:text-base text-feedback-success">₹ {discount - 40} saved on the total!</div>
                 {summaryOpen && (
                   <div className="divide-y divide-[#f5e7df]">
                     <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Item Total</span>
                       <span className="flex items-center gap-2 font-medium">
-                        <span className="line-through text-[#bcae9e] text-xs sm:text-sm">₹ {(itemTotal + discount).toLocaleString()}</span>
-                        <span className="text-[#6c4323] font-bold text-sm sm:text-base">₹ {itemTotal.toLocaleString()}</span>
+                        <span className="line-through text-[#bcae9e] text-xs sm:text-sm">₹ {mrpTotal.toLocaleString()}</span>
+                        <span className="text-[#6c4323] font-bold text-sm sm:text-base">₹ {subtotal.toLocaleString()}</span>
                       </span>
                     </div>
                     <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Delivery fee</span>
-                      <span className="text-[#6c4323] font-bold">₹ {deliveryFee}</span>
+                      <span className="text-[#6c4323] font-bold">₹ {shipping}</span>
                     </div>
                     <div className="flex justify-between py-3 sm:py-4 text-[#8b7355] text-sm sm:text-base items-center">
                       <span>Cash/Pay on Delivery fee</span>
-                      <span className="text-[#6c4323] font-bold">₹ 10</span>
+                      <span className="text-[#6c4323] font-bold">₹ 0</span>
                     </div>
                     <div className="flex justify-between py-3 sm:py-4 font-bold text-[#6c4323] text-base sm:text-lg items-center">
                       <span>Order Total</span>
-                      <span>₹ {(itemTotal + deliveryFee + 10 - discount).toLocaleString()}</span>
+                      <span>₹ {total.toLocaleString()}</span>
                     </div>
                   </div>
                 )}

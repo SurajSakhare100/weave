@@ -281,19 +281,37 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         )}
 
         {/* Price Section */}
+        <div>
         <div className="flex items-center gap-4">
-          <div className="text-[#B04848] text-2xl font-medium">-{calculateDiscount()}</div>
-          {product.mrp > product.price && (
-            <span className="text-sm text-[#5E3A1C] line-through ">₹{product.mrp}</span>
+          <div className="text-[#B04848] text-2xl font-medium">
+            -{calculateDiscount()}%
+          </div>
+          <div className="text-[#5E3A1C] text-2xl font-bold">
+            ₹{product.price.toLocaleString('en-IN')}
+          </div>
+          
+          <div className="bg-[#B59C8A] w-fit text-white px-3 py-1 rounded-md inline-flex items-center gap-2 text-sm">
+          <span className="font-medium">Limited Deal</span>
+        </div>
+        </div>
+        {product.mrp > product.price && (
+            <span className="text-sm text-[#5E3A1C] line-through opacity-70">
+              M.R.P.: ₹{product.mrp.toLocaleString('en-IN')}
+            </span>
           )}
         </div>
+        
+        {/* Limited Deal Badge */}
+        
 
         {/* Note */}
-        <div className="text-[#EE346C] text-sm">
+        <div className=''>
+        <div className="text-[#EE346C] text-sm sm:text-base pb-2 ">
           Note: We offer worldwide shipping for all orders.
         </div>
-        <div className="text-[#5E3A1C] text-sm">
+        <div className="text-[#5E3A1C] text-sm sm:text-base">
           Delivery expected within the next 3-4 business days to 🇮🇳
+        </div>
         </div>
 
         {/* Buttons */}

@@ -3,20 +3,24 @@ import api from './api';
 interface ProductQueryParams {
   search?: string;
   category?: string;
-  availability?: string;
-  size?: string;
-  colors?: string;
-  minPrice?: string | number;
-  maxPrice?: string | number;
-  sort?: '-sales' | 'price' | '-price' | 'createdAt' | '-createdAt' | '-discount';
+  minPrice?: number;
+  maxPrice?: number;
   page?: number;
   limit?: number;
+  // Add approval status filter
+  approvalStatus?: 'approved' | 'pending' | 'rejected';
 }
 
 export async function getProducts(params?: ProductQueryParams) {
   try {
-    console.log('Sending product request with params:', params);
-    const res = await api.get('/products', { params });
+    // Always filter for approved products by default
+    const queryParams = {
+      ...params,
+      approvalStatus: 'approved'
+    };
+
+    console.log('Sending product request with params:', queryParams);
+    const res = await api.get('/products', { params: queryParams });
     console.log('Product response:', res.data);
     return res.data;
   } catch (error) {
@@ -25,9 +29,15 @@ export async function getProducts(params?: ProductQueryParams) {
   }
 }
 
-export async function searchProducts(params: any) {
+export async function searchProducts(params: ProductQueryParams) {
   try {
-    const res = await api.get('/products/search', { params });
+    // Ensure search also only returns approved products
+    const searchParams = {
+      ...params,
+      approvalStatus: 'approved'
+    };
+
+    const res = await api.get('/products/search', { params: searchParams });
     return res.data;
   } catch (error) {
     console.error('Failed to search products:', error);

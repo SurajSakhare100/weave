@@ -111,7 +111,7 @@ function CheckoutPaymentPageContent() {
                         className="w-4 h-4 text-[#cf1a53]"
                       />
                       <div>
-                        <span className="font-bold text-base sm:text-lg">₹{(itemTotal+10+deliveryFee)}</span>
+                        <span className="font-bold text-base sm:text-lg">₹{(itemTotal+deliveryFee)}</span>
                         <span className="font-bold text-base sm:text-lg ml-2">Pay Online</span>
                       </div>
                     </div>
@@ -234,7 +234,7 @@ function CheckoutPaymentPageContent() {
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                     <span className="font-bold text-base sm:text-lg">To Pay</span>
-                    <span className="line-through text-sm sm:text-lg">₹{(itemTotal+10+deliveryFee +discount).toLocaleString()}</span>
+                    <span className="line-through text-sm sm:text-lg">₹{(itemTotal+deliveryFee +discount).toLocaleString()}</span>
                     <span className="font-bold text-base sm:text-lg">₹{totalAmount.toLocaleString()}</span>
                   </div>
                   <button className="p-1">
@@ -249,7 +249,7 @@ function CheckoutPaymentPageContent() {
                 <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{(itemTotal+10+deliveryFee +discount).toLocaleString()}</span>
+                    <span className="font-medium">₹{(itemTotal+deliveryFee +discount).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery</span>
@@ -258,7 +258,6 @@ function CheckoutPaymentPageContent() {
                   {paymentMethod === 'cod' && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">COD Fee</span>
-                      <span className="font-medium">₹10</span>
                     </div>
                   )}
                   {discount > 0 && (
@@ -269,7 +268,7 @@ function CheckoutPaymentPageContent() {
                   )}
                   <div className="flex justify-between font-bold text-base sm:text-lg border-t border-gray-200 pt-2 sm:pt-3">
                     <span>Total</span>
-                    <span>₹{itemTotal+10+deliveryFee}</span>
+                    <span>₹{itemTotal+deliveryFee}</span>
                   </div>
                 </div>
               </div>

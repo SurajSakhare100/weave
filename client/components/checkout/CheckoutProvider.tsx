@@ -4,6 +4,8 @@ import { placeOrder } from '../../services/orderService';
 import { useDispatch } from 'react-redux';
 import { clearCartAsync } from '../../features/cart/cartSlice';
 import { AppDispatch } from '../../store/store';
+import { calculateCartSummary } from '../../utils/cartCalculations';
+import { CartItem } from '@/types/index.d';
 
 interface CheckoutItem {
   proId: string;
@@ -47,6 +49,7 @@ interface CheckoutContextType {
   
   // Totals
   itemTotal: number;
+  mrpTotal: number;
   deliveryFee: number;
   totalAmount: number;
   discount: number;
@@ -114,18 +117,6 @@ const setStoredPaymentMethod = (method: 'online' | 'cod') => {
   }
 };
 
-interface CartItem {
-  proId: string;
-  item?: {
-    name: string;
-    files?: string[];
-  };
-  name?: string;
-  price: number;
-  mrp: number;
-  quantity: number;
-  variantSize?: string;
-}
 
 export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -196,12 +187,12 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         const items = response.result || [];
         setCartItems(items.map((item: CartItem) => ({
           proId: item.proId,
-          name: item.item?.name || item.name || 'Product',
+          name: item.item?.name || 'Product',
           price: item.price,
           mrp: item.mrp,
           quantity: item.quantity,
           variantSize: item.variantSize,
-          image: item.item?.files?.[0] ? `/uploads/${item.item.files[0]}` : "/products/product.png"
+          image: item.item?.images?.[0] ? `/uploads/${item.item.images[0].url }` : "/products/product.png"
         })));
       }
     } catch (error: unknown) {
@@ -217,10 +208,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     refreshCart();
   }, []);
 
-  const itemTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const deliveryFee = cartItems.length > 0 ? 40 : 0;
-  const discount = Math.round(itemTotal * 0.1); // 10% discount for demo
-  const totalAmount = itemTotal + deliveryFee - discount;
+  // Replace existing calculations with new utility
+  const cartSummary = calculateCartSummary(cartItems as unknown as CartItem[]);
+  const { subtotal, mrpTotal, shipping, discount, total } = cartSummary;
 
   const handlePlaceOrder = async (): Promise<boolean> => {
     if (!selectedAddress) {
@@ -241,9 +231,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         items: cartItems,
         shippingAddress: selectedAddress,
         paymentMethod,
-        totalAmount,
-        itemTotal,
-        deliveryFee,
+        totalAmount: total,
+        itemTotal: subtotal,
+        mrpTotal,
+        deliveryFee: shipping,
         discount
       };
 
@@ -268,7 +259,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     }
   };
 
-  const value: CheckoutContextType = {
+  // Provide context values
+  const contextValue: CheckoutContextType = {
     cartItems,
     cartLoading,
     cartError,
@@ -280,9 +272,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     orderLoading,
     orderError,
     placeOrder: handlePlaceOrder,
-    itemTotal,
-    deliveryFee,
-    totalAmount,
+    itemTotal: subtotal,
+    mrpTotal,
+    deliveryFee: shipping,
+    totalAmount: total,
     discount,
     refreshCart,
     clearCheckoutState,
@@ -290,7 +283,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
   };
 
   return (
-    <CheckoutContext.Provider value={value}>
+    <CheckoutContext.Provider value={contextValue}>
       {children}
     </CheckoutContext.Provider>
   );

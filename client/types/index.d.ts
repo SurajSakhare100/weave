@@ -116,3 +116,23 @@ export interface ProductWithReviews extends Product {
     count: number;
   }>;
 }
+
+export interface CartItem {
+  proId: string;
+  quantity: number;
+  price: number;
+  mrp: number;
+  variantSize?: string;
+  item: {
+    _id: string;
+    name: string;
+    images?: {
+      url: string;
+    }[];
+    color?: string;
+    size?: string;
+  };
+  image?: string;
+  color?: string;
+  size?: string;
+}

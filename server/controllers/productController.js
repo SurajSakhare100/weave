@@ -218,7 +218,7 @@ export const getProductById = asyncHandler(async (req, res) => {
 
     // Check if product is approved for public access
     // Vendor products must be approved by admin to be visible
-    if (product.vendor === true && !product.adminApproved) {
+    if ( !product.adminApproved) {
       return res.status(404).json({
         success: false,
         message: 'Product not available',
@@ -719,7 +719,11 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
     }
 
     // Get the current product to find similar ones
-    const currentProduct = await Product.findById(id).lean();
+    const currentProduct = await Product.findOne({
+      _id: req.params.id,
+      available: true,
+      adminApproved: true
+    }).lean();
     
     if (!currentProduct) {
       return res.status(404).json({
@@ -1339,7 +1343,11 @@ export const deleteVendorReviewResponse = asyncHandler(async (req, res) => {
 
 export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      _id: req.params.id,
+      available: true,
+      adminApproved: true,
+    });
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
@@ -1359,7 +1367,11 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
 export const getComparableProducts = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      _id: req.params.id,
+      available: true,
+      adminApproved: true
+    });
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }

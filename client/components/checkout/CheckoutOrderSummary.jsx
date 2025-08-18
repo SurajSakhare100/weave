@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { calculateCartSummary } from '../../utils/cartCalculations';
 
 const SummaryItem = ({ item }) => {
   // Get the primary image from product images or fallback to item.image
@@ -40,10 +41,13 @@ const SummaryItem = ({ item }) => {
   );
 };
 
-const CheckoutOrderSummary = ({ items, summary }) => {
+const CheckoutOrderSummary = ({ items }) => {
+  // Calculate summary using the new utility
+  const summary = calculateCartSummary(items);
+
   return (
     <div className="bg-[#f5f5f5] p-6 rounded-lg">
-      {items.map(item => <SummaryItem key={item.id} item={item} />)}
+      {items.map(item => <SummaryItem key={item.proId} item={item} />)}
       
       <div className="border-t border-b border-gray-300 py-6 my-4">
         <div className="flex gap-2">
@@ -60,8 +64,16 @@ const CheckoutOrderSummary = ({ items, summary }) => {
       
       <div className="space-y-2 text-gray-800">
         <div className="flex justify-between">
+          <span>MRP Total</span>
+          <span className="font-semibold line-through text-gray-500">₹ {summary.mrpTotal.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between">
           <span>Subtotal</span>
           <span className="font-semibold">₹ {summary.subtotal.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between text-green-600">
+          <span>Discount</span>
+          <span className="font-semibold">₹ {summary.discount.toLocaleString('en-IN')}</span>
         </div>
         <div className="flex justify-between">
           <span>Shipping</span>
