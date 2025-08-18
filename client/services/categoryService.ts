@@ -7,7 +7,7 @@ export async function getCategories() {
 
 export async function getHeaderCategories() {
   const res = await api.get('/categories/header');
-  return res.data;
+  return res.data.data;
 }
 
 export async function searchCategories(params: any) {

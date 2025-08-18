@@ -6,6 +6,7 @@ import { ShoppingCart, User, Heart, Search, Menu, X, ChevronDown, ChevronRight }
 import Link from 'next/link';
 import { getUserToken } from '@/services/authService';
 import { RootState } from '@/store/store';
+import { getHeaderCategories } from '@/services/categoryService';
 
 interface HeaderProps {
   title?: string;
@@ -17,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
   const isAuthenticated = useSelector((state: RootState) => state?.user?.isAuthenticated ?? false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
 
   const cartItemCount = items?.length || 0;
   const token = getUserToken();
@@ -27,6 +29,19 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getHeaderCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching header categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Prevent background scroll when mobile drawer is open
   useEffect(() => {
@@ -66,6 +81,15 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                   </button>
                   <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all">
                     <Link href="/products" className="block px-4 py-2 hover:bg-gray-100">All Products</Link>
+                    {categories.length > 0 && categories.map((category) => (
+                      <Link 
+                        key={category?._id} 
+                        href={`/products?category=${category.slug || category.name}`} 
+                        className="block px-4 py-2 hover:bg-gray-100"
+                      >
+                        {category?.name}
+                      </Link>
+                    ))}
                   </div>
                 </div>
                 <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors xl:hidden">
@@ -177,10 +201,29 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 </button>
               </div>
               <div className="px-4">
-                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/products'); setIsMobileMenuOpen(false); }}>
+                <button 
+                  className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" 
+                  onClick={() => { 
+                    router.push('/products'); 
+                    setIsMobileMenuOpen(false); 
+                  }}
+                >
                   <span>Shop</span>
                   <ChevronDown className="w-5 h-5" />
                 </button>
+                {categories.map((category) => (
+                  <button
+                    key={category._id}
+                    className="w-full flex items-center justify-between py-4 text-[#5E3A1C] text-base pl-4"
+                    onClick={() => {
+                      router.push(`/products?category=${category.slug}`);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <span>{category.name}</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ))}
                 <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push({ pathname: '/products', query: { sort: '-discount' } }); setIsMobileMenuOpen(false); }}>
                   <span>Sale</span>
                   <ChevronDown className="w-5 h-5" />

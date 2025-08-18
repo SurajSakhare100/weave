@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
           <div className="space-y-4 mb-8 lg:mb-0">
             <div className="flex items-center space-x-2">
               <img src="/landing/footer.png" alt="Weave Logo" className="h-12 w-auto" />
-              <img src="/landing/footerlogo.png" alt="Weave Logo" className="h-12 w-auto" />
+              <img src="/landing/footerLogo.png" alt="Weave Logo" className="h-12 w-auto" />
             </div>
             <div className="flex items-start space-x-2 text-base">
               <MapPin className="h-5 w-5 mt-1 flex-shrink-0" />

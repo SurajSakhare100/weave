@@ -264,8 +264,8 @@ export const searchCategories = asyncHandler(async (req, res) => {
 // @route   GET /api/categories/header
 // @access  Public
 export const getHeaderCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find({ header: true }).sort('name');
-
+  // const categories = await Category.find({ header: true }).sort('name').select('name slug');
+  const categories = await Category.find({  }).sort('name').select('name slug');
   res.json({
     success: true,
     data: categories

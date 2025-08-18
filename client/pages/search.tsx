@@ -171,7 +171,7 @@ export default function SearchPage() {
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Search for products..."
-                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 text-base sm:text-lg border border-secondary rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 text-base sm:text-lg border border-secondary rounded-full focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent bg-white"
                     onFocus={() => setShowSuggestions(true)}
                   />
                   {query && (
@@ -201,6 +201,8 @@ export default function SearchPage() {
               ))}
             </div>
           </div>
+          
+          
 
           {/* Search Results */}
           {searched && (
@@ -228,10 +230,31 @@ export default function SearchPage() {
                 )} */}
               </div>
 
-              {error && (
+              {/* By default, show some search suggestions or trending searches if no error */}
+              {error ? (
                 <div className="mb-4 text-red-600 text-center bg-red-50 p-3 sm:p-4 rounded-lg text-sm sm:text-base">
                   {error}
                 </div>
+              ) : (
+                !searched && !loading && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-2 text-primary font-semibold">
+                      <TrendingUp className="w-5 h-5" />
+                      <span>Trending Searches</span>
+                    </div>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {trendingSearches.map((trend, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleSuggestionClick(trend)}
+                          className="px-5 py-2 bg-white border border-[#E7D9CC] text-[#5E3A1C] rounded-full hover:bg-[#E7D9CC] transition-colors"
+                        >
+                          {trend}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
               )}
 
               {!loading && results.length === 0 && !error && (
