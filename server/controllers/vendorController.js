@@ -237,9 +237,144 @@ export const getVendorById = asyncHandler(async (req, res) => {
     throw new Error('Vendor not found');
   }
 
+  // Get vendor's product IDs
+  const vendorProductIds = await Product.find({ vendorId: req.params.id }).distinct('_id');
+
+  // Calculate detailed sales data with product order information
+  const salesData = await Order.aggregate([
+    {
+      $match: {
+        'orderItems.productId': { $in: vendorProductIds },
+        isPaid: true,
+        isDelivered: true,
+        // Consider orders within the last 12 months
+        createdAt: { 
+          $gte: new Date(new Date().setMonth(new Date().getMonth() - 12)) 
+        }
+      }
+    },
+    {
+      $unwind: '$orderItems'
+    },
+    {
+      $match: {
+        'orderItems.productId': { $in: vendorProductIds }
+      }
+    },
+    {
+      $group: {
+        _id: { 
+          month: { $dateToString: { format: "%B", date: "$createdAt" } },
+          year: { $dateToString: { format: "%Y", date: "$createdAt" } }
+        },
+        totalSales: { $sum: { $multiply: ['$orderItems.price', '$orderItems.quantity'] } },
+        totalQuantity: { $sum: '$orderItems.quantity' },
+        uniqueOrders: { $addToSet: '$_id' }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        month: '$_id.month',
+        year: '$_id.year',
+        totalSales: 1,
+        totalQuantity: 1,
+        uniqueOrders: { $size: '$uniqueOrders' }
+      }
+    },
+    {
+      $sort: { 
+        year: -1, 
+        month: -1 
+      }
+    }
+  ]);
+
+  // Prepare month order for sorting
+  const monthOrder = [
+    'January', 'February', 'March', 'April', 'May', 'June', 
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Function to generate month name and year
+  const generateMonthYear = (offsetMonths) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - offsetMonths);
+    return {
+      monthName: date.toLocaleString('default', { month: 'long' }),
+      year: date.getFullYear().toString(),
+      get monthYear() {
+        return `${this.monthName} ${this.year}`;
+      }
+    };
+  };
+
+  // Generate month ranges dynamically
+  const generateMonthRanges = () => {
+    return {
+      '3': Array.from({length: 3}, (_, i) => generateMonthYear(i)),
+      '6': Array.from({length: 6}, (_, i) => generateMonthYear(i)),
+      '12': Array.from({length: 12}, (_, i) => generateMonthYear(i))
+    };
+  };
+
+  // Create sales map with all months initialized
+  const createSalesMap = (monthRanges) => {
+    const salesMap = {};
+    
+    // Sort month ranges from newest to oldest
+    const sortedMonthRanges = monthRanges.sort((a, b) => {
+      const yearDiff = parseInt(b.year) - parseInt(a.year);
+      if (yearDiff !== 0) return yearDiff;
+      
+      const monthOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June', 
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      return monthOrder.indexOf(b.monthName) - monthOrder.indexOf(a.monthName);
+    });
+
+    // Initialize sales map with sorted month ranges
+    sortedMonthRanges.forEach(({monthYear}) => {
+      salesMap[monthYear] = {
+        totalSales: 0,
+        totalQuantity: 0,
+        uniqueOrders: 0,
+        products: []
+      };
+    });
+
+    // Populate with actual sales data
+    salesData.forEach(sale => {
+      const monthYear = `${sale.month} ${sale.year}`;
+      if (salesMap.hasOwnProperty(monthYear)) {
+        salesMap[monthYear] = {
+          totalSales: sale.totalSales,
+          totalQuantity: sale.totalQuantity,
+          uniqueOrders: sale.uniqueOrders,
+          products: [] // You can expand this if needed
+        };
+      }
+    });
+
+    return salesMap;
+  };
+
+  // Calculate total revenue
+  const totalRevenue = salesData.reduce((sum, sale) => sum + sale.totalSales, 0);
+
+  // Get total number of products
+  const totalProducts = await Product.countDocuments({ vendorId: req.params.id });
+
   res.json({
     success: true,
-    data: vendor
+    data: {
+      ...vendor.toObject(),
+      totalRevenue,
+      totalProducts,
+      sales: createSalesMap(generateMonthRanges()['12']) // Default to 12 months
+    }
   });
 });
 

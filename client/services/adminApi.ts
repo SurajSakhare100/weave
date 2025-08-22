@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { VendorDetailsResponse, VendorStatusUpdatePayload } from '../types/vendor';
 
 // RTK Query API slice for admin operations
 export const adminApi = createApi({
@@ -620,8 +621,41 @@ export const adminApi = createApi({
       providesTags: (result, error, { id }) => [{ type: 'Customer', id }, 'Customer'],
     }),
     
+    // Get detailed vendor information
+    getVendorDetails: builder.query<VendorDetailsResponse, string>({
+      query: (vendorId) => `/vendors/admin/${vendorId}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      providesTags: (result, error, vendorId) => [{ type: 'Vendor', id: vendorId }]
+    }),
 
-  
+    // Update vendor status (approve/suspend)
+    updateVendorStatus: builder.mutation<void, VendorStatusUpdatePayload>({
+      query: ({ vendorId, status }) => ({
+        url: `/vendors/admin/${vendorId}/status`,
+        method: 'PATCH',
+        body: { status }
+      }),
+      invalidatesTags: (result, error, { vendorId }) => [
+        { type: 'Vendor', id: vendorId }
+      ]
+    }),
+
+    // Delete a vendor
+    deleteVendor: builder.mutation<void, string>({
+      query: (vendorId) => ({
+        url: `/vendors/admin/${vendorId}`,
+        method: 'DELETE'
+      }),
+      invalidatesTags: (result, error, vendorId) => [
+        { type: 'Vendor', id: vendorId },
+        'Vendors'
+      ]
+    }),
   }),
 });
 
@@ -647,6 +681,8 @@ export const {
   useReapplyVendorMutation,
   useGetVendorProductsQuery,
   useGetVendorOrdersQuery,
+  useGetVendorDetailsQuery,
+  useUpdateVendorStatusMutation,
   
   // Products
   useGetAdminProductStatsQuery,

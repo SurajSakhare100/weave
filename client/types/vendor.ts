@@ -80,4 +80,31 @@ export interface ProductManagementState {
   selectedProducts: string[];
   searchQuery: string;
   showContextMenu: string | null;
+}
+
+export interface VendorBasicInfo {
+  _id: string;
+  name: string;
+  email: string;
+  businessName: string;
+  phone: string;
+  status: 'pending' | 'approved' | 'suspended';
+}
+
+export interface VendorDetailsResponse extends VendorBasicInfo {
+  totalRevenue: number;
+  totalProducts: number;
+  createdAt: string;
+  sales: {
+    [month: string]: number | string;
+  };
+  address?: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
+}
+
+export interface VendorStatusUpdatePayload {
+  vendorId: string;
+  status: 'pending' | 'approved' | 'suspended';
 } 

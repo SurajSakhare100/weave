@@ -44,10 +44,6 @@ function VendorsComp({ loaded, setLoaded }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [currentPage, setCurrentPage] = useState(1)
-    const [viewModal, setViewModal] = useState({
-        isOpen: false,
-        vendor: null
-    })
     const [rejectionModal, setRejectionModal] = useState({
         isOpen: false,
         vendor: null
@@ -133,10 +129,8 @@ function VendorsComp({ loaded, setLoaded }) {
     }
 
     const handleViewVendor = (vendor) => {
-        setViewModal({
-            isOpen: true,
-            vendor
-        })
+        // Navigate to vendor details page
+        navigate.push(`/admin/vendor/${vendor._id}`)
     }
 
    
@@ -405,56 +399,6 @@ function VendorsComp({ loaded, setLoaded }) {
                     </div>
                 )}
             </div>
-
-            {/* View Vendor Modal */}
-            <BaseModal
-                isOpen={viewModal.isOpen}
-                onClose={() => setViewModal({ isOpen: false, vendor: null })}
-                title="Vendor Details"
-                size="lg"
-            >
-                {viewModal.vendor && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Personal Information</h3>
-                                <div className="space-y-2">
-                                    <p><span className="font-medium">Name:</span> {viewModal.vendor.name}</p>
-                                    <p><span className="font-medium">Email:</span> {viewModal.vendor.email}</p>
-                                    <p><span className="font-medium">Phone:</span> {viewModal.vendor.number || 'N/A'}</p>
-                                    <p><span className="font-medium">Address:</span> {viewModal.vendor.address || 'N/A'}</p>
-                                    <p><span className="font-medium">City:</span> {viewModal.vendor.city || 'N/A'}</p>
-                                    <p><span className="font-medium">State:</span> {viewModal.vendor.state || 'N/A'}</p>
-                                    <p><span className="font-medium">PIN Code:</span> {viewModal.vendor.pinCode || 'N/A'}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Business Information</h3>
-                                <div className="space-y-2">
-                                    <p><span className="font-medium">Business Name:</span> {viewModal.vendor.businessName || 'N/A'}</p>
-                                    <p><span className="font-medium">Status:</span>
-                                        <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getVendorStatusColor(viewModal.vendor.adminApproved)}`}>
-                                            {viewModal.vendor.adminApproved ? 'Approved' : 'Pending'}
-                                        </span>
-                                    </p>
-                                    {viewModal.vendor.adminRejectionReason && (
-                                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                                            <p className="text-sm font-medium text-red-800 mb-1">Rejection Reason:</p>
-                                            <p className="text-sm text-red-700">{viewModal.vendor.adminRejectionReason}</p>
-                                        </div>
-                                    )}
-                                    {viewModal.vendor.adminApprovalFeedback && (
-                                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                                            <p className="text-sm font-medium text-green-800 mb-1">Approval Feedback:</p>
-                                            <p className="text-sm text-green-700">{viewModal.vendor.adminApprovalFeedback}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </BaseModal>
 
             {/* Rejection Modal */}
             <RejectionModal
