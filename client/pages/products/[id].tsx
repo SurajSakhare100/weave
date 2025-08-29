@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Image from 'next/image'
 import { addCartItem } from '../../features/cart/cartSlice'
@@ -38,6 +38,39 @@ export default function ProductDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [compareProducts, setCompareProducts] = useState<(Product | ProductWithReviews)[]>([])
   const [showCompareModal, setShowCompareModal] = useState(false)
+
+  // Add state for selected color
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+  // Get all available colors (from product.colors and colorImages keys)
+  const availableColors = useMemo(() => {
+    if (!product) return [];
+
+    const colorsFromField = product.colors || [];
+    const colorsFromImages = product.colorImages ? Object.keys(product.colorImages) : [];
+
+    // Combine and deduplicate colors
+    const allColors = [...new Set([...colorsFromField, ...colorsFromImages])];
+
+    return allColors;
+  }, [product]);
+
+  // Modify image display to use color-specific images
+  const displayImages = useMemo(() => {
+    // If no color selected, use default images
+    if (!selectedColor) {
+      return product?.images || [];
+    }
+
+    // Find color-specific images
+    const colorImages = product?.colorImages?.[selectedColor] || [];
+
+    // If no color-specific images, fallback to default images
+    return colorImages.length > 0 ? colorImages : (product?.images || []);
+  }, [product, selectedColor]);
+
+  // Update image gallery to use displayImages
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
@@ -88,6 +121,8 @@ export default function ProductDetailPage() {
       }
     } catch (error: unknown) {
       console.error('Product loading error:', error)
+
+
       
       if (error instanceof Error) {
         if (error.message.includes('not found') || error.message.includes('not available')) {
@@ -305,6 +340,53 @@ export default function ProductDetailPage() {
             onNext={similarProducts.length > 0 ? handleNextProduct : undefined}
             onPrevious={similarProducts.length > 0 ? handlePreviousProduct : undefined}
           />
+
+          {/* Color Selection */}
+          {availableColors.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Available Colors</h3>
+              <div className="flex gap-2">
+                {availableColors.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(selectedColor === color ? null : color)}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      selectedColor === color
+                        ? 'border-primary scale-110'
+                        : 'border-gray-300 hover:border-primary'
+                    }`}
+                    style={{
+                      backgroundColor: color.toLowerCase(),
+                      filter: ['white', 'beige', 'tan', 'yellow'].includes(color.toLowerCase())
+                        ? 'brightness(0.9)'
+                        : 'none'
+                    }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Image Gallery */}
+          <div className="grid grid-cols-4 gap-4">
+            {displayImages.map((image, index) => (
+              <div
+                key={image.url || index}
+                className={`relative aspect-square cursor-pointer ${
+                  selectedImage === image.url ? 'border-2 border-primary' : ''
+                }`}
+                onClick={() => setSelectedImage(image.url)}
+              >
+                <Image
+                  src={image.url || '/products/product.png'}
+                  alt={`Product image ${index + 1}`}
+                  fill
+                  className="object-cover rounded"
+                />
+              </div>
+            ))}
+          </div>
 
           {/* Frequently Bought Together */}
           {frequentlyBought.length > 0 && (

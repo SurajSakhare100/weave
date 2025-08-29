@@ -132,7 +132,7 @@ export async function createProduct(data: any) {
     return res.data;
   } catch (error) {
     console.error('Failed to create product:', error);
-    throw new Error('Failed to create product');
+    throw new Error(error.response?.data?.message || 'Failed to create product');
   }
 }
 
@@ -144,7 +144,7 @@ export async function updateProduct(id: string, data: any) {
     return res.data;
   } catch (error) {
     console.error('Failed to update product:', error);
-    throw new Error('Failed to update product');
+    throw new Error(error.response?.data?.message || 'Failed to update product');
   }
 }
 

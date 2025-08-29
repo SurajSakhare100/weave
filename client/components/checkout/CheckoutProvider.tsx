@@ -45,7 +45,7 @@ interface CheckoutContextType {
   // Order
   orderLoading: boolean;
   orderError: string | null;
-  placeOrder: () => Promise<boolean>;
+  placeOrder: () => Promise<{ success: boolean; message?: string; data?: { _id: string } }>;
   
   // Totals
   itemTotal: number;
@@ -168,7 +168,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       clearCheckoutState();
       // Clear Redux store
       await dispatch(clearCartAsync());
-      console.log('Cart cleared completely');
     } catch (error) {
       console.error('Error clearing cart completely:', error);
     }
@@ -212,15 +211,15 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
   const cartSummary = calculateCartSummary(cartItems as unknown as CartItem[]);
   const { subtotal, mrpTotal, shipping, discount, total } = cartSummary;
 
-  const handlePlaceOrder = async (): Promise<boolean> => {
+  const handlePlaceOrder = async (): Promise<{ success: boolean; message?: string; data?: { _id: string } }> => {
     if (!selectedAddress) {
       setOrderError('Please select a delivery address');
-      return false;
+      return { success: false, message: 'Please select a delivery address' };
     }
 
     if (cartItems.length === 0) {
       setOrderError('Cart is empty');
-      return false;
+      return { success: false, message: 'Cart is empty' };
     }
 
     try {
@@ -242,18 +241,16 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       
       if (response.success === false) {
         setOrderError(response.message || 'Failed to place order');
-        return false;
+        return response;
       }
 
       // Clear cart and checkout state after successful order
-      console.log('Order placed successfully, clearing cart...');
       await clearCartCompletely();
-      console.log('Cart cleared successfully after order placement');
-      return true;
+      return response;
     } catch (error: unknown) {
       console.error('Error placing order:', error);
       setOrderError('Failed to place order. Please try again.');
-      return false;
+      return { success: false, message: 'Failed to place order. Please try again.' };
     } finally {
       setOrderLoading(false);
     }

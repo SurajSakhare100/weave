@@ -21,6 +21,7 @@ import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import vendorRoutes from './routes/vendors.js';
 import adminRoutes from './routes/admin.js';
+import razorpayRoutes from './razorpay/razorpayRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -122,6 +123,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/razorpay', razorpayRoutes);
 
 app.get('/', (req, res) => {
   res.json({

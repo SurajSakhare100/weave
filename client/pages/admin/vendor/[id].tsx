@@ -339,6 +339,7 @@ export default function VendorDetailsPage() {
                 </div>
               </div>
             </CardHeader>
+
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-blue-50 p-4 rounded-lg">

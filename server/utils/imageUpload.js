@@ -171,13 +171,15 @@ export const validateImageFile = (file) => {
 
   // Check file size (max 10MB)
   const maxSize = 10 * 1024 * 1024; // 10MB
-  if (file.size > maxSize) {
+  const fileSize = file.size || file.buffer?.length || 0;
+  if (fileSize > maxSize) {
     return false;
   }
 
-  // Check file type
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.mimetype)) {
+  // Check file type - handle both mimetype and mimetype properties
+  const mimeType = file.mimetype || file.type || '';
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(mimeType.toLowerCase())) {
     return false;
   }
 

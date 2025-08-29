@@ -115,6 +115,7 @@ const createOrder = asyncHandler(async (req, res) => {
       message: 'Order created successfully and cart cleared'
     });
   } catch (error) {
+    console.error('Error in createOrder:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

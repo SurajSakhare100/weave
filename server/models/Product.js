@@ -231,6 +231,31 @@ const ProductSchema = new mongoose.Schema({
         enum: ['pending', 'published', 'cancelled'],
         default: 'pending',
     },
+    // Add color-specific images to the schema
+    colorImages: {
+        type: Map,
+        of: [{
+            url: {
+                type: String,
+                required: true
+            },
+            public_id: {
+                type: String,
+                required: true
+            },
+            width: Number,
+            height: Number,
+            format: String,
+            bytes: Number,
+            thumbnail_url: String,
+            small_thumbnail_url: String,
+            is_primary: {
+                type: Boolean,
+                default: false
+            }
+        }],
+        default: {}
+    },
 }, { 
     timestamps: true,
     toJSON: { virtuals: true },

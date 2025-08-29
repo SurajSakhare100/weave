@@ -42,7 +42,9 @@ const OrderSchema = new mongoose.Schema({
         id: String,
         status: String,
         update_time: String,
-        email_address: String
+        email_address: String,
+        order_id: String, // Razorpay order ID
+        signature: String // Razorpay signature
     },
     status: {
         type: String,

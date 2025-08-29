@@ -416,29 +416,85 @@ export const createProduct = asyncHandler(async (req, res) => {
         .replace(/(^-|-$)/g, '');
     }
 
-    // Handle image uploads to Cloudinary
+    // Handle color-specific image uploads to Cloudinary
+    let colorImages = {};
     let images = [];
+
+    // Debug: Log received files
+    console.log('Received files:', req.files?.length || 0);
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file, index) => {
+        console.log(`File ${index}: fieldname=${file.fieldname}, originalname=${file.originalname}, size=${file.size}`);
+      });
+    }
+
+    // Process files from flexible upload
     if (req.files && req.files.length > 0) {
       try {
-        const imageBuffers = req.files.map(file => file.buffer);
-        const uploadResults = await uploadMultipleImages(
-          imageBuffers, 
-          'weave-products', 
-          `product_${slug}_${Date.now()}`
-        );
+        // Separate main images and color-specific images
+        const mainImageFiles = [];
+        const colorFileMap = {};
 
-        // Process upload results
-        images = uploadResults.map((result, index) => ({
-          url: result.url,
-          public_id: result.public_id,
-          width: result.width,
-          height: result.height,
-          format: result.format,
-          bytes: result.bytes,
-          thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
-          small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
-          is_primary: index === 0 // First image is primary
-        }));
+        req.files.forEach(file => {
+          // Check if file is a color-specific image
+          const colorMatch = file.fieldname.match(/colorImages\[([^\]]+)\]/);
+          if (colorMatch) {
+            const color = colorMatch[1];
+            if (!colorFileMap[color]) {
+              colorFileMap[color] = [];
+            }
+            colorFileMap[color].push(file);
+          } else if (file.fieldname === 'images') {
+            // Main product images
+            mainImageFiles.push(file);
+          }
+        });
+
+        // Upload main product images
+        if (mainImageFiles.length > 0) {
+          const mainImageBuffers = mainImageFiles.map(file => file.buffer);
+          const mainUploadResults = await uploadMultipleImages(
+            mainImageBuffers, 
+            'weave-products', 
+            `product_${slug}_${Date.now()}`
+          );
+
+          // Process main image upload results
+          images = mainUploadResults.map((result, index) => ({
+            url: result.url,
+            public_id: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+            thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+            small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+            is_primary: index === 0 // First image is primary
+          }));
+        }
+
+        // Upload color-specific images
+        for (const [color, files] of Object.entries(colorFileMap)) {
+          const imageBuffers = files.map(file => file.buffer);
+          const uploadResults = await uploadMultipleImages(
+            imageBuffers, 
+            'weave-products', 
+            `product_${slug}_${color}_${Date.now()}`
+          );
+
+          // Process upload results for this color
+          colorImages[color] = uploadResults.map((result, index) => ({
+            url: result.url,
+            public_id: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+            thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+            small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+            is_primary: index === 0 // First image is primary
+          }));
+        }
       } catch (uploadError) {
         console.error('Image upload error:', uploadError);
         return res.status(500).json({
@@ -446,6 +502,14 @@ export const createProduct = asyncHandler(async (req, res) => {
           message: 'Failed to upload images. Please try again.'
         });
       }
+    }
+
+    // Validate that at least one image is uploaded
+    if (images.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least one image is required.' 
+      });
     }
 
     // Calculate discount if not provided
@@ -485,6 +549,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       colors: Array.isArray(colors) ? colors : [],
       status: status || 'active',
       images,
+      colorImages,
       keyFeatures: Array.isArray(keyFeatures) ? keyFeatures.filter(f => f.trim()) : [],
       productDetails: productDetails || {},
       tags: Array.isArray(tags) ? tags.filter(t => t.trim()) : [],
@@ -620,8 +685,83 @@ export const updateProduct = asyncHandler(async (req, res) => {
       }
     }
 
+    // Handle color-specific image uploads
+    let colorImages = product.colorImages || {};
+    if (req.files) {
+      try {
+        // Group files by color
+        const colorFileMap = {};
+        Object.keys(req.files).forEach(key => {
+          if (key.startsWith('colorImages[')) {
+            const colorMatch = key.match(/colorImages\[([^\]]+)\]/);
+            if (colorMatch) {
+              const color = colorMatch[1];
+              if (!colorFileMap[color]) {
+                colorFileMap[color] = [];
+              }
+              colorFileMap[color].push(req.files[key]);
+            }
+          }
+        });
+
+        // Upload color-specific images
+        for (const [color, files] of Object.entries(colorFileMap)) {
+          const imageBuffers = files.map(file => file.buffer);
+          const uploadResults = await uploadMultipleImages(
+            imageBuffers, 
+            'weave-products', 
+            `product_${product.slug}_${color}_${Date.now()}`
+          );
+
+          // Process upload results for this color
+          const newColorImages = uploadResults.map((result, index) => ({
+            url: result.url,
+            public_id: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+            thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+            small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+            is_primary: index === 0 // First image is primary
+          }));
+
+          // Merge with existing color images
+          colorImages[color] = [
+            ...(colorImages[color] || []),
+            ...newColorImages
+          ];
+        }
+      } catch (uploadError) {
+        console.error('Color-specific image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload color-specific images. Please try again.'
+        });
+      }
+    }
+
+    // Handle existing color images
+    if (req.body.existingColorImages) {
+      try {
+        const existingColorImages = JSON.parse(req.body.existingColorImages);
+        colorImages = {
+          ...colorImages,
+          ...existingColorImages
+        };
+      } catch (error) {
+        console.error('Error parsing existingColorImages:', error);
+      }
+    }
+
+    // Update product with color images
+    let updateData = { 
+      ...req.body, 
+      images, 
+      colorImages 
+    };
+
     // Calculate discount if price or MRP changed
-    let updateData = { ...req.body, images };
     if ((req.body.price !== undefined || req.body.mrp !== undefined) && !req.body.discount) {
       const newPrice = req.body.price !== undefined ? Number(req.body.price) : product.price;
       const newMrp = req.body.mrp !== undefined ? Number(req.body.mrp) : product.mrp;

@@ -43,6 +43,20 @@ export const uploadSingle = multer({
   }
 }).single('image');
 
+// Multer configuration for flexible file uploads
+export const uploadFlexible = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    // For flexible uploads, we'll validate in the middleware handler instead
+    // This allows us to handle dynamic field names properly
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 20 // Maximum 20 files total
+  }
+}).any(); // Allows any number of files with any field names
+
 // Error handling middleware
 export const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -144,13 +158,6 @@ export const handleMultipleUpload = (req, res, next) => {
       return handleUploadError(err, req, res, next);
     }
     
-    if (!req.files || req.files.length === 0) {
-      // return res.status(400).json({
-      //   success: false,
-      //   message: 'No images uploaded. Please select at least one image.'
-      // });
-    }
-
     // Validate all files
     for (const file of req.files) {
       if (!validateImageFile(file)) {
@@ -158,6 +165,38 @@ export const handleMultipleUpload = (req, res, next) => {
           success: false,
           message: `Invalid file: ${file.originalname}. Only JPEG, PNG, and WebP files up to 10MB are allowed.`
         });
+      }
+    }
+
+    next();
+  });
+}; 
+
+// Middleware to handle flexible file uploads
+export const handleFlexibleUpload = (req, res, next) => {
+  console.log('Upload middleware called');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Body keys:', Object.keys(req.body || {}));
+
+  uploadFlexible(req, res, (err) => {
+    if (err) {
+      console.log('Upload error:', err);
+      return handleUploadError(err, req, res, next);
+    }
+
+    console.log('Upload successful, files received:', req.files?.length || 0);
+
+    // Validate all files
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        console.log(`Validating file: ${file.fieldname} - ${file.originalname}`);
+        if (!validateImageFile(file)) {
+          console.log(`Invalid file: ${file.originalname}`);
+          return res.status(400).json({
+            success: false,
+            message: `Invalid file: ${file.originalname}. Only JPEG, PNG, and WebP files up to 10MB are allowed.`
+          });
+        }
       }
     }
 

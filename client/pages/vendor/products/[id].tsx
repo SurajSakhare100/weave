@@ -52,6 +52,11 @@ export default function VendorEditProductPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
+  // Add state for color-specific images
+  const [colorImages, setColorImages] = useState<{[color: string]: File[]}>({});
+  const [colorImagePreviews, setColorImagePreviews] = useState<{[color: string]: string[]}>({});
+  const [existingColorImages, setExistingColorImages] = useState<{[color: string]: {url: string; public_id: string}[]}>({});
+
   useEffect(() => {
     api.get('/categories').then(res => {
       setCategories(res.data.data || []);
@@ -87,6 +92,15 @@ export default function VendorEditProductPage() {
       setSizes(p.sizes || []);
       setColors(p.colors || []);
       setTags(p.tags || []);
+
+      // Load color-specific images
+      if (p.colorImages) {
+        const colorImagesMap: {[color: string]: {url: string; public_id: string}[]} = {};
+        Object.entries(p.colorImages).forEach(([color, images]) => {
+          colorImagesMap[color] = images as {url: string; public_id: string}[];
+        });
+        setExistingColorImages(colorImagesMap);
+      }
     }).catch((err) => {
       if (err.response?.status === 404) {
         setProductNotFound(true);
@@ -158,6 +172,74 @@ export default function VendorEditProductPage() {
     setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
+  // New method to handle color-specific image uploads
+  const handleColorImageChange = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate number of images
+    const currentColorImages = colorImages[color] || [];
+    const currentExistingImages = existingColorImages[color] || [];
+    if (currentColorImages.length + currentExistingImages.length + files.length > MAX_IMAGES) {
+      toast.error(`You can only upload a maximum of ${MAX_IMAGES} images for ${color}`);
+      return;
+    }
+
+    // Validate each file
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    files.forEach(file => {
+      const error = validateImage(file);
+      if (error) {
+        toast.error(`${file.name}: ${error}`);
+      } else {
+        validFiles.push(file);
+        validPreviews.push(URL.createObjectURL(file));
+      }
+    });
+
+    setColorImages(prev => ({
+      ...prev,
+      [color]: [...(prev[color] || []), ...validFiles]
+    }));
+    setColorImagePreviews(prev => ({
+      ...prev,
+      [color]: [...(prev[color] || []), ...validPreviews]
+    }));
+    
+    // Clear the input
+    e.target.value = '';
+  };
+
+  // New method to remove color-specific images
+  const removeColorImage = (color: string, idx: number, isExisting: boolean = false) => {
+    if (isExisting) {
+      // Remove from existing images
+      setExistingColorImages(prev => {
+        const newExistingColorImages = {...prev};
+        newExistingColorImages[color] = newExistingColorImages[color].filter((_, i) => i !== idx);
+        return newExistingColorImages;
+      });
+    } else {
+      // Remove from new images
+      setColorImages(prev => {
+        const newColorImages = {...prev};
+        newColorImages[color] = newColorImages[color].filter((_, i) => i !== idx);
+        return newColorImages;
+      });
+      setColorImagePreviews(prev => {
+        const newColorImagePreviews = {...prev};
+        const preview = newColorImagePreviews[color][idx];
+        newColorImagePreviews[color] = newColorImagePreviews[color].filter((_, i) => i !== idx);
+        
+        // Revoke the URL to prevent memory leaks
+        URL.revokeObjectURL(preview);
+        
+        return newColorImagePreviews;
+      });
+    }
+  };
+
   const handleFeatureChange = (idx: number, value: string) => {
     setKeyFeatures(prev => prev.map((f, i) => (i === idx ? value : f)));
   };
@@ -166,8 +248,34 @@ export default function VendorEditProductPage() {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
 
+  // Modify handleColorToggle to reset color-specific images
   const handleColorToggle = (color: string) => {
-    setColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
+    setColors(prev => {
+      const newColors = prev.includes(color) 
+        ? prev.filter(c => c !== color) 
+        : [...prev, color];
+      
+      // If color is removed, remove its images
+      if (prev.includes(color)) {
+        setColorImages(prev => {
+          const newColorImages = {...prev};
+          delete newColorImages[color];
+          return newColorImages;
+        });
+        setColorImagePreviews(prev => {
+          const newColorImagePreviews = {...prev};
+          delete newColorImagePreviews[color];
+          return newColorImagePreviews;
+        });
+        setExistingColorImages(prev => {
+          const newExistingColorImages = {...prev};
+          delete newExistingColorImages[color];
+          return newExistingColorImages;
+        });
+      }
+      
+      return newColors;
+    });
   };
 
   const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -271,7 +379,20 @@ export default function VendorEditProductPage() {
 
       // Add sizes and colors
       sizes.forEach(size => formData.append('sizes', size));
-      colors.forEach(color => formData.append('colors', color));
+      colors.forEach(color => {
+        // Add existing color images to be kept
+        const existingColorImagesForColor = existingColorImages[color] || [];
+        existingColorImagesForColor.forEach((img, index) => {
+          formData.append(`existingColorImages[${color}][${index}][url]`, img.url);
+          formData.append(`existingColorImages[${color}][${index}][public_id]`, img.public_id);
+        });
+
+        // Add new color-specific images
+        const colorFiles = colorImages[color] || [];
+        colorFiles.forEach((file, index) => {
+          formData.append(`colorImages[${color}][${index}]`, file);
+        });
+      });
       tags.forEach(tag => formData.append('tags', tag));
       
       // Add existing images and new images
@@ -639,6 +760,64 @@ export default function VendorEditProductPage() {
                 <div className="text-xs text-gray-400 mt-1">{tags.length}/10 tags</div>
               </div>
             </section>
+
+            {/* Color-Specific Image Upload Sections */}
+            {colors.map(color => (
+              <div key={color} className="mb-4">
+                <label className="block font-medium mb-2">Images for {color} Color</label>
+                <div className="grid grid-cols-4 gap-4">
+                  {/* Render existing color images */}
+                  {(existingColorImages[color] || []).map((img, idx) => (
+                    <div key={`existing-${idx}`} className="relative">
+                      <img
+                        src={img.url}
+                        alt={`${color} color existing image ${idx + 1}`}
+                        className="w-full h-24 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeColorImage(color, idx, true)}
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Render new color images */}
+                  {(colorImages[color] || []).map((file, idx) => (
+                    <div key={`new-${idx}`} className="relative">
+                      <img
+                        src={colorImagePreviews[color]?.[idx]}
+                        alt={`${color} color preview ${idx + 1}`}
+                        className="w-full h-24 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeColorImage(color, idx)}
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add image button */}
+                  {((colorImagePreviews[color] || []).length + (existingColorImages[color] || []).length) < MAX_IMAGES && (
+                    <label className="border-2 border-dashed border-gray-300 flex items-center justify-center h-24 rounded cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleColorImageChange(color, e)}
+                      />
+                      <Upload className="text-gray-400" />
+                    </label>
+                  )}
+                </div>
+              </div>
+            ))}
 
             {error && <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</div>}
             {success && <div className="text-green-600 font-medium bg-green-50 p-3 rounded-lg">Product updated successfully! Redirecting...</div>}

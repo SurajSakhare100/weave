@@ -4,9 +4,12 @@ import VendorLayout from '@/components/Vendor/VendorLayout';
 import Image from 'next/image';
 import { addVendorProduct } from '@/services/vendorService';
 import api from '@/services/api';
-import { Upload, Info, X, AlertCircle } from 'lucide-react';
+import { Upload, Info, X, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Label } from '@/components/ui/label';
+import { ColorPickerModal } from '@/components/ui/color-picker';
+import { SimpleColorPicker } from '@/components/ui/simple-color-picker';
 
 interface Category {
   _id: string;
@@ -50,6 +53,26 @@ export default function VendorAddProductPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
+  // State for color and image management
+  const [colorImageMap, setColorImageMap] = useState<{
+    [color: string]: {
+      hex: string;
+      images: File[];
+      imageUrls?: string[];
+    }
+  }>({});
+
+  // State for image upload
+  const [imageUploadProgress, setImageUploadProgress] = useState<{[color: string]: number[]}>({});
+  const [isUploading, setIsUploading] = useState<{[color: string]: boolean}>({});
+
+  // State for color picker modal
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [currentColorImageUpload, setCurrentColorImageUpload] = useState<{
+    color: string | null;
+    type: 'add' | 'replace';
+  }>({ color: null, type: 'add' });
+
   useEffect(() => {
     // Load categories
     api.get('/categories').then(res => {
@@ -62,42 +85,95 @@ export default function VendorAddProductPage() {
 
   const validateImage = (file: File): string | null => {
     if (!file.type.startsWith('image/')) {
-      return 'File must be an image';
+      return `${file.name}: Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.`;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return 'Image size must be less than 5MB';
+      return `${file.name}: File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds the 5MB limit.`;
     }
+
+    // Check for supported formats
+    const allowedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedFormats.includes(file.type.toLowerCase())) {
+      return `${file.name}: Unsupported format. Use JPEG, PNG, WebP, or GIF.`;
+    }
+
     return null;
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    // Validate number of images
-    if (images.length + files.length > MAX_IMAGES) {
-      toast.error(`You can only upload a maximum of ${MAX_IMAGES} images`);
-      return;
-    }
-
-    // Validate each file
+  // Enhanced validation for multiple files
+  const validateImageFiles = (files: File[]): { validFiles: File[], errors: string[] } => {
     const validFiles: File[] = [];
-    const validPreviews: string[] = [];
+    const errors: string[] = [];
 
     files.forEach(file => {
       const error = validateImage(file);
       if (error) {
-        toast.error(`${file.name}: ${error}`);
+        errors.push(error);
       } else {
         validFiles.push(file);
-        validPreviews.push(URL.createObjectURL(file));
       }
     });
+
+    return { validFiles, errors };
+  };
+
+  // Handle main product image upload
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    handleMainImageUpload(files);
+  };
+
+  // Handle drag and drop for main images
+  const handleMainImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    handleMainImageUpload(imageFiles);
+  };
+
+  // Main image upload handler
+  const handleMainImageUpload = (files: File[]) => {
+    // Validate number of images
+    if (images.length + files.length > MAX_IMAGES) {
+      toast.error(`Cannot add ${files.length} images. Maximum ${MAX_IMAGES} images allowed. Current: ${images.length}`);
+      return;
+    }
+
+    // Enhanced validation
+    const { validFiles, errors } = validateImageFiles(files);
+
+    // Show all errors at once
+    errors.forEach(error => {
+      toast.error(error);
+    });
+
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    // Set uploading state for main images
+    setIsUploading(prev => ({ ...prev, main: true }));
+
+    // Simulate processing time for better UX
+    setTimeout(() => {
+      // Create previews for valid files
+      const validPreviews = validFiles.map(file => URL.createObjectURL(file));
 
     setImages(prev => [...prev, ...validFiles]);
     setImagePreviews(prev => [...prev, ...validPreviews]);
     
-    // Clear the input
-    e.target.value = '';
+      // Clear uploading state
+      setIsUploading(prev => ({ ...prev, main: false }));
+
+      // Show success message
+      if (validFiles.length === files.length) {
+        toast.success(`Successfully uploaded ${validFiles.length} image${validFiles.length > 1 ? 's' : ''}`);
+      } else {
+        toast.info(`Uploaded ${validFiles.length} of ${files.length} images`);
+      }
+    }, 500); // Small delay for better UX feedback
   };
 
   const removeImage = (idx: number) => {
@@ -118,8 +194,173 @@ export default function VendorAddProductPage() {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
 
+  // Modify handleColorToggle to reset color-specific images
   const handleColorToggle = (color: string) => {
-    setColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
+    setColors(prev => {
+      const newColors = prev.includes(color) 
+        ? prev.filter(c => c !== color) 
+        : [...prev, color];
+      
+      // If color is removed, remove its images
+      if (prev.includes(color)) {
+        setColorImageMap(prev => {
+          const newColorImages = {...prev};
+          delete newColorImages[color];
+          return newColorImages;
+        });
+      }
+      
+      return newColors;
+    });
+  };
+
+  // Open color picker for adding new color
+  const openColorPicker = () => {
+    setCurrentColorImageUpload({ color: null, type: 'add' });
+    setIsColorPickerOpen(true);
+  };
+
+  // Handle color selection
+  const handleColorSelect = (color: { name: string; hex: string }) => {
+    // Prevent duplicate colors
+    if (colorImageMap[color.name]) {
+      toast.error(`Color ${color.name} is already added`);
+      return;
+    }
+
+    // Close color picker
+    setIsColorPickerOpen(false);
+
+    // If adding new color, prepare for image upload
+    if (currentColorImageUpload.type === 'add') {
+      setColorImageMap(prev => ({
+        ...prev,
+        [color.name]: {
+          hex: color.hex,
+          images: []
+        }
+      }));
+      
+      // Trigger file input for new color
+      setCurrentColorImageUpload({ color: color.name, type: 'add' });
+      
+      // Simulate click on hidden file input
+      const fileInput = document.getElementById(`color-image-upload-${color.name}`) as HTMLInputElement;
+      fileInput?.click();
+    }
+  };
+
+  // Image upload handler
+  const handleImageUpload = async (color: string, files: File[]) => {
+    // Validate number of images
+    const currentColorImages = colorImageMap[color]?.images || [];
+    if (currentColorImages.length + files.length > MAX_IMAGES) {
+      toast.error(`Cannot add ${files.length} images for ${color}. Maximum ${MAX_IMAGES} images allowed. Current: ${currentColorImages.length}`);
+      return;
+    }
+
+    // Enhanced validation
+    const { validFiles, errors } = validateImageFiles(files);
+
+    // Show all errors at once
+    errors.forEach(error => {
+      toast.error(error);
+    });
+
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    // Set uploading state for this color
+    setIsUploading(prev => ({ ...prev, [color]: true }));
+
+    // Simulate processing time for better UX
+    setTimeout(() => {
+      // Create previews for valid files
+      const validPreviews = validFiles.map(file => URL.createObjectURL(file));
+
+      // Update color images with new files
+      setColorImageMap(prev => ({
+        ...prev,
+        [color]: {
+          ...prev[color],
+          images: [...(prev[color]?.images || []), ...validFiles],
+          imageUrls: [...(prev[color]?.imageUrls || []), ...validPreviews]
+        }
+      }));
+
+      // Clear uploading state
+      setIsUploading(prev => ({ ...prev, [color]: false }));
+
+      // Show success message
+      if (validFiles.length === files.length) {
+        toast.success(`Successfully uploaded ${validFiles.length} image${validFiles.length > 1 ? 's' : ''} for ${color}`);
+      } else {
+        toast.info(`Uploaded ${validFiles.length} of ${files.length} images for ${color}`);
+      }
+    }, 500); // Small delay for better UX feedback
+  };
+
+  // Handle color-specific image upload
+  const handleColorImageUpload = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    // Upload images
+    handleImageUpload(color, files);
+  };
+
+  // Handle drag and drop for color images
+  const handleColorImageDrop = (color: string, e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (imageFiles.length > 0) {
+      handleImageUpload(color, imageFiles);
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Remove image from a color
+  const removeColorImage = (color: string, index: number) => {
+    setColorImageMap(prev => {
+      const colorData = {...prev[color]};
+      
+      // Revoke object URL if exists
+      if (colorData.imageUrls?.[index]) {
+        URL.revokeObjectURL(colorData.imageUrls[index]);
+      }
+
+      // Remove image
+      colorData.images.splice(index, 1);
+      colorData.imageUrls?.splice(index, 1);
+
+      return {
+        ...prev,
+        [color]: colorData
+      };
+    });
+  };
+
+  // Remove entire color section
+  const removeColorSection = (color: string) => {
+    setColorImageMap(prev => {
+      const newMap = {...prev};
+      
+      // Revoke all preview URLs
+      newMap[color].images.forEach((file) => URL.revokeObjectURL(URL.createObjectURL(file)));
+      
+      // Remove color
+      delete newMap[color];
+      
+      return newMap;
+    });
   };
 
   const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -189,54 +430,64 @@ export default function VendorAddProductPage() {
     return errors;
   };
 
+  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setFieldErrors({});
-
-    // Client-side validation
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setFieldErrors(validationErrors);
-      toast.error('Please fix the errors in the form');
-      return;
-    }
-
     setLoading(true);
+    setError(null);
+
     try {
+      // Create FormData for multipart upload
       const formData = new FormData();
-      formData.append('name', name.trim());
-      formData.append('description', description.trim());
-      formData.append('srtDescription', additionalDetails.trim());
+
+      // Add basic product details
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('category', category);
       formData.append('price', price);
       formData.append('mrp', mrp);
-      formData.append('category', category);
-      formData.append('offers', String(offers));
-      if (offers && salePrice) {
-        formData.append('salePrice', salePrice);
+      // Add other necessary fields...
+
+      // Debug: Log FormData contents
+      console.log('FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
       }
-      formData.append('productDetails', JSON.stringify(productDetails));
-      
-      // Add key features (filter out empty ones)
-      const nonEmptyFeatures = keyFeatures.filter(f => f.trim());
-      nonEmptyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f.trim()));
 
-      // Add sizes and colors
-      sizes.forEach(size => formData.append('sizes', size));
-      colors.forEach(color => formData.append('colors', color));
-      tags.forEach(tag => formData.append('tags', tag));
-      
-      // Add images
-      images.forEach(img => formData.append('images', img));
+      // Add main product images
+      images.forEach((file, index) => {
+        formData.append('images', file);
+        console.log(`Added main image ${index}: ${file.name}`);
+      });
 
-      await addVendorProduct(formData);
-      setSuccess(true);
-      toast.success('Product added successfully! It will be reviewed by admin before going live.');
-      setTimeout(() => router.push('/vendor/products'), 2000);
+      // Add color-specific images
+      Object.entries(colorImageMap).forEach(([color, colorData]) => {
+        // Add color
+        formData.append('colors', color);
+        console.log(`Added color: ${color}`);
+
+        // Add color-specific images
+        colorData.images.forEach((file, index) => {
+          const fieldName = `colorImages[${color}]`;
+          formData.append(fieldName, file);
+          console.log(`Added ${fieldName}[${index}]: ${file.name}`);
+        });
+      });
+
+      // Submit product
+      console.log('Submitting product with FormData...');
+      const response = await addVendorProduct(formData);
+      console.log('Product submission successful:', response);
+      
+      toast.success('Product added successfully');
+      router.push('/vendor/products');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const errorMessage = error?.response?.data?.message || 'Failed to add product';
-      setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -338,7 +589,11 @@ export default function VendorAddProductPage() {
                 <label className="block font-medium mb-1 flex items-center gap-1">
                   Product images * <Info className="h-4 w-4 text-gray-400" />
                 </label>
-                <div className={`bg-[#f4f8fb] border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center ${fieldErrors.images ? 'border-red-500' : 'border-gray-200'}`}>
+                <div
+                  className={`bg-[#f4f8fb] border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center ${fieldErrors.images ? 'border-red-500' : 'border-gray-200'} hover:border-[#5A9BD8] transition-colors`}
+                  onDrop={images.length < MAX_IMAGES ? handleMainImageDrop : undefined}
+                  onDragOver={images.length < MAX_IMAGES ? handleDragOver : undefined}
+                >
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -353,8 +608,9 @@ export default function VendorAddProductPage() {
                     <span className="text-[#5A9BD8] font-medium">
                       {images.length >= MAX_IMAGES ? 'Maximum images reached' : 'Click or drop images'}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">
-                      {images.length}/{MAX_IMAGES} images • Max 5MB each
+                                      <span className="text-xs text-gray-500 mt-1 text-center">
+                    {images.length}/{MAX_IMAGES} images uploaded<br />
+                    Supported: JPEG, PNG, WebP, GIF • Max 5MB each
                     </span>
                   </label>
                   
@@ -547,6 +803,139 @@ export default function VendorAddProductPage() {
               </div>
             </section>
 
+            {/* Render color-specific image upload sections */}
+            {colors.map(color => (
+              <div key={color} className="mb-4">
+                <Label className="block mb-2">Images for {color} Color</Label>
+                <div className="grid grid-cols-4 gap-4">
+                  {(colorImageMap[color]?.images || []).map((preview, idx) => (
+                    <div key={idx} className="relative">
+                      <img 
+                        src={URL.createObjectURL(preview)} 
+                        alt={`${color} color preview ${idx + 1}`} 
+                        className="w-full h-24 object-cover rounded"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => removeColorImage(color, idx)}
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                  {(colorImageMap[color]?.images || []).length < MAX_IMAGES && (
+                    <label className="border-2 border-dashed border-gray-300 flex items-center justify-center h-24 rounded cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        multiple 
+                        className="hidden"
+                        id={`color-image-upload-${color}`}
+                        onChange={(e) => handleColorImageUpload(color, e)}
+                      />
+                      <Upload className="text-gray-400" />
+                    </label>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Color-specific image upload section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-4">Color-Specific Images</h3>
+              
+              {/* Add color button */}
+              <button 
+                type="button"
+                onClick={openColorPicker}
+                className="mb-4 flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition"
+              >
+                <Plus className="mr-2 h-5 w-5 text-gray-400" />
+                <span>Add Color Images</span>
+              </button>
+
+              {/* Color-specific image sections */}
+              {Object.entries(colorImageMap).map(([color, colorData]) => (
+                <div 
+                  key={color} 
+                  className="mb-6 p-4 border rounded-lg relative"
+                >
+                  {/* Remove color section button */}
+                  <button
+                    type="button"
+                    onClick={() => removeColorSection(color)}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+
+                  {/* Color display */}
+                  <h4 className="text-md font-medium mb-3 flex items-center">
+                    <div 
+                      className="w-6 h-6 rounded-full mr-2 border" 
+                      style={{ 
+                        backgroundColor: colorData.hex || color.toLowerCase(),
+                        filter: ['white', 'beige', 'tan', 'yellow'].includes(color.toLowerCase()) 
+                          ? 'brightness(0.9)' 
+                          : 'none' 
+                      }}
+                    />
+                    {color} Color Images
+                  </h4>
+
+                  {/* Image upload grid */}
+                  <div className="grid grid-cols-4 gap-4">
+                    {/* Existing images */}
+                    {colorData.images.map((imageUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={URL.createObjectURL(imageUrl)} 
+                          alt={`${color} color image ${index + 1}`} 
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeColorImage(color, index)}
+                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          X
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add image button */}
+                    {colorData.images.length < MAX_IMAGES && (
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center h-24 cursor-pointer hover:border-primary transition relative group"
+                        onDrop={(e) => handleColorImageDrop(color, e)}
+                        onDragOver={handleDragOver}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          id={`color-image-upload-${color}`}
+                          onChange={(e) => handleColorImageUpload(color, e)}
+                        />
+                        <label
+                          htmlFor={`color-image-upload-${color}`}
+                          className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
+                        >
+                          <Plus className="text-gray-400 group-hover:text-primary mb-1" />
+                          <span className="text-xs text-gray-500 text-center px-2">
+                            Drop or Click to Upload<br />
+                            Max 4 images
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {error && <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</div>}
             {success && <div className="text-green-600 font-medium bg-green-50 p-3 rounded-lg">Product added successfully! Redirecting...</div>}
             
@@ -569,6 +958,15 @@ export default function VendorAddProductPage() {
           </form>
         </div>
       </div>
+
+      {/* Color picker modal */}
+      {isColorPickerOpen && (
+        <SimpleColorPicker 
+          onColorSelect={handleColorSelect}
+          onClose={() => setIsColorPickerOpen(false)}
+          existingColors={Object.keys(colorImageMap)}
+        />
+      )}
     </VendorLayout>
   );
 } 

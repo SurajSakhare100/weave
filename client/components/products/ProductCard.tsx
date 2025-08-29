@@ -21,6 +21,9 @@ interface Product {
   sizes?: string[]; // Added sizes field
   currVariantSize?: string;
   images?: Array<{ url: string; is_primary?: boolean }>;
+  colorImages?: {
+    [color: string]: Array<{ url: string; is_primary?: boolean }>;
+  };
   averageRating?: number;
   totalReviews?: number;
   files?: string[];
@@ -37,6 +40,30 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors ? product.colors[0] : null
   );
+
+  // Get display image based on selected color
+  const displayImage = React.useMemo(() => {
+    if (selectedColor && product.colorImages?.[selectedColor]?.length > 0) {
+      // Use color-specific primary image or first image
+      const colorImages = product.colorImages[selectedColor];
+      return colorImages.find(img => img.is_primary) || colorImages[0];
+    }
+
+    // Fallback to main product images
+    if (product.images?.length > 0) {
+      return product.images.find(img => img.is_primary) || product.images[0];
+    }
+
+    // Final fallback
+    return { url: '/products/product.png', is_primary: true };
+  }, [selectedColor, product.colorImages, product.images]);
+
+  // Get all available colors (from colors field and colorImages keys)
+  const availableColors = React.useMemo(() => {
+    const colorsFromField = product.colors || [];
+    const colorsFromImages = product.colorImages ? Object.keys(product.colorImages) : [];
+    return [...new Set([...colorsFromField, ...colorsFromImages])];
+  }, [product.colors, product.colorImages]);
 
   const resolvedSize = React.useMemo(() => {
     if (product.sizes && product.sizes.length > 0) {
@@ -111,14 +138,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Product Image Container */}
         <div className="relative  w-full aspect-[4/3] rounded-xl bg-[#FFFBF8] overflow-hidden">
           <Image
-            src={getPrimaryImage()}
-            alt={product.name}
+            src={displayImage.url}
+            alt={product.name + (selectedColor ? ` - ${selectedColor}` : '')}
             fill
             className="object-contain p-2 sm:p-4"
             onError={(e) => {
               e.currentTarget.src = '/products/product.png';
             }}
           />
+
+          {/* Color Image Indicator */}
+          {selectedColor && product.colorImages?.[selectedColor]?.length > 0 && (
+            <div className="absolute bottom-2 left-2 bg-primary/90 text-white text-xs px-1.5 py-0.5 rounded">
+              {product.colorImages[selectedColor].length}
+            </div>
+          )}
 
           {/* Stock Badge */}
           {stock > 0 && stock <= 5 && (
@@ -148,23 +182,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </h3>
 
         {/* Color Swatches */}
-        <div className="flex gap-2 items-center">
-          {(product.colors || defaultColors).slice(0, 6).map((color) => (
-            <div
-              key={color}
-              className='flex items-center justify-center'
-            >
-              <button
-              style={{ backgroundColor: color }}
-              className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
-                selectedColor === color ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
-              }`}
-                onClick={() => setSelectedColor(color)}
-                aria-label={`Select color ${color}`}
-              />
-            </div>
-          ))}
-        </div>
+        {availableColors.length > 0 && (
+          <div className="flex gap-2 items-center">
+            {availableColors.slice(0, 6).map((color) => (
+              <div
+                key={color}
+                className='flex items-center justify-center'
+              >
+                <button
+                  style={{ backgroundColor: color }}
+                  className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+                    selectedColor === color ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
+                  }`}
+                  onClick={() => setSelectedColor(color)}
+                  aria-label={`Select color ${color}`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Rating */}
        <div className='flex items-center justify-between'>

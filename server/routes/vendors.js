@@ -43,7 +43,7 @@ import {
   validateSearch
 } from '../middleware/validation.js';
 import { protectVendor, protectVendorWithStatus, protectAdmin } from '../middleware/auth.js';
-import { handleMultipleUpload } from '../middleware/upload.js';
+import { handleFlexibleUpload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -67,8 +67,8 @@ router.post('/reapply', protectVendorWithStatus, reapplyVendor);
 
 // Vendor product routes (allow access but check approval status)
 router.get('/products', protectVendorWithStatus, validatePagination, getVendorProducts);
-router.post('/products', protectVendorWithStatus, handleMultipleUpload, createVendorProductController);
-router.put('/products/:id', protectVendorWithStatus, handleMultipleUpload, updateVendorProduct);
+router.post('/products', protectVendorWithStatus, handleFlexibleUpload, createVendorProductController);
+router.put('/products/:id', protectVendorWithStatus, handleFlexibleUpload, updateVendorProduct);
 router.delete('/products/:id', protectVendorWithStatus, validateId, deleteVendorProduct);
 router.get('/products/released', protectVendorWithStatus, validatePagination, getVendorReleasedProducts);
 router.get('/products/drafts', protectVendorWithStatus, validatePagination, getVendorDraftProducts);

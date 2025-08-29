@@ -63,6 +63,11 @@ export interface Product {
     adminApproved?: boolean;
     adminRejectionReason?: string;
     // Virtual field for available sizes
+
+    // Add color-specific images
+    colorImages?: {
+      [color: string]: ProductImage[];
+    };
 }
 
 // Product image interface

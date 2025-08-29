@@ -32,21 +32,16 @@ const initialState: CartState = {
 
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
   try {
-    console.log('fetchCart thunk - Starting fetch');
     const data = await getCart()
-    console.log('fetchCart thunk - API response:', data);
     
     if (data.success === false) {
-      console.log('fetchCart thunk - API returned success: false');
       return rejectWithValue(data.message || 'Could not load cart')
     }
     
     // The server returns { success: true, result: [...], amount: {...} }
     const result = data.result || [];
-    console.log('fetchCart thunk - Returning result:', result);
     return result;
   } catch (err: any) {
-    console.error('fetchCart thunk - Error:', err);
     return rejectWithValue(err.message || 'Could not load cart')
   }
 })
@@ -67,7 +62,6 @@ export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product
     // The server returns { success: true, result: [...], amount: {...} }
     return result.result || []
   } catch (err: any) {
-    console.error('addCartItem error:', err);
     return rejectWithValue(err.message || 'Could not add to cart')
   }
 })
@@ -127,10 +121,6 @@ const cartSlice = createSlice({
         state.error = null
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
-        console.log('fetchCart.fulfilled - Raw payload:', action.payload);
-        console.log('fetchCart.fulfilled - Payload type:', typeof action.payload);
-        console.log('fetchCart.fulfilled - Payload length:', Array.isArray(action.payload) ? action.payload.length : 'not array');
-        
         // Temporarily less strict filtering for debugging
         const validItems = action.payload.filter(item => {
           const hasProId = item && item.proId;
@@ -138,18 +128,13 @@ const cartSlice = createSlice({
           const isValid = hasProId && hasItem;
           
           if (!hasProId) {
-            console.log('Filtered out item - missing proId:', item);
           }
           if (!hasItem) {
-            console.log('Filtered out item - missing item data:', item);
           }
           
           return isValid;
         });
-        
-        console.log('fetchCart.fulfilled - Valid items:', validItems.length);
-        console.log('fetchCart.fulfilled - Valid items data:', validItems);
-        
+                    
         state.items = validItems
         state.loading = false
       })

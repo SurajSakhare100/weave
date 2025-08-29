@@ -31,8 +31,25 @@ export async function placeOrder(orderData: any) {
     const res = await api.post('/orders', transformedOrderData);
     return res.data;
   } catch (error: any) {
-    console.error('Error placing order:', error);
     return { success: false, message: 'Failed to place order' };
+  }
+}
+
+export async function createRazorpayOrder(amount: number, orderId: string) {
+  try {
+    const res = await api.post('/razorpay/order', { amount, currency: 'INR', orderId });
+    return res.data;
+  } catch (error: any) {
+    return { success: false, message: error.message || 'Failed to create Razorpay order' };
+  }
+}
+
+export async function verifyRazorpayPayment(paymentData: any) {
+  try {
+    const res = await api.post('/razorpay/verify', paymentData);
+    return res.data;
+  } catch (error: any) {
+    return { success: false, message: error.message || 'Failed to verify Razorpay payment' };
   }
 }
 

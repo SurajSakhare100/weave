@@ -85,8 +85,12 @@ export async function getVendorProducts(params?: {
   return res.data;
 }
 
-export async function createVendorProduct(productData: any) {
-  const res = await api.post('/vendors/products', productData);
+export async function createVendorProduct(productData: FormData) {
+  const res = await api.post('/vendors/products', productData, {
+    headers: { 
+      'Content-Type': 'multipart/form-data' 
+    }
+  });
   return res.data;
 }
 

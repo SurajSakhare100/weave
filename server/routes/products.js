@@ -30,7 +30,7 @@ import {
   validatePriceRange
 } from '../middleware/validation.js';
 import { protectUser, protectVendor, protectVendorWithStatus, optionalVendorAuth } from '../middleware/auth.js';
-import { handleMultipleUpload, processUploadedFiles } from '../middleware/upload.js';
+import { handleFlexibleUpload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -66,20 +66,18 @@ router.put('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendorW
 router.delete('/:id/reviews/:reviewId/vendor-responses/:responseId', protectVendorWithStatus, validateId, deleteVendorReviewResponse);
 
 // Vendor product management routes
-router.post('/', 
-  protectVendorWithStatus, 
+router.post('/',
+  protectVendorWithStatus,
+  handleFlexibleUpload,
   validateProduct,
-  handleMultipleUpload,
-  processUploadedFiles,
   createProduct
 );
 
-router.put('/:id', 
-  protectVendorWithStatus, 
+router.put('/:id',
+  protectVendorWithStatus,
+  handleFlexibleUpload,
   validateId,
   validateProduct,
-  handleMultipleUpload,
-  processUploadedFiles,
   updateProduct
 );
 
