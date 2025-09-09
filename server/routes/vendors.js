@@ -30,7 +30,17 @@ import {
   updateVendorProduct,
   deleteVendorProduct,
   acceptVendor,
-  reapplyVendor
+  reapplyVendor,
+  // Sales management
+  recordOfflineSale,
+  getVendorSales,
+  getSalesAnalytics,
+  // Stock management
+  updateProductStock,
+  getStockMovements,
+  getStockAnalytics,
+  getProductStockHistory,
+  updateVendorSettings
 } from '../controllers/vendorController.js';
 import {
   addVendorReviewResponse,
@@ -95,5 +105,19 @@ router.get('/orders', protectVendorWithStatus, validatePagination, getVendorOrde
 router.get('/orders/:id', protectVendorWithStatus, validateId, getVendorOrderById);
 router.put('/orders/:id', protectVendorWithStatus, validateId, updateVendorOrder);
 router.put('/orders/:id/status', protectVendorWithStatus, validateId, updateOrderStatus);
+
+// Sales management routes
+router.post('/sales/offline', protectVendorWithStatus, recordOfflineSale);
+router.get('/sales', protectVendorWithStatus, validatePagination, getVendorSales);
+router.get('/sales/analytics', protectVendorWithStatus, getSalesAnalytics);
+
+// Stock management routes
+router.put('/stock/:productId', protectVendorWithStatus, validateId, updateProductStock);
+router.get('/stock/movements', protectVendorWithStatus, validatePagination, getStockMovements);
+router.get('/stock/analytics', protectVendorWithStatus, getStockAnalytics);
+router.get('/stock/:productId/history', protectVendorWithStatus, validateId, getProductStockHistory);
+
+// Vendor settings
+router.put('/settings', protectVendorWithStatus, updateVendorSettings);
 
 export default router; 

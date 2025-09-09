@@ -18,9 +18,12 @@ import {
   DollarSign,
   Percent,
   LogOut,
-  PackageCheck
+  PackageCheck,
+  ShoppingCart,
+  TrendingUp,
+  Boxes
 } from 'lucide-react';
-
+// import "@/styles/vendor-globals.css"
 interface SidebarSection {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -60,6 +63,21 @@ const sidebarSections: SidebarSection[] = [
       // { label: 'Cancelled', icon: PackageCheck, href: '/vendor/orders/cancelled' },
     ],
   },
+  {
+    label: 'Sales',
+    icon: ShoppingCart,
+    children: [
+      { label: 'Sales Dashboard', icon: TrendingUp, href: '/vendor/sales' },
+    ],
+  },
+  {
+    label: 'Stocks',
+    icon: Boxes,
+    href: '/vendor/stocks',
+    children :[
+      { label: 'Stock Management', icon: Boxes, href: '/vendor/stock' },
+    ],
+  },  
   // {
   //   label: 'Store',
   //   icon: Store,

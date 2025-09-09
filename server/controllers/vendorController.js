@@ -3,6 +3,8 @@ import Vendor from '../models/Vendor.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Review from '../models/Review.js';
+import VendorSales from '../models/VendorSales.js';
+import StockMovement from '../models/StockMovement.js';
 import { createVendorProduct, updateVendorProduct as updateVendorProductHelper } from '../helpers/vendorHelpers.js';
 
 
@@ -1956,3 +1958,521 @@ export const reapplyVendor = asyncHandler(async (req, res) => {
     }
   });
 }); 
+
+// ==================== SALES MANAGEMENT ENDPOINTS ====================
+
+// @desc    Record offline sale
+// @route   POST /api/vendors/sales/offline
+// @access  Private (Vendor)
+export const recordOfflineSale = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const {
+    productId,
+    quantity,
+    unitPrice,
+    customerName,
+    customerPhone,
+    customerEmail,
+    paymentMethod,
+    discount = 0,
+    notes,
+    saleLocation,
+    invoiceNumber
+  } = req.body;
+
+  // Validate required fields
+  if (!productId || !quantity || !unitPrice || !paymentMethod) {
+    res.status(400);
+    throw new Error('Product ID, quantity, unit price, and payment method are required');
+  }
+
+  // Check if vendor can manage offline sales
+  if (!req.vendor.canManageOfflineSales()) {
+    res.status(403);
+    throw new Error('Offline sales management not enabled for this vendor');
+  }
+
+  // Verify product belongs to vendor
+  const product = await Product.findOne({ _id: productId, vendorId });
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found or does not belong to you');
+  }
+
+  // Check stock availability
+  if (product.stock < quantity) {
+    res.status(400);
+    throw new Error(`Insufficient stock. Available: ${product.stock}, Requested: ${quantity}`);
+  }
+
+  const totalAmount = (unitPrice * quantity) - discount;
+
+  // Create sales record
+  const sale = await VendorSales.create({
+    vendorId,
+    productId,
+    saleType: 'offline',
+    quantity,
+    unitPrice,
+    totalAmount,
+    customerName,
+    customerPhone,
+    customerEmail,
+    paymentMethod,
+    discount,
+    notes,
+    saleLocation,
+    invoiceNumber,
+    status: 'completed'
+  });
+
+  // Update product stock if auto-deduction is enabled
+  if (req.vendor.autoStockDeduction) {
+    const previousStock = product.stock;
+    product.stock -= quantity;
+    await product.save();
+
+    // Record stock movement
+    await StockMovement.create({
+      vendorId,
+      productId,
+      movementType: 'out',
+      quantity: -quantity,
+      previousStock,
+      newStock: product.stock,
+      referenceType: 'sale',
+      referenceId: sale._id.toString(),
+      reason: 'Offline sale',
+      createdBy: vendorId,
+      createdByModel: 'Vendor'
+    });
+  }
+
+  // Update vendor sales stats
+  await req.vendor.updateSalesStats();
+
+  res.status(201).json({
+    success: true,
+    message: 'Offline sale recorded successfully',
+    data: sale
+  });
+});
+
+// @desc    Get vendor sales (online and offline)
+// @route   GET /api/vendors/sales
+// @access  Private (Vendor)
+export const getVendorSales = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const {
+    page = 1,
+    limit = 20,
+    saleType,
+    startDate,
+    endDate,
+    productId,
+    status = 'completed'
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+
+  // Build filter
+  const filter = { vendorId, status };
+  
+  if (saleType && saleType !== 'all') {
+    filter.saleType = saleType;
+  }
+  
+  if (productId) {
+    filter.productId = productId;
+  }
+  
+  if (startDate && endDate) {
+    filter.saleDate = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  // Get sales with product details
+  const sales = await VendorSales.find(filter)
+    .populate('productId', 'name price images category')
+    .sort('-saleDate')
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const total = await VendorSales.countDocuments(filter);
+
+  // Get sales summary
+  const summary = await VendorSales.getSalesSummary(vendorId, startDate, endDate);
+
+  res.json({
+    success: true,
+    data: {
+      sales,
+      summary,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get sales analytics
+// @route   GET /api/vendors/sales/analytics
+// @access  Private (Vendor)
+export const getSalesAnalytics = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { days = 30 } = req.query;
+
+  // Get daily sales data
+  const dailySales = await VendorSales.getDailySales(vendorId, parseInt(days));
+  
+  // Get sales summary
+  const summary = await VendorSales.getSalesSummary(vendorId);
+  
+  // Get top-selling products
+  const topProducts = await VendorSales.aggregate([
+    {
+      $match: {
+        vendorId: vendorId,
+        status: 'completed',
+        saleDate: { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) }
+      }
+    },
+    {
+      $group: {
+        _id: '$productId',
+        totalQuantity: { $sum: '$quantity' },
+        totalRevenue: { $sum: '$totalAmount' },
+        salesCount: { $sum: 1 }
+      }
+    },
+    {
+      $lookup: {
+        from: 'products',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'product'
+      }
+    },
+    {
+      $unwind: '$product'
+    },
+    {
+      $project: {
+        productName: '$product.name',
+        totalQuantity: 1,
+        totalRevenue: 1,
+        salesCount: 1
+      }
+    },
+    {
+      $sort: { totalRevenue: -1 }
+    },
+    {
+      $limit: 10
+    }
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      dailySales,
+      summary,
+      topProducts,
+      period: `${days} days`
+    }
+  });
+});
+
+// ==================== STOCK MANAGEMENT ENDPOINTS ====================
+
+// @desc    Update product stock
+// @route   PUT /api/vendors/stock/:productId
+// @access  Private (Vendor)
+export const updateProductStock = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productId } = req.params;
+  const { quantity, movementType, reason, notes, unitCost, batchNumber, expiryDate } = req.body;
+
+  // Validate required fields
+  if (!quantity || !movementType || !reason) {
+    res.status(400);
+    throw new Error('Quantity, movement type, and reason are required');
+  }
+
+  // Check if vendor can manage stock
+  if (!req.vendor.canManageStock()) {
+    res.status(403);
+    throw new Error('Stock management not enabled for this vendor');
+  }
+
+  // Verify product belongs to vendor
+  const product = await Product.findOne({ _id: productId, vendorId });
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found or does not belong to you');
+  }
+
+  const previousStock = product.stock;
+  let newStock;
+  let adjustedQuantity = quantity;
+
+  // Calculate new stock based on movement type
+  switch (movementType) {
+    case 'in':
+    case 'return':
+      newStock = previousStock + Math.abs(quantity);
+      adjustedQuantity = Math.abs(quantity);
+      break;
+    case 'out':
+    case 'damage':
+      if (previousStock < Math.abs(quantity)) {
+        res.status(400);
+        throw new Error(`Insufficient stock. Available: ${previousStock}, Requested: ${Math.abs(quantity)}`);
+      }
+      newStock = previousStock - Math.abs(quantity);
+      adjustedQuantity = -Math.abs(quantity);
+      break;
+    case 'adjustment':
+      newStock = previousStock + quantity; // quantity can be positive or negative
+      adjustedQuantity = quantity;
+      if (newStock < 0) {
+        res.status(400);
+        throw new Error('Stock adjustment would result in negative stock');
+      }
+      break;
+    default:
+      res.status(400);
+      throw new Error('Invalid movement type');
+  }
+
+  // Update product stock
+  product.stock = newStock;
+  await product.save();
+
+  // Create stock movement record
+  const stockMovement = await StockMovement.create({
+    vendorId,
+    productId,
+    movementType,
+    quantity: adjustedQuantity,
+    previousStock,
+    newStock,
+    referenceType: 'manual',
+    reason,
+    notes,
+    unitCost,
+    totalCost: unitCost ? unitCost * Math.abs(adjustedQuantity) : undefined,
+    batchNumber,
+    expiryDate,
+    createdBy: vendorId,
+    createdByModel: 'Vendor'
+  });
+
+  // Update vendor stock stats
+  await req.vendor.updateStockStats();
+
+  res.json({
+    success: true,
+    message: 'Stock updated successfully',
+    data: {
+      product: {
+        _id: product._id,
+        name: product.name,
+        previousStock,
+        newStock,
+        stockChange: adjustedQuantity
+      },
+      stockMovement
+    }
+  });
+});
+
+// @desc    Get stock movements
+// @route   GET /api/vendors/stock/movements
+// @access  Private (Vendor)
+export const getStockMovements = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const {
+    page = 1,
+    limit = 20,
+    productId,
+    movementType,
+    startDate,
+    endDate
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+
+  // Build filter
+  const filter = { vendorId };
+  
+  if (productId) {
+    filter.productId = productId;
+  }
+  
+  if (movementType) {
+    filter.movementType = movementType;
+  }
+  
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  // Get movements with product details
+  const movements = await StockMovement.find(filter)
+    .populate('productId', 'name price images')
+    .populate('createdBy', 'name email')
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const total = await StockMovement.countDocuments(filter);
+
+  res.json({
+    success: true,
+    data: {
+      movements,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get stock analytics
+// @route   GET /api/vendors/stock/analytics
+// @access  Private (Vendor)
+export const getStockAnalytics = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { days = 30 } = req.query;
+
+  // Get current stock levels
+  const stockLevels = await Product.find({ vendorId })
+    .select('name stock price category')
+    .sort('stock');
+
+  // Get low stock products
+  const lowStockProducts = stockLevels.filter(product => 
+    product.stock <= req.vendor.lowStockThreshold && product.stock > 0
+  );
+
+  // Get out of stock products
+  const outOfStockProducts = stockLevels.filter(product => product.stock === 0);
+
+  // Get stock movements summary
+  const movementsSummary = await StockMovement.getVendorStockSummary(vendorId);
+
+  // Calculate total stock value
+  const totalStockValue = stockLevels.reduce((total, product) => 
+    total + (product.stock * product.price), 0
+  );
+
+  res.json({
+    success: true,
+    data: {
+      summary: {
+        totalProducts: stockLevels.length,
+        lowStockProducts: lowStockProducts.length,
+        outOfStockProducts: outOfStockProducts.length,
+        totalStockValue,
+        lowStockThreshold: req.vendor.lowStockThreshold
+      },
+      lowStockProducts: lowStockProducts.slice(0, 10), // Top 10 low stock
+      outOfStockProducts: outOfStockProducts.slice(0, 10), // Top 10 out of stock
+      movementsSummary,
+      period: `${days} days`
+    }
+  });
+});
+
+// @desc    Get product stock history
+// @route   GET /api/vendors/stock/:productId/history
+// @access  Private (Vendor)
+export const getProductStockHistory = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const { productId } = req.params;
+  const { limit = 50 } = req.query;
+
+  // Verify product belongs to vendor
+  const product = await Product.findOne({ _id: productId, vendorId });
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found or does not belong to you');
+  }
+
+  // Get stock history
+  const history = await StockMovement.getStockHistory(productId, parseInt(limit));
+
+  res.json({
+    success: true,
+    data: {
+      product: {
+        _id: product._id,
+        name: product.name,
+        currentStock: product.stock
+      },
+      history
+    }
+  });
+});
+
+// @desc    Update vendor sales/stock settings
+// @route   PUT /api/vendors/settings
+// @access  Private (Vendor)
+export const updateVendorSettings = asyncHandler(async (req, res) => {
+  const vendorId = req.vendor._id;
+  const {
+    enableOfflineSales,
+    defaultPaymentMethods,
+    stockManagementEnabled,
+    lowStockThreshold,
+    autoStockDeduction,
+    businessType,
+    operatingHours,
+    notifications
+  } = req.body;
+
+  const vendor = await Vendor.findById(vendorId);
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
+  }
+
+  // Update settings
+  if (enableOfflineSales !== undefined) vendor.enableOfflineSales = enableOfflineSales;
+  if (defaultPaymentMethods) vendor.defaultPaymentMethods = defaultPaymentMethods;
+  if (stockManagementEnabled !== undefined) vendor.stockManagementEnabled = stockManagementEnabled;
+  if (lowStockThreshold !== undefined) vendor.lowStockThreshold = lowStockThreshold;
+  if (autoStockDeduction !== undefined) vendor.autoStockDeduction = autoStockDeduction;
+  if (businessType) vendor.businessType = businessType;
+  if (operatingHours) vendor.operatingHours = operatingHours;
+  if (notifications) vendor.notifications = { ...vendor.notifications, ...notifications };
+
+  await vendor.save();
+
+  res.json({
+    success: true,
+    message: 'Settings updated successfully',
+    data: {
+      enableOfflineSales: vendor.enableOfflineSales,
+      defaultPaymentMethods: vendor.defaultPaymentMethods,
+      stockManagementEnabled: vendor.stockManagementEnabled,
+      lowStockThreshold: vendor.lowStockThreshold,
+      autoStockDeduction: vendor.autoStockDeduction,
+      businessType: vendor.businessType,
+      operatingHours: vendor.operatingHours,
+      notifications: vendor.notifications
+    }
+  });
+});

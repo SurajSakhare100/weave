@@ -7,6 +7,8 @@ import Coupon from '../models/Coupon.js';
 import Vendor from '../models/Vendor.js';
 import User from '../models/User.js';
 import Order from '../models/Order.js';
+import VendorSales from '../models/VendorSales.js';
+import StockMovement from '../models/StockMovement.js';
 import mongoose from 'mongoose';
 
 // Get pending vendors for approval
@@ -998,3 +1000,616 @@ export const getCustomerOrdersById = asyncHandler(async (req, res) => {
     }
   });
 }); 
+
+// ==================== VENDOR SALES & STOCK MANAGEMENT (ADMIN) ====================
+
+// @desc    Get all vendor sales overview
+// @route   GET /api/admin/vendors/sales
+// @access  Private/Admin
+export const getVendorSalesOverview = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 20,
+    vendorId,
+    saleType,
+    startDate,
+    endDate,
+    sortBy = 'saleDate',
+    sortOrder = 'desc'
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+  
+  // Build filter
+  const filter = { status: 'completed' };
+  
+  if (vendorId) {
+    filter.vendorId = vendorId;
+  }
+  
+  if (saleType && saleType !== 'all') {
+    filter.saleType = saleType;
+  }
+  
+  if (startDate && endDate) {
+    filter.saleDate = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  // Build sort object
+  const sort = {};
+  sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+  // Get sales with vendor and product details
+  const sales = await VendorSales.find(filter)
+    .populate('vendorId', 'name businessName email city state')
+    .populate('productId', 'name price category images')
+    .sort(sort)
+    .skip(skip)
+    .limit(parseInt(limit));
+  console.log(sales)
+
+  const total = await VendorSales.countDocuments(filter);
+
+  // Get summary statistics
+  const summary = await VendorSales.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: '$saleType',
+        totalSales: { $sum: '$totalAmount' },
+        totalQuantity: { $sum: '$quantity' },
+        salesCount: { $sum: 1 },
+        avgSaleValue: { $avg: '$totalAmount' }
+      }
+    }
+  ]);
+
+  // Get top vendors by sales
+  const topVendors = await VendorSales.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: '$vendorId',
+        totalSales: { $sum: '$totalAmount' },
+        totalOrders: { $sum: 1 }
+      }
+    },
+    {
+      $lookup: {
+        from: 'vendors',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'vendor'
+      }
+    },
+    {
+      $unwind: '$vendor'
+    },
+    {
+      $project: {
+        vendorName: '$vendor.name',
+        businessName: '$vendor.businessName',
+        totalSales: 1,
+        totalOrders: 1
+      }
+    },
+    {
+      $sort: { totalSales: -1 }
+    },
+    {
+      $limit: 10
+    }
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      sales,
+      summary,
+      topVendors,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get vendor sales analytics
+// @route   GET /api/admin/vendors/:id/sales
+// @access  Private/Admin
+export const getVendorSalesDetails = asyncHandler(async (req, res) => {
+  const { id: vendorId } = req.params;
+  const { days = 30 } = req.query;
+
+  // Verify vendor exists
+  const vendor = await Vendor.findById(vendorId).select('name businessName email salesStats');
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
+  }
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - parseInt(days));
+
+  // Get sales summary
+  const salesSummary = await VendorSales.getSalesSummary(vendorId);
+  
+  // Get daily sales trend
+  const dailySales = await VendorSales.getDailySales(vendorId, parseInt(days));
+  
+  // Get recent sales
+  const recentSales = await VendorSales.find({
+    vendorId,
+    status: 'completed',
+    saleDate: { $gte: startDate }
+  })
+    .populate('productId', 'name price images')
+    .sort('-saleDate')
+    .limit(20);
+
+  // Get top products for this vendor
+  const topProducts = await VendorSales.aggregate([
+    {
+      $match: {
+        vendorId: new mongoose.Types.ObjectId(vendorId),
+        status: 'completed',
+        saleDate: { $gte: startDate }
+      }
+    },
+    {
+      $group: {
+        _id: '$productId',
+        totalQuantity: { $sum: '$quantity' },
+        totalRevenue: { $sum: '$totalAmount' },
+        salesCount: { $sum: 1 }
+      }
+    },
+    {
+      $lookup: {
+        from: 'products',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'product'
+      }
+    },
+    {
+      $unwind: '$product'
+    },
+    {
+      $project: {
+        productName: '$product.name',
+        totalQuantity: 1,
+        totalRevenue: 1,
+        salesCount: 1
+      }
+    },
+    {
+      $sort: { totalRevenue: -1 }
+    },
+    {
+      $limit: 10
+    }
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      vendor: {
+        _id: vendor._id,
+        name: vendor.name,
+        businessName: vendor.businessName,
+        email: vendor.email,
+        salesStats: vendor.salesStats
+      },
+      salesSummary,
+      dailySales,
+      recentSales,
+      topProducts,
+      period: `${days} days`
+    }
+  });
+});
+
+// @desc    Get vendor stock overview
+// @route   GET /api/admin/vendors/stock
+// @access  Private/Admin
+export const getVendorStockOverview = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 20,
+    vendorId,
+    lowStock = false,
+    outOfStock = false,
+    sortBy = 'stock',
+    sortOrder = 'asc'
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+  
+  // Build filter
+  const filter = {};
+  
+  if (vendorId) {
+    filter.vendorId = vendorId;
+  }
+  
+  if (lowStock === 'true') {
+    // We'll filter this after getting vendor info
+    filter.stock = { $gt: 0, $lte: 20 }; // Default threshold
+  }
+  
+  if (outOfStock === 'true') {
+    filter.stock = 0;
+  }
+
+  // Build sort object
+  const sort = {};
+  sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+  // Get products with vendor details
+  const products = await Product.find(filter)
+    .populate('vendorId', 'name businessName email lowStockThreshold')
+    .select('name stock price category images vendorId')
+    .sort(sort)
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const total = await Product.countDocuments(filter);
+
+  // Get stock summary by vendor
+  const stockSummary = await Product.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: '$vendorId',
+        totalProducts: { $sum: 1 },
+        totalStockValue: { $sum: { $multiply: ['$stock', '$price'] } },
+        lowStockCount: {
+          $sum: {
+            $cond: [
+              { $and: [{ $lte: ['$stock', 10] }, { $gt: ['$stock', 0] }] },
+              1,
+              0
+            ]
+          }
+        },
+        outOfStockCount: {
+          $sum: {
+            $cond: [{ $eq: ['$stock', 0] }, 1, 0]
+          }
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: 'vendors',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'vendor'
+      }
+    },
+    {
+      $unwind: '$vendor'
+    },
+    {
+      $project: {
+        vendorName: '$vendor.name',
+        businessName: '$vendor.businessName',
+        totalProducts: 1,
+        totalStockValue: 1,
+        lowStockCount: 1,
+        outOfStockCount: 1
+      }
+    },
+    {
+      $sort: { totalStockValue: -1 }
+    }
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      products,
+      stockSummary,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get vendor stock details
+// @route   GET /api/admin/vendors/:id/stock
+// @access  Private/Admin
+export const getVendorStockDetails = asyncHandler(async (req, res) => {
+  const { id: vendorId } = req.params;
+  const { days = 30 } = req.query;
+
+  // Verify vendor exists
+  const vendor = await Vendor.findById(vendorId).select('name businessName email stockStats lowStockThreshold');
+  if (!vendor) {
+    res.status(404);
+    throw new Error('Vendor not found');
+  }
+
+  // Get current stock levels
+  const stockLevels = await Product.find({ vendorId })
+    .select('name stock price category images')
+    .sort('stock');
+
+  // Get low stock products
+  const lowStockProducts = stockLevels.filter(product => 
+    product.stock <= vendor.lowStockThreshold && product.stock > 0
+  );
+
+  // Get out of stock products
+  const outOfStockProducts = stockLevels.filter(product => product.stock === 0);
+
+  // Get recent stock movements
+  const recentMovements = await StockMovement.find({ vendorId })
+    .populate('productId', 'name price images')
+    .populate('createdBy', 'name email')
+    .sort('-createdAt')
+    .limit(20);
+
+  // Get stock movements summary
+  const movementsSummary = await StockMovement.getVendorStockSummary(vendorId);
+
+  // Calculate total stock value
+  const totalStockValue = stockLevels.reduce((total, product) => 
+    total + (product.stock * product.price), 0
+  );
+
+  res.json({
+    success: true,
+    data: {
+      vendor: {
+        _id: vendor._id,
+        name: vendor.name,
+        businessName: vendor.businessName,
+        email: vendor.email,
+        stockStats: vendor.stockStats,
+        lowStockThreshold: vendor.lowStockThreshold
+      },
+      summary: {
+        totalProducts: stockLevels.length,
+        lowStockProducts: lowStockProducts.length,
+        outOfStockProducts: outOfStockProducts.length,
+        totalStockValue
+      },
+      lowStockProducts: lowStockProducts.slice(0, 10),
+      outOfStockProducts: outOfStockProducts.slice(0, 10),
+      recentMovements,
+      movementsSummary,
+      period: `${days} days`
+    }
+  });
+});
+
+// @desc    Get all stock movements (Admin)
+// @route   GET /api/admin/stock/movements
+// @access  Private/Admin
+export const getAllStockMovements = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 20,
+    vendorId,
+    productId,
+    movementType,
+    startDate,
+    endDate
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+
+  // Build filter
+  const filter = {};
+  
+  if (vendorId) {
+    filter.vendorId = vendorId;
+  }
+  
+  if (productId) {
+    filter.productId = productId;
+  }
+  
+  if (movementType) {
+    filter.movementType = movementType;
+  }
+  
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  // Get movements with vendor and product details
+  const movements = await StockMovement.find(filter)
+    .populate('vendorId', 'name businessName email')
+    .populate('productId', 'name price images category')
+    .populate('createdBy', 'name email')
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const total = await StockMovement.countDocuments(filter);
+
+  // Get summary statistics
+  const summary = await StockMovement.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: '$movementType',
+        totalQuantity: { $sum: { $abs: '$quantity' } },
+        totalValue: { $sum: '$totalCost' },
+        movementCount: { $sum: 1 }
+      }
+    }
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      movements,
+      summary,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get platform sales analytics
+// @route   GET /api/admin/analytics/sales
+// @access  Private/Admin
+export const getPlatformSalesAnalytics = asyncHandler(async (req, res) => {
+  const { days = 30 } = req.query;
+  
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - parseInt(days));
+
+  // Get overall sales summary
+  const overallSummary = await VendorSales.aggregate([
+    {
+      $match: {
+        status: 'completed',
+        saleDate: { $gte: startDate }
+      }
+    },
+    {
+      $group: {
+        _id: '$saleType',
+        totalSales: { $sum: '$totalAmount' },
+        totalQuantity: { $sum: '$quantity' },
+        salesCount: { $sum: 1 },
+        avgSaleValue: { $avg: '$totalAmount' }
+      }
+    }
+  ]);
+
+  // Get daily sales trend
+  const dailyTrend = await VendorSales.aggregate([
+    {
+      $match: {
+        status: 'completed',
+        saleDate: { $gte: startDate }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          date: { $dateToString: { format: '%Y-%m-%d', date: '$saleDate' } },
+          type: '$saleType'
+        },
+        totalSales: { $sum: '$totalAmount' },
+        salesCount: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { '_id.date': 1 }
+    }
+  ]);
+
+  // Get vendor performance
+  const vendorPerformance = await VendorSales.aggregate([
+    {
+      $match: {
+        status: 'completed',
+        saleDate: { $gte: startDate }
+      }
+    },
+    {
+      $group: {
+        _id: '$vendorId',
+        totalSales: { $sum: '$totalAmount' },
+        totalOrders: { $sum: 1 },
+        onlineSales: {
+          $sum: {
+            $cond: [{ $eq: ['$saleType', 'online'] }, '$totalAmount', 0]
+          }
+        },
+        offlineSales: {
+          $sum: {
+            $cond: [{ $eq: ['$saleType', 'offline'] }, '$totalAmount', 0]
+          }
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: 'vendors',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'vendor'
+      }
+    },
+    {
+      $unwind: '$vendor'
+    },
+    {
+      $project: {
+        vendorName: '$vendor.name',
+        businessName: '$vendor.businessName',
+        totalSales: 1,
+        totalOrders: 1,
+        onlineSales: 1,
+        offlineSales: 1,
+        avgOrderValue: { $divide: ['$totalSales', '$totalOrders'] }
+      }
+    },
+    {
+      $sort: { totalSales: -1 }
+    },
+    {
+      $limit: 10
+    }
+  ]);
+
+  // Calculate totals
+  let totalOnlineSales = 0;
+  let totalOfflineSales = 0;
+  let totalSalesCount = 0;
+
+  overallSummary.forEach(item => {
+    if (item._id === 'online') {
+      totalOnlineSales = item.totalSales;
+    } else if (item._id === 'offline') {
+      totalOfflineSales = item.totalSales;
+    }
+    totalSalesCount += item.salesCount;
+  });
+
+  const totalSales = totalOnlineSales + totalOfflineSales;
+
+  res.json({
+    success: true,
+    data: {
+      summary: {
+        totalSales,
+        totalOnlineSales,
+        totalOfflineSales,
+        totalSalesCount,
+        avgSaleValue: totalSalesCount > 0 ? totalSales / totalSalesCount : 0,
+        onlinePercentage: totalSales > 0 ? Math.round((totalOnlineSales / totalSales) * 100) : 0,
+        offlinePercentage: totalSales > 0 ? Math.round((totalOfflineSales / totalSales) * 100) : 0
+      },
+      overallSummary,
+      dailyTrend,
+      vendorPerformance,
+      period: `${days} days`
+    }
+  });
+});

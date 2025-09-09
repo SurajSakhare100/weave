@@ -17,7 +17,9 @@ import {
     Bell,
     Search,
     Users2,
-    UserSquare2
+    UserSquare2,
+    TrendingUp,
+    Boxes
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +39,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = "Admin Pane
         { href: '/admin/products', label: 'Products', icon: Package },
         { href: '/admin/categories', label: 'Categories', icon: Tags },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+        { href: '/admin/sales', label: 'Sales', icon: TrendingUp },
+        { href: '/admin/stock', label: 'Stock', icon: Boxes },
         { href: '/admin/vendors', label: 'Vendors', icon: Users2 },
         { href: '/admin/customer', label: 'Customers', icon: UserSquare2 },
     ];

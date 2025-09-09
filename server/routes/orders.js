@@ -16,6 +16,11 @@ import {
   getVendorOrderStats
 } from '../controllers/orderController.js';
 import {
+  recordOnlineSalesFromOrder,
+  updateOrderStatusAndRecordSales,
+  getOrderSalesBreakdown
+} from '../controllers/onlineSalesController.js';
+import {
   validateOrder,
   validateId,
   validatePagination
@@ -43,5 +48,10 @@ router.get('/myorders', protectUser, validatePagination, getMyOrders);
 router.get('/:id', protectUser, validateId, getOrderById);
 router.put('/:id/pay', protectUser, validateId, updateOrderToPaid);
 router.put('/:id/cancel', protectUser, validateId, cancelOrder);
+
+// Online sales management routes
+router.post('/:id/record-sales', protectAdmin, validateId, recordOnlineSalesFromOrder);
+router.put('/:id/status-with-sales', protectAdmin, validateId, updateOrderStatusAndRecordSales);
+router.get('/:id/sales', protectAdmin, validateId, getOrderSalesBreakdown);
 
 export default router; 

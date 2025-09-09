@@ -2,6 +2,10 @@ import asyncHandler from 'express-async-handler';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import Order from '../models/Order.js';
+import Product from '../models/Product.js';
+import Vendor from '../models/Vendor.js';
+import VendorSales from '../models/VendorSales.js';
+import StockMovement from '../models/StockMovement.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -104,9 +108,102 @@ const verifyRazorpayPayment = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
+    // Record online sales for each vendor
+    try {
+      // Check if sales already recorded for this order
+      const existingSales = await VendorSales.findOne({ orderId: updatedOrder._id });
+      
+      if (!existingSales) {
+        // Populate order with product details
+        const populatedOrder = await Order.findById(updatedOrder._id)
+          .populate('orderItems.productId')
+          .populate('user');
+        
+        // Process each item in the order
+        for (const item of populatedOrder.orderItems) {
+          const product = await Product.findById(item.productId);
+          if (!product) {
+            console.error(`Product not found: ${item.productId}`);
+            continue;
+          }
+          
+          const vendor = await Vendor.findById(product.vendorId);
+          if (!vendor) {
+            console.error(`Vendor not found for product: ${item.productId}`);
+            continue;
+          }
+          
+          // Calculate platform commission (5% of sale)
+          const platformCommissionRate = 0.05;
+          const saleAmount = item.price * item.quantity;
+          const platformCommission = saleAmount * platformCommissionRate;
+          const netAmount = saleAmount - platformCommission;
+          
+          // Create sales record for vendor
+          const sale = await VendorSales.create({
+            vendorId: product.vendorId,
+            productId: item.productId,
+            saleType: 'online',
+            quantity: item.quantity,
+            unitPrice: item.price,
+            totalAmount: saleAmount,
+            customerName: populatedOrder.shippingAddress?.name || populatedOrder.user?.firstName || 'Online Customer',
+            customerPhone: populatedOrder.shippingAddress?.phone || populatedOrder.user?.number,
+            customerEmail: populatedOrder.user?.email,
+            paymentMethod: 'razorpay',
+            discount: 0, // Order-level discounts handled separately
+            platformCommission,
+            netAmount,
+            orderId: populatedOrder._id,
+            status: 'completed',
+            saleDate: new Date(),
+            notes: `Razorpay Payment ID: ${razorpay_payment_id}`
+          });
+          
+          console.log(`Sales record created for vendor ${vendor.businessName}: ${sale._id}`);
+          
+          // Update product stock if vendor has auto-deduction enabled
+          if (vendor.autoStockDeduction) {
+            const previousStock = product.stock;
+            product.stock -= item.quantity;
+            await product.save();
+            
+            // Record stock movement
+            await StockMovement.create({
+              vendorId: product.vendorId,
+              productId: item.productId,
+              movementType: 'out',
+              quantity: -item.quantity,
+              previousStock,
+              newStock: product.stock,
+              referenceType: 'online_order',
+              referenceId: populatedOrder._id.toString(),
+              reason: 'Online sale via Razorpay',
+              notes: `Order #${populatedOrder._id}, Payment: ${razorpay_payment_id}`,
+              createdBy: populatedOrder.user._id,
+              createdByModel: 'User'
+            });
+            
+            console.log(`Stock updated for product ${product.name}: ${previousStock} -> ${product.stock}`);
+          }
+          
+          // Update vendor sales statistics
+          await vendor.updateSalesStats();
+        }
+        
+        console.log(`Online sales recorded successfully for order ${updatedOrder._id}`);
+      } else {
+        console.log(`Sales already recorded for order ${updatedOrder._id}`);
+      }
+    } catch (salesError) {
+      console.error('Error recording online sales:', salesError);
+      // Don't fail the payment verification if sales recording fails
+      // Sales can be recorded later via admin panel if needed
+    }
+
     res.json({
       success: true,
-      message: 'Payment verified and order updated',
+      message: 'Payment verified, order updated, and sales recorded',
       order: updatedOrder,
     });
   } else {

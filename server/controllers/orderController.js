@@ -5,7 +5,80 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
 import Coupon from '../models/Coupon.js';
+import VendorSales from '../models/VendorSales.js';
+import StockMovement from '../models/StockMovement.js';
 import userHelpers from '../helpers/userHelpers.js';
+
+// Helper function to record online sales from order
+const recordOnlineSalesFromOrder = async (order) => {
+  // Check if sales already recorded for this order
+  const existingSales = await VendorSales.findOne({ orderId: order._id });
+  if (existingSales) {
+    return; // Already recorded
+  }
+  
+  const populatedOrder = await Order.findById(order._id).populate('orderItems.productId user');
+  
+  // Process each item in the order
+  for (const item of populatedOrder.orderItems) {
+    const product = await Product.findById(item.productId);
+    if (!product) continue;
+    
+    const vendor = await Vendor.findById(product.vendorId);
+    if (!vendor) continue;
+    
+    // Calculate platform commission (e.g., 5% of sale)
+    const platformCommissionRate = 0.05; // 5%
+    const saleAmount = item.price * item.quantity;
+    const platformCommission = saleAmount * platformCommissionRate;
+    const netAmount = saleAmount - platformCommission;
+    
+    // Create sales record
+    await VendorSales.create({
+      vendorId: product.vendorId,
+      productId: item.productId,
+      saleType: 'online',
+      quantity: item.quantity,
+      unitPrice: item.price,
+      totalAmount: saleAmount,
+      customerName: populatedOrder.shippingAddress?.name || 'Online Customer',
+      customerPhone: populatedOrder.shippingAddress?.phone,
+      customerEmail: populatedOrder.user?.email,
+      paymentMethod: populatedOrder.paymentMethod || 'online_payment',
+      discount: 0, // Discounts handled at order level
+      platformCommission,
+      netAmount,
+      orderId: populatedOrder._id,
+      status: 'completed',
+      saleDate: populatedOrder.createdAt
+    });
+    
+    // Update product stock if vendor has auto-deduction enabled
+    if (vendor.autoStockDeduction) {
+      const previousStock = product.stock;
+      product.stock -= item.quantity;
+      await product.save();
+      
+      // Record stock movement
+      await StockMovement.create({
+        vendorId: product.vendorId,
+        productId: item.productId,
+        movementType: 'out',
+        quantity: -item.quantity,
+        previousStock,
+        newStock: product.stock,
+        referenceType: 'online_order',
+        referenceId: populatedOrder._id.toString(),
+        reason: 'Online sale',
+        createdBy: populatedOrder.user._id,
+        createdByModel: 'User'
+      });
+    }
+    
+    // Update vendor sales stats
+    await vendor.updateSalesStats();
+  }
+};
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -184,6 +257,14 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     };
 
     const updatedOrder = await order.save();
+
+    // Auto-record online sales when order is paid
+    try {
+      await recordOnlineSalesFromOrder(updatedOrder);
+    } catch (error) {
+      console.error('Error recording online sales:', error);
+      // Don't fail the payment if sales recording fails
+    }
 
     res.json({
       success: true,

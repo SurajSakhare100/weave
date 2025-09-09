@@ -8,12 +8,12 @@ export const adminApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
     credentials: 'include',
   }),
-  tagTypes: ['Category', 'Vendor', 'Product', 'ProductStats', 'Order', 'OrderStats', 'Dashboard', 'Coupon', 'Customer'],
+  tagTypes: ['Category', 'Vendor', 'Product', 'ProductStats', 'Order', 'OrderStats', 'Dashboard', 'Coupon', 'Customer', 'VendorSales', 'VendorStock', 'StockMovements', 'SalesAnalytics'],
   endpoints: (builder) => ({
     // ==================== DASHBOARD ENDPOINTS ====================
     getDashboardStats: builder.query({
       query: () => '/admin/dashboard-stats',
-      transformResponse: (response: any) => {
+      transformResponse: (response: any) => { 
         if (response.success && response.data) {
           return response.data;
         }
@@ -646,15 +646,64 @@ export const adminApi = createApi({
     }),
 
     // Delete a vendor
-    deleteVendor: builder.mutation<void, string>({
+    delete: builder.mutation<void, string>({
       query: (vendorId) => ({
         url: `/vendors/admin/${vendorId}`,
         method: 'DELETE'
       }),
       invalidatesTags: (result, error, vendorId) => [
         { type: 'Vendor', id: vendorId },
-        'Vendors'
+        'Vendor'
       ]
+    }),
+
+    // Sales and Stock Management
+    getVendorSalesOverview: builder.query({
+      query: (params) => ({
+        url: '/admin/vendors/sales',
+        params
+      }),
+      providesTags: ['VendorSales', 'Vendor']
+    }),
+
+    getVendorSalesDetails: builder.query({
+      query: ({ id, ...params }) => ({
+        url: `/admin/vendors/${id}/sales`,
+        params
+      }),
+      providesTags: (result, error, { id }) => [{ type: 'VendorSales', id }, 'Vendor']
+    }),
+
+    getVendorStockOverview: builder.query({
+      query: (params) => ({
+        url: '/admin/vendors/stock',
+        params
+      }),
+      providesTags: ['VendorStock', 'Vendor']
+    }),
+
+    getVendorStockDetails: builder.query({
+      query: ({ id, ...params }) => ({
+        url: `/admin/vendors/${id}/stock`,
+        params
+      }),
+      providesTags: (result, error, { id }) => [{ type: 'VendorStock', id }, 'Vendor']
+    }),
+
+    getAllStockMovements: builder.query({
+      query: (params) => ({
+        url: '/admin/stock/movements',
+        params
+      }),
+      providesTags: ['StockMovements', 'Vendor']
+    }),
+
+    getPlatformSalesAnalytics: builder.query({
+      query: (params) => ({
+        url: '/admin/analytics/sales',
+        params
+      }),
+      providesTags: ['SalesAnalytics', 'Vendor']
     }),
   }),
 });
@@ -725,4 +774,12 @@ export const {
   useGetCustomerAddressQuery,
   useGetCustomerOrdersByIdQuery,
   useGetCustomerOrdersQuery,
+
+  // Sales and Stock Management
+  useGetVendorSalesOverviewQuery,
+  useGetVendorSalesDetailsQuery,
+  useGetVendorStockOverviewQuery,
+  useGetVendorStockDetailsQuery,
+  useGetAllStockMovementsQuery,
+  useGetPlatformSalesAnalyticsQuery,
 } = adminApi; 

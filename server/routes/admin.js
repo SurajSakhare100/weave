@@ -29,7 +29,14 @@ import {
   deleteCustomer,
   updateCustomer,
   getCustomerOrders,
-  getCustomerOrdersById
+  getCustomerOrdersById,
+  // Sales and stock management
+  getVendorSalesOverview,
+  getVendorSalesDetails,
+  getVendorStockOverview,
+  getVendorStockDetails,
+  getAllStockMovements,
+  getPlatformSalesAnalytics
 } from '../controllers/adminController.js';
 import { protectAdmin } from '../middleware/auth.js';
 import { validatePagination } from '../middleware/validation.js';
@@ -94,5 +101,13 @@ router.get('/customers/orders/:orderId', getCustomerOrdersById);
 
 
 
+
+// Sales and stock management routes (Admin)
+router.get('/vendors/sales', validatePagination, getVendorSalesOverview);
+router.get('/vendors/:id/sales', getVendorSalesDetails);
+router.get('/vendors/stock', validatePagination, getVendorStockOverview);
+router.get('/vendors/:id/stock', getVendorStockDetails);
+router.get('/stock/movements', validatePagination, getAllStockMovements);
+router.get('/analytics/sales', getPlatformSalesAnalytics);
 
 export default router; 

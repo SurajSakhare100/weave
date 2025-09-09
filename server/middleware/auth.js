@@ -27,14 +27,12 @@ const verifyToken = asyncHandler(async (req, res, next) => {
       // Check if token has the required fields
       if (!decoded.id) {
         console.error('Token missing id field:', decoded);
-        res.status(401);
-        throw new Error('Invalid token structure - missing id');
+        return res.status(401).json({ message: 'Invalid token structure - missing id' });
       }
 
       if (!decoded.userType) {
         console.error('Token missing userType field:', decoded);
-        res.status(401);
-        throw new Error('Invalid token structure - missing userType');
+        return res.status(401).json({ message: 'Invalid token structure - missing userType' });
       }
       
       // Store decoded token info
@@ -47,12 +45,10 @@ const verifyToken = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       console.error('Token verification failed:', error.message);
-      res.status(401);
-      throw new Error('Not authorized, token failed');
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {
-    res.status(401);
-    throw new Error('Not authorized, no token');
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 });
 
@@ -63,28 +59,24 @@ const protectUser = asyncHandler(async (req, res, next) => {
       // Verify token is for user type
       if (req.tokenInfo.userType !== 'user') {
         console.error('Expected user token, got:', req.tokenInfo.userType);
-        res.status(403);
-        throw new Error('Access denied. User token required.');
+        return res.status(403).json({ message: 'Access denied. User token required.' });
       }
 
       const user = await User.findById(req.tokenInfo.id).select('-password');
       if (!user) {
         console.error('User not found for id:', req.tokenInfo.id);
-        res.status(401);
-        throw new Error('Not authorized, user not found');
+        return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
       if (!user.isActive) {
-        res.status(403);
-        throw new Error('Account is deactivated');
+        return res.status(403).json({ message: 'Account is deactivated' });
       }
 
       req.user = user;
       next();
     } catch (error) {
       console.error('User authentication failed:', error.message);
-      res.status(401);
-      throw new Error('User authentication failed');
+      return res.status(401).json({ message: 'User authentication failed' });
     }
   });
 });
@@ -96,15 +88,13 @@ const protectVendorWithStatus = asyncHandler(async (req, res, next) => {
       // Verify token is for vendor type
       if (req.tokenInfo.userType !== 'vendor') {
         console.error('Expected vendor token, got:', req.tokenInfo.userType);
-        res.status(403);
-        throw new Error('Access denied. Vendor token required.');
+        return res.status(403).json({ message: 'Access denied. Vendor token required.' });
       }
 
       const vendor = await Vendor.findById(req.tokenInfo.id).select('-password');
       if (!vendor) {
         console.error('Vendor not found for id:', req.tokenInfo.id);
-        res.status(401);
-        throw new Error('Not authorized, vendor not found');
+        return res.status(401).json({ message: 'Not authorized, vendor not found' });
       }
 
       // Always allow access but provide approval status
@@ -118,8 +108,7 @@ const protectVendorWithStatus = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       console.error('Vendor authentication failed:', error.message);
-      res.status(401);
-      throw new Error('Vendor authentication failed');
+      return res.status(401).json({ message: 'Vendor authentication failed' });
     }
   });
 });
@@ -131,28 +120,24 @@ const protectVendor = asyncHandler(async (req, res, next) => {
       // Verify token is for vendor type
       if (req.tokenInfo.userType !== 'vendor') {
         console.error('Expected vendor token, got:', req.tokenInfo.userType);
-        res.status(403);
-        throw new Error('Access denied. Vendor token required.');
+        return res.status(403).json({ message: 'Access denied. Vendor token required.' });
       }
 
       const vendor = await Vendor.findById(req.tokenInfo.id).select('-password');
       if (!vendor) {
         console.error('Vendor not found for id:', req.tokenInfo.id);
-        res.status(401);
-        throw new Error('Not authorized, vendor not found');
+        return res.status(401).json({ message: 'Not authorized, vendor not found' });
       }
 
       if (!vendor.adminApproved) {
-        res.status(403);
-        throw new Error('Vendor account not yet approved by admin');
+        return res.status(403).json({ message: 'Vendor account not yet approved by admin' });
       }
 
       req.vendor = vendor;
       next();
     } catch (error) {
       console.error('Vendor authentication failed:', error.message);
-      res.status(401);
-      throw new Error('Vendor authentication failed');
+      return res.status(401).json({ message: 'Vendor authentication failed' });
     }
   });
 });
@@ -164,28 +149,24 @@ const protectAdmin = asyncHandler(async (req, res, next) => {
       // Verify token is for admin type
       if (req.tokenInfo.userType !== 'admin') {
         console.error('Expected admin token, got:', req.tokenInfo.userType);
-        res.status(403);
-        throw new Error('Access denied. Admin token required.');
+        return res.status(403).json({ message: 'Access denied. Admin token required.' });
       }
 
       const admin = await Admin.findById(req.tokenInfo.id).select('-password');
       if (!admin) {
         console.error('Admin not found for id:', req.tokenInfo.id);
-        res.status(401);
-        throw new Error('Not authorized, admin not found');
+        return res.status(401).json({ message: 'Not authorized, admin not found' });
       }
 
       if (!admin.isActive) {
-        res.status(403);
-        throw new Error('Admin account is deactivated');
+        return res.status(403).json({ message: 'Admin account is deactivated' });
       }
 
       req.admin = admin;
       next();
     } catch (error) {
       console.error('Admin authentication failed:', error.message);
-      res.status(401);
-      throw new Error('Admin authentication failed');
+      return res.status(401).json({ message: 'Admin authentication failed' });
     }
   });
 });
@@ -247,8 +228,7 @@ const protectAny = asyncHandler(async (req, res, next) => {
         case 'user':
           const user = await User.findById(id).select('-password');
           if (!user || !user.isActive) {
-            res.status(401);
-            throw new Error('User not found or inactive');
+            return res.status(401).json({ message: 'User not found or inactive' });
           }
           req.user = user;
           break;
@@ -256,8 +236,7 @@ const protectAny = asyncHandler(async (req, res, next) => {
         case 'vendor':
           const vendor = await Vendor.findById(id).select('-password');
           if (!vendor || !vendor.accept) {
-            res.status(401);
-            throw new Error('Vendor not found or not approved');
+            return res.status(401).json({ message: 'Vendor not found or not approved' });
           }
           req.vendor = vendor;
           break;
@@ -265,21 +244,18 @@ const protectAny = asyncHandler(async (req, res, next) => {
         case 'admin':
           const admin = await Admin.findById(id).select('-password');
           if (!admin || !admin.isActive) {
-            res.status(401);
-            throw new Error('Admin not found or inactive');
+            return res.status(401).json({ message: 'Admin not found or inactive' });
           }
           req.admin = admin;
           break;
           
         default:
-          res.status(403);
-          throw new Error('Invalid user type');
+          return res.status(403).json({ message: 'Invalid user type' });
       }
       
       next();
     } catch (error) {
-      res.status(401);
-      throw new Error('Authentication failed');
+      return res.status(401).json({ message: 'Authentication failed' });
     }
   });
 });

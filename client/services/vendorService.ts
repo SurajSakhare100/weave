@@ -86,7 +86,7 @@ export async function getVendorProducts(params?: {
 }
 
 export async function createVendorProduct(productData: FormData) {
-  const res = await api.post('/vendors/products', productData, {
+  const res = await api.post('/admin/vendors/products', productData, {
     headers: { 
       'Content-Type': 'multipart/form-data' 
     }
@@ -255,4 +255,106 @@ export async function updateVendorOrder(orderId: string, orderData: any) {
 export async function updateOrderStatus(orderId: string, status: string) {
   const res = await api.put(`/vendors/orders/${orderId}/status`, { status });
   return res.data;
-} 
+}
+
+// ============================================================================
+// VENDOR SALES MANAGEMENT
+// ============================================================================
+
+export async function recordOfflineSale(saleData: {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  paymentMethod: string;
+  discount?: number;
+  notes?: string;
+  saleLocation?: string;
+  invoiceNumber?: string;
+}) {
+  const res = await api.post('/vendors/sales/offline', saleData);
+  return res.data;
+}
+
+export async function getVendorSales(params?: {
+  page?: number;
+  limit?: number;
+  saleType?: 'online' | 'offline' | 'all';
+  startDate?: string;
+  endDate?: string;
+  productId?: string;
+  status?: string;
+}) {
+  const res = await api.get('/vendors/sales', { params });
+  return res.data;
+}
+
+export async function getSalesAnalytics(params?: {
+  days?: number;
+}) {
+  const res = await api.get('/vendors/sales/analytics', { params });
+  return res.data;
+}
+
+// ============================================================================
+// VENDOR STOCK MANAGEMENT
+// ============================================================================
+
+export async function updateProductStock(productId: string, stockData: {
+  quantity: number;
+  movementType: 'in' | 'out' | 'adjustment' | 'return' | 'damage';
+  reason: string;
+  notes?: string;
+  unitCost?: number;
+  batchNumber?: string;
+  expiryDate?: string;
+}) {
+  const res = await api.put(`/vendors/stock/${productId}`, stockData);
+  return res.data;
+}
+
+export async function getStockMovements(params?: {
+  page?: number;
+  limit?: number;
+  productId?: string;
+  movementType?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const res = await api.get('/vendors/stock/movements', { params });
+  return res.data;
+}
+
+export async function getStockAnalytics(params?: {
+  days?: number;
+}) {
+  const res = await api.get('/vendors/stock/analytics', { params });
+  return res.data;
+}
+
+export async function getProductStockHistory(productId: string, params?: {
+  limit?: number;
+}) {
+  const res = await api.get(`/vendors/stock/${productId}/history`, { params });
+  return res.data;
+}
+
+// ============================================================================
+// VENDOR SETTINGS
+// ============================================================================
+
+export async function updateVendorSettings(settings: {
+  enableOfflineSales?: boolean;
+  defaultPaymentMethods?: string[];
+  stockManagementEnabled?: boolean;
+  lowStockThreshold?: number;
+  autoStockDeduction?: boolean;
+  businessType?: 'retail' | 'wholesale' | 'both';
+  operatingHours?: any;
+  notifications?: any;
+}) {
+  const res = await api.put('/vendors/settings', settings);
+  return res.data;
+}
