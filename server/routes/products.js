@@ -20,7 +20,8 @@ import {
   updateVendorReviewResponse,
   deleteVendorReviewResponse,
   getFrequentlyBoughtTogether,
-  getComparableProducts
+  getComparableProducts,
+  getAvailableColors
 } from '../controllers/productController.js';
 import {
   validateProduct,
@@ -38,6 +39,7 @@ const router = express.Router();
 router.get('/', validatePagination, validateSearch, validatePriceRange, getProducts);
 router.get('/search', validateSearch, validatePriceRange, validatePagination, searchProducts);
 router.get('/category/:categorySlug', validatePriceRange, validatePagination, getProductsByCategory);
+router.get('/colors', getAvailableColors); // Get available colors
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', validateId, getProductById);
 router.get('/:id/similar', validateId, getSimilarProducts);

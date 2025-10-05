@@ -47,7 +47,7 @@ const validateUserLogin = [
   handleValidationErrors
 ];
 
-// @desc    Product validation
+// @desc    Product validation - handles FormData fields
 // @route   POST /api/products
 // @access  Private/Vendor
 const validateProduct = [
@@ -56,9 +56,11 @@ const validateProduct = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Product name must be between 2 and 100 characters'),
   body('price')
+    .isNumeric()
     .isFloat({ min: 0 })
     .withMessage('Price must be a positive number'),
   body('mrp')
+    .isNumeric()
     .isFloat({ min: 0 })
     .withMessage('MRP must be a positive number'),
   body('category')
@@ -73,30 +75,89 @@ const validateProduct = [
     .optional()
     .isLength({ max: 200 })
     .withMessage('Short description cannot exceed 200 characters'),
+  body('stock')
+    .optional()
+    .isNumeric()
+    .isInt({ min: 0 })
+    .withMessage('Stock must be a non-negative integer'),
+  body('status')
+    .optional()
+    .isIn(['active', 'inactive', 'draft', 'scheduled'])
+    .withMessage('Status must be one of: active, inactive, draft, scheduled'),
+  body('sizes')
+    .optional()
+    .custom((value) => {
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed);
+        } catch {
+          return false;
+        }
+      }
+      return Array.isArray(value);
+    })
+    .withMessage('Sizes must be an array'),
   body('keyFeatures')
     .optional()
-    .isArray()
+    .custom((value) => {
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed);
+        } catch {
+          return false;
+        }
+      }
+      return Array.isArray(value);
+    })
     .withMessage('Key features must be an array'),
-  body('keyFeatures.*')
+  body('tags')
     .optional()
-    .isLength({ max: 100 })
-    .withMessage('Each key feature cannot exceed 100 characters'),
-  body('productDetails')
+    .custom((value) => {
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed);
+        } catch {
+          return false;
+        }
+      }
+      return Array.isArray(value);
+    })
+    .withMessage('Tags must be an array'),
+  body('colorVariants')
     .optional()
-    .isObject()
-    .withMessage('Product details must be an object'),
-  body('productDetails.weight')
-    .optional()
-    .isLength({ max: 50 })
-    .withMessage('Weight cannot exceed 50 characters'),
-  body('productDetails.dimensions')
-    .optional()
-    .isLength({ max: 50 })
-    .withMessage('Dimensions cannot exceed 50 characters'),
-  body('productDetails.capacity')
-    .optional()
-    .isLength({ max: 50 })
-    .withMessage('Capacity cannot exceed 50 characters'),
+    .custom((value) => {
+      if (!value) return true; // Allow empty/undefined
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (!Array.isArray(parsed)) return false;
+          // Validate each color variant structure
+          return parsed.every(variant => 
+            variant && 
+            typeof variant.colorName === 'string' &&
+            typeof variant.colorCode === 'string' &&
+            typeof variant.stock === 'number' &&
+            typeof variant.isActive === 'boolean'
+          );
+        } catch {
+          return false;
+        }
+      }
+      if (Array.isArray(value)) {
+        return value.every(variant => 
+          variant && 
+          typeof variant.colorName === 'string' &&
+          typeof variant.colorCode === 'string' &&
+          typeof variant.stock === 'number' &&
+          typeof variant.isActive === 'boolean'
+        );
+      }
+      return false;
+    })
+    .withMessage('Color variants must be a valid array of color variant objects'),
   body('productDetails.materials')
     .optional()
     .isLength({ max: 100 })

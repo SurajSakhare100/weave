@@ -16,8 +16,25 @@ interface Category {
 const SIZE_OPTIONS = [
   'XS', 'S', 'M', 'L', 'XL', 'XXL'
 ];
+
+// Predefined color options with hex codes
 const COLOR_OPTIONS = [
-  'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Green', hex: '#008000' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Pink', hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Brown', hex: '#8B4513' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Tan', hex: '#D2B48C' },
+  { name: 'Maroon', hex: '#800000' },
+  { name: 'Olive', hex: '#808000' }
 ];
 
 const MAX_IMAGES = 4;
@@ -48,14 +65,18 @@ export default function VendorEditProductPage() {
   const [salePrice, setSalePrice] = useState('');
   const [category, setCategory] = useState('');
   const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
-  // Add state for color-specific images
-  const [colorImages, setColorImages] = useState<{[color: string]: File[]}>({});
-  const [colorImagePreviews, setColorImagePreviews] = useState<{[color: string]: string[]}>({});
-  const [existingColorImages, setExistingColorImages] = useState<{[color: string]: {url: string; public_id: string}[]}>({});
+  // State for color variants with images and stock
+  const [colorImageMap, setColorImageMap] = useState<{
+    [color: string]: {
+      hex: string;
+      images: File[];
+      imageUrls?: string[];
+      stock: number;
+    }
+  }>({});
 
   useEffect(() => {
     api.get('/categories').then(res => {
@@ -90,16 +111,32 @@ export default function VendorEditProductPage() {
       setSalePrice(p.salePrice?.toString() || '');
       setCategory(p.categorySlug || '');
       setSizes(p.sizes || []);
-      setColors(p.colors || []);
       setTags(p.tags || []);
 
-      // Load color-specific images
-      if (p.colorImages) {
-        const colorImagesMap: {[color: string]: {url: string; public_id: string}[]} = {};
-        Object.entries(p.colorImages).forEach(([color, images]) => {
-          colorImagesMap[color] = images as {url: string; public_id: string}[];
+      // Load color variants
+      if (p.colorVariants && p.colorVariants.length > 0) {
+        const colorMap: {[color: string]: {hex: string; images: File[]; imageUrls?: string[]; stock: number}} = {};
+        p.colorVariants.forEach((variant: any) => {
+          colorMap[variant.colorName] = {
+            hex: variant.colorCode,
+            images: [],
+            imageUrls: variant.images?.map((img: any) => img.url) || [],
+            stock: variant.stock || 0
+          };
         });
-        setExistingColorImages(colorImagesMap);
+        setColorImageMap(colorMap);
+      } else if (p.colorImages) {
+        // Legacy color images support
+        const colorMap: {[color: string]: {hex: string; images: File[]; imageUrls?: string[]; stock: number}} = {};
+        Object.entries(p.colorImages).forEach(([color, images]) => {
+          colorMap[color] = {
+            hex: '#cccccc', // Default color for legacy
+            images: [],
+            imageUrls: (images as any[])?.map((img: any) => img.url) || [],
+            stock: 0
+          };
+        });
+        setColorImageMap(colorMap);
       }
     }).catch((err) => {
       if (err.response?.status === 404) {
@@ -172,14 +209,16 @@ export default function VendorEditProductPage() {
     setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // New method to handle color-specific image uploads
-  const handleColorImageChange = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle color-specific image uploads
+  const handleColorImageUpload = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
     // Validate number of images
-    const currentColorImages = colorImages[color] || [];
-    const currentExistingImages = existingColorImages[color] || [];
-    if (currentColorImages.length + currentExistingImages.length + files.length > MAX_IMAGES) {
+    const currentColorData = colorImageMap[color];
+    const currentImages = currentColorData?.images || [];
+    const currentImageUrls = currentColorData?.imageUrls || [];
+    
+    if (currentImages.length + currentImageUrls.length + files.length > MAX_IMAGES) {
       toast.error(`You can only upload a maximum of ${MAX_IMAGES} images for ${color}`);
       return;
     }
@@ -198,46 +237,55 @@ export default function VendorEditProductPage() {
       }
     });
 
-    setColorImages(prev => ({
+    setColorImageMap(prev => ({
       ...prev,
-      [color]: [...(prev[color] || []), ...validFiles]
-    }));
-    setColorImagePreviews(prev => ({
-      ...prev,
-      [color]: [...(prev[color] || []), ...validPreviews]
+      [color]: {
+        ...prev[color],
+        images: [...(prev[color]?.images || []), ...validFiles],
+        imageUrls: [...(prev[color]?.imageUrls || []), ...validPreviews]
+      }
     }));
     
     // Clear the input
     e.target.value = '';
   };
 
-  // New method to remove color-specific images
-  const removeColorImage = (color: string, idx: number, isExisting: boolean = false) => {
-    if (isExisting) {
-      // Remove from existing images
-      setExistingColorImages(prev => {
-        const newExistingColorImages = {...prev};
-        newExistingColorImages[color] = newExistingColorImages[color].filter((_, i) => i !== idx);
-        return newExistingColorImages;
-      });
-    } else {
-      // Remove from new images
-      setColorImages(prev => {
-        const newColorImages = {...prev};
-        newColorImages[color] = newColorImages[color].filter((_, i) => i !== idx);
-        return newColorImages;
-      });
-      setColorImagePreviews(prev => {
-        const newColorImagePreviews = {...prev};
-        const preview = newColorImagePreviews[color][idx];
-        newColorImagePreviews[color] = newColorImagePreviews[color].filter((_, i) => i !== idx);
-        
-        // Revoke the URL to prevent memory leaks
-        URL.revokeObjectURL(preview);
-        
-        return newColorImagePreviews;
-      });
-    }
+  // Remove color image
+  const removeColorImage = (color: string, index: number) => {
+    setColorImageMap(prev => {
+      const colorData = {...prev[color]};
+      
+      // Revoke object URL if exists
+      if (colorData.imageUrls?.[index]) {
+        URL.revokeObjectURL(colorData.imageUrls[index]);
+      }
+
+      // Remove image
+      colorData.images.splice(index, 1);
+      colorData.imageUrls?.splice(index, 1);
+
+      return {
+        ...prev,
+        [color]: colorData
+      };
+    });
+  };
+
+  // Remove entire color section
+  const removeColorSection = (color: string) => {
+    setColorImageMap(prev => {
+      const newMap = {...prev};
+      
+      // Revoke all preview URLs
+      if (newMap[color]?.imageUrls) {
+        newMap[color].imageUrls.forEach(url => URL.revokeObjectURL(url));
+      }
+      
+      // Remove color
+      delete newMap[color];
+      
+      return newMap;
+    });
   };
 
   const handleFeatureChange = (idx: number, value: string) => {
@@ -248,34 +296,26 @@ export default function VendorEditProductPage() {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
 
-  // Modify handleColorToggle to reset color-specific images
-  const handleColorToggle = (color: string) => {
-    setColors(prev => {
-      const newColors = prev.includes(color) 
-        ? prev.filter(c => c !== color) 
-        : [...prev, color];
-      
-      // If color is removed, remove its images
-      if (prev.includes(color)) {
-        setColorImages(prev => {
-          const newColorImages = {...prev};
-          delete newColorImages[color];
-          return newColorImages;
-        });
-        setColorImagePreviews(prev => {
-          const newColorImagePreviews = {...prev};
-          delete newColorImagePreviews[color];
-          return newColorImagePreviews;
-        });
-        setExistingColorImages(prev => {
-          const newExistingColorImages = {...prev};
-          delete newExistingColorImages[color];
-          return newExistingColorImages;
-        });
-      }
-      
-      return newColors;
-    });
+  // Handle color selection from predefined options
+  const handleColorSelect = (colorOption: { name: string; hex: string }) => {
+    if (colorImageMap[colorOption.name]) {
+      // Remove color if already selected
+      setColorImageMap(prev => {
+        const newColorImages = {...prev};
+        delete newColorImages[colorOption.name];
+        return newColorImages;
+      });
+    } else {
+      // Add new color
+      setColorImageMap(prev => ({
+        ...prev,
+        [colorOption.name]: {
+          hex: colorOption.hex,
+          images: [],
+          stock: 0
+        }
+      }));
+    }
   };
 
   const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -377,23 +417,27 @@ export default function VendorEditProductPage() {
       const nonEmptyFeatures = keyFeatures.filter(f => f.trim());
       nonEmptyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f.trim()));
 
-      // Add sizes and colors
+      // Add sizes and tags
       sizes.forEach(size => formData.append('sizes', size));
-      colors.forEach(color => {
-        // Add existing color images to be kept
-        const existingColorImagesForColor = existingColorImages[color] || [];
-        existingColorImagesForColor.forEach((img, index) => {
-          formData.append(`existingColorImages[${color}][${index}][url]`, img.url);
-          formData.append(`existingColorImages[${color}][${index}][public_id]`, img.public_id);
-        });
+      tags.forEach(tag => formData.append('tags', tag));
 
-        // Add new color-specific images
-        const colorFiles = colorImages[color] || [];
-        colorFiles.forEach((file, index) => {
-          formData.append(`colorImages[${color}][${index}]`, file);
+      // Add color variants with images and stock
+      const colorVariants = Object.entries(colorImageMap).map(([colorName, colorData]) => ({
+        colorName,
+        colorCode: colorData.hex,
+        stock: colorData.stock,
+        isActive: true
+      }));
+
+      formData.append('colorVariants', JSON.stringify(colorVariants));
+
+      // Add color-specific images
+      Object.entries(colorImageMap).forEach(([color, colorData]) => {
+        colorData.images.forEach((file, index) => {
+          const fieldName = `colorVariantImages[${color}][${index}]`;
+          formData.append(fieldName, file);
         });
       });
-      tags.forEach(tag => formData.append('tags', tag));
       
       // Add existing images and new images
       formData.append('existingImages', JSON.stringify(existingImages));
@@ -715,17 +759,26 @@ export default function VendorEditProductPage() {
                 <label className="block font-medium mb-1 flex items-center gap-1">
                   Colors <Info className="h-4 w-4 text-gray-400" />
                 </label>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                   {COLOR_OPTIONS.map(color => (
-                    <label key={color} className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={colors.includes(color)} 
-                        onChange={() => handleColorToggle(color)} 
-                        className="form-checkbox h-5 w-5 text-[#5A9BD8]" 
+                    <button
+                      key={color.name}
+                      type="button"
+                      onClick={() => handleColorSelect(color)}
+                      className={`
+                        flex flex-col items-center p-2 rounded-lg border-2 transition-all
+                        ${colorImageMap[color.name]
+                          ? 'border-[#5A9BD8] bg-[#5A9BD8]/10'
+                          : 'border-gray-200 hover:border-gray-300'
+                        }
+                      `}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full border border-gray-300 mb-1"
+                        style={{ backgroundColor: color.hex }}
                       />
-                      {color}
-                    </label>
+                      <span className="text-xs text-center">{color.name}</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -761,63 +814,119 @@ export default function VendorEditProductPage() {
               </div>
             </section>
 
-            {/* Color-Specific Image Upload Sections */}
-            {colors.map(color => (
-              <div key={color} className="mb-4">
-                <label className="block font-medium mb-2">Images for {color} Color</label>
-                <div className="grid grid-cols-4 gap-4">
-                  {/* Render existing color images */}
-                  {(existingColorImages[color] || []).map((img, idx) => (
-                    <div key={`existing-${idx}`} className="relative">
-                      <img
-                        src={img.url}
-                        alt={`${color} color existing image ${idx + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                      />
+            {/* Color Variants Section */}
+            {Object.keys(colorImageMap).length > 0 && (
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Color Variants</h2>
+                
+                {Object.entries(colorImageMap).map(([color, colorData]) => (
+                  <div key={color} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    {/* Color header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-full border border-gray-300"
+                          style={{ backgroundColor: colorData.hex }}
+                        />
+                        <h3 className="text-lg font-medium capitalize">{color} Variant</h3>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeColorImage(color, idx, true)}
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
+                        onClick={() => removeColorSection(color)}
+                        className="text-red-500 hover:text-red-700 p-1"
                       >
-                        X
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
-                  ))}
 
-                  {/* Render new color images */}
-                  {(colorImages[color] || []).map((file, idx) => (
-                    <div key={`new-${idx}`} className="relative">
-                      <img
-                        src={colorImagePreviews[color]?.[idx]}
-                        alt={`${color} color preview ${idx + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeColorImage(color, idx)}
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
-                      >
-                        X
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Add image button */}
-                  {((colorImagePreviews[color] || []).length + (existingColorImages[color] || []).length) < MAX_IMAGES && (
-                    <label className="border-2 border-dashed border-gray-300 flex items-center justify-center h-24 rounded cursor-pointer">
+                    {/* Stock input */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">Stock for {color} variant:</label>
                       <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleColorImageChange(color, e)}
+                        type="number"
+                        min="0"
+                        value={colorData.stock}
+                        onChange={(e) => setColorImageMap(prev => ({
+                          ...prev,
+                          [color]: {
+                            ...prev[color],
+                            stock: parseInt(e.target.value) || 0
+                          }
+                        }))}
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
+                        placeholder="0"
                       />
-                      <Upload className="text-gray-400" />
-                    </label>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </div>
+
+                    {/* Image upload */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Images for {color} variant:</label>
+                      <div className="grid grid-cols-4 gap-4">
+                        {/* Existing images */}
+                        {colorData.imageUrls?.map((imageUrl, index) => (
+                          <div key={`existing-${index}`} className="relative group">
+                            <img 
+                              src={imageUrl} 
+                              alt={`${color} variant ${index + 1}`} 
+                              className="w-full h-24 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeColorImage(color, index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* New images */}
+                        {colorData.images.map((imageUrl, index) => (
+                          <div key={`new-${index}`} className="relative group">
+                            <img 
+                              src={URL.createObjectURL(imageUrl)} 
+                              alt={`${color} variant ${index + 1}`} 
+                              className="w-full h-24 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeColorImage(color, index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add image button */}
+                        {(colorData.images.length + (colorData.imageUrls?.length || 0)) < MAX_IMAGES && (
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center h-24 cursor-pointer hover:border-[#5A9BD8] transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              id={`color-image-upload-${color}`}
+                              onChange={(e) => handleColorImageUpload(color, e)}
+                            />
+                            <label
+                              htmlFor={`color-image-upload-${color}`}
+                              className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
+                            >
+                              <Upload className="text-gray-400 mb-1" />
+                              <span className="text-xs text-gray-500 text-center px-2">
+                                Add Images<br />
+                                Max {MAX_IMAGES - (colorData.images.length + (colorData.imageUrls?.length || 0))} more
+                              </span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
 
             {error && <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</div>}
             {success && <div className="text-green-600 font-medium bg-green-50 p-3 rounded-lg">Product updated successfully! Redirecting...</div>}

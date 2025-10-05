@@ -7,9 +7,6 @@ import api from '@/services/api';
 import { Upload, Info, X, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Label } from '@/components/ui/label';
-import { ColorPickerModal } from '@/components/ui/color-picker';
-import { SimpleColorPicker } from '@/components/ui/simple-color-picker';
 
 interface Category {
   _id: string;
@@ -20,8 +17,25 @@ interface Category {
 const SIZE_OPTIONS = [
   'XS', 'S', 'M', 'L', 'XL', 'XXL'
 ];
+
+// Predefined color options with hex codes
 const COLOR_OPTIONS = [
-  'Black', 'White', 'Beige', 'Tan', 'Brown', 'Grey'
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Green', hex: '#008000' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Pink', hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Brown', hex: '#8B4513' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Tan', hex: '#D2B48C' },
+  { name: 'Maroon', hex: '#800000' },
+  { name: 'Olive', hex: '#808000' }
 ];
 
 const MAX_IMAGES = 4;
@@ -49,7 +63,6 @@ export default function VendorAddProductPage() {
   const [salePrice, setSalePrice] = useState('');
   const [category, setCategory] = useState('');
   const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
@@ -59,6 +72,7 @@ export default function VendorAddProductPage() {
       hex: string;
       images: File[];
       imageUrls?: string[];
+      stock: number;
     }
   }>({});
 
@@ -66,12 +80,6 @@ export default function VendorAddProductPage() {
   const [imageUploadProgress, setImageUploadProgress] = useState<{[color: string]: number[]}>({});
   const [isUploading, setIsUploading] = useState<{[color: string]: boolean}>({});
 
-  // State for color picker modal
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [currentColorImageUpload, setCurrentColorImageUpload] = useState<{
-    color: string | null;
-    type: 'add' | 'replace';
-  }>({ color: null, type: 'add' });
 
   useEffect(() => {
     // Load categories
@@ -127,9 +135,18 @@ export default function VendorAddProductPage() {
   const handleMainImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Reset drag styling
+    e.currentTarget.classList.remove('border-[#5A9BD8]', 'bg-blue-50');
 
     const files = Array.from(e.dataTransfer.files);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      toast.error('Please drop only image files');
+      return;
+    }
+    
     handleMainImageUpload(imageFiles);
   };
 
@@ -194,61 +211,28 @@ export default function VendorAddProductPage() {
     setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   };
 
-  // Modify handleColorToggle to reset color-specific images
-  const handleColorToggle = (color: string) => {
-    setColors(prev => {
-      const newColors = prev.includes(color) 
-        ? prev.filter(c => c !== color) 
-        : [...prev, color];
-      
-      // If color is removed, remove its images
-      if (prev.includes(color)) {
-        setColorImageMap(prev => {
-          const newColorImages = {...prev};
-          delete newColorImages[color];
-          return newColorImages;
-        });
-      }
-      
-      return newColors;
-    });
-  };
-
-  // Open color picker for adding new color
-  const openColorPicker = () => {
-    setCurrentColorImageUpload({ color: null, type: 'add' });
-    setIsColorPickerOpen(true);
-  };
-
-  // Handle color selection
-  const handleColorSelect = (color: { name: string; hex: string }) => {
-    // Prevent duplicate colors
-    if (colorImageMap[color.name]) {
-      toast.error(`Color ${color.name} is already added`);
-      return;
-    }
-
-    // Close color picker
-    setIsColorPickerOpen(false);
-
-    // If adding new color, prepare for image upload
-    if (currentColorImageUpload.type === 'add') {
+  // Handle color selection from predefined options
+  const handleColorSelect = (colorOption: { name: string; hex: string }) => {
+    if (colorImageMap[colorOption.name]) {
+      // Remove color if already selected
+      setColorImageMap(prev => {
+        const newColorImages = {...prev};
+        delete newColorImages[colorOption.name];
+        return newColorImages;
+      });
+    } else {
+      // Add new color
       setColorImageMap(prev => ({
         ...prev,
-        [color.name]: {
-          hex: color.hex,
-          images: []
+        [colorOption.name]: {
+          hex: colorOption.hex,
+          images: [],
+          stock: 0
         }
       }));
-      
-      // Trigger file input for new color
-      setCurrentColorImageUpload({ color: color.name, type: 'add' });
-      
-      // Simulate click on hidden file input
-      const fileInput = document.getElementById(`color-image-upload-${color.name}`) as HTMLInputElement;
-      fileInput?.click();
     }
   };
+
 
   // Image upload handler
   const handleImageUpload = async (color: string, files: File[]) => {
@@ -325,6 +309,14 @@ export default function VendorAddProductPage() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    e.currentTarget.classList.add('border-[#5A9BD8]', 'bg-blue-50');
+  };
+
+  // Handle drag leave
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('border-[#5A9BD8]', 'bg-blue-50');
   };
 
   // Remove image from a color
@@ -417,10 +409,16 @@ export default function VendorAddProductPage() {
       errors.category = 'Category is required';
     }
 
-    if (images.length === 0) {
-      errors.images = 'At least one image is required';
-    } else if (images.length > MAX_IMAGES) {
-      errors.images = `Maximum ${MAX_IMAGES} images allowed`;
+    // Validate color variants have images
+    const hasColorImages = Object.values(colorImageMap).some(colorData => colorData.images.length > 0);
+    if (!hasColorImages) {
+      errors.colorImages = 'At least one color variant must have images';
+    }
+
+    // Validate each selected color has at least one image
+    const colorsWithoutImages = Object.entries(colorImageMap).filter(([color, colorData]) => colorData.images.length === 0);
+    if (colorsWithoutImages.length > 0) {
+      errors.colorImages = `The following colors need at least one image: ${colorsWithoutImages.map(([color]) => color).join(', ')}`;
     }
 
     if (sizes.length === 0) {
@@ -443,10 +441,44 @@ export default function VendorAddProductPage() {
       // Add basic product details
       formData.append('name', name);
       formData.append('description', description);
+      formData.append('srtDescription', additionalDetails); // Fixed: model expects srtDescription
       formData.append('category', category);
-      formData.append('price', price);
-      formData.append('mrp', mrp);
-      // Add other necessary fields...
+      formData.append('price', Number(price).toString()); // Ensure number
+      formData.append('mrp', Number(mrp).toString()); // Ensure number
+      formData.append('stock', '0'); // Added: required field in model
+      formData.append('status', 'active'); // Added: required field in model
+      formData.append('weight', productDetails.weight);
+      formData.append('dimensions', productDetails.dimensions);
+      formData.append('capacity', productDetails.capacity);
+      formData.append('materials', productDetails.materials);
+      formData.append('keyFeatures', JSON.stringify(keyFeatures.filter(f => f.trim())));
+      formData.append('sizes', JSON.stringify(sizes));
+      formData.append('tags', JSON.stringify(tags));
+      formData.append('offers', offers.toString());
+      if (offers && salePrice) {
+        formData.append('salePrice', Number(salePrice).toString()); // Ensure number
+      }
+
+      // No main product images - only color-specific images
+
+      // Add color variants with images and stock
+      const colorVariants = Object.entries(colorImageMap).map(([colorName, colorData]) => ({
+        colorName,
+        colorCode: colorData.hex,
+        stock: Number(colorData.stock), // Convert string to number
+        isActive: true
+      }));
+
+      console.log('Color variants before stringify:', colorVariants);
+      formData.append('colorVariants', JSON.stringify(colorVariants));
+
+      // Add color-specific images
+      Object.entries(colorImageMap).forEach(([color, colorData]) => {
+        colorData.images.forEach((file, index) => {
+          const fieldName = `colorVariantImages[${color}][${index}]`;
+          formData.append(fieldName, file);
+        });
+      });
 
       // Debug: Log FormData contents
       console.log('FormData contents:');
@@ -458,33 +490,13 @@ export default function VendorAddProductPage() {
         }
       }
 
-      // Add main product images
-      images.forEach((file, index) => {
-        formData.append('images', file);
-        console.log(`Added main image ${index}: ${file.name}`);
-      });
-
-      // Add color-specific images
-      Object.entries(colorImageMap).forEach(([color, colorData]) => {
-        // Add color
-        formData.append('colors', color);
-        console.log(`Added color: ${color}`);
-
-        // Add color-specific images
-        colorData.images.forEach((file, index) => {
-          const fieldName = `colorImages[${color}]`;
-          formData.append(fieldName, file);
-          console.log(`Added ${fieldName}[${index}]: ${file.name}`);
-        });
-      });
-
       // Submit product
       console.log('Submitting product with FormData...');
       const response = await addVendorProduct(formData);
       console.log('Product submission successful:', response);
       
       toast.success('Product added successfully');
-      router.push('/vendor/products');
+      router.push('/admin/products');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const errorMessage = error?.response?.data?.message || 'Failed to add product';
@@ -582,63 +594,9 @@ export default function VendorAddProductPage() {
               </div>
             </section>
 
-            {/* Images & Category */}
+            {/* Category */}
             <section>
-              <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Images & Category</h2>
-              <div className="mb-4">
-                <label className="block font-medium mb-1 flex items-center gap-1">
-                  Product images * <Info className="h-4 w-4 text-gray-400" />
-                </label>
-                <div
-                  className={`bg-[#f4f8fb] border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center ${fieldErrors.images ? 'border-red-500' : 'border-gray-200'} hover:border-[#5A9BD8] transition-colors`}
-                  onDrop={images.length < MAX_IMAGES ? handleMainImageDrop : undefined}
-                  onDragOver={images.length < MAX_IMAGES ? handleDragOver : undefined}
-                >
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    multiple 
-                    onChange={handleImageChange} 
-                    className="hidden" 
-                    id="product-images" 
-                    disabled={images.length >= MAX_IMAGES}
-                  />
-                  <label htmlFor="product-images" className={`cursor-pointer flex flex-col items-center ${images.length >= MAX_IMAGES ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <Upload className="h-8 w-8 text-[#5A9BD8] mb-2" />
-                    <span className="text-[#5A9BD8] font-medium">
-                      {images.length >= MAX_IMAGES ? 'Maximum images reached' : 'Click or drop images'}
-                    </span>
-                                      <span className="text-xs text-gray-500 mt-1 text-center">
-                    {images.length}/{MAX_IMAGES} images uploaded<br />
-                    Supported: JPEG, PNG, WebP, GIF • Max 5MB each
-                    </span>
-                  </label>
-                  
-                  {images.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-4 w-full">
-                      {imagePreviews.map((src, idx) => (
-                        <div key={idx} className="relative group">
-                          <Image src={src} alt={`Product preview ${idx + 1}`} width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
-                          <button 
-                            type="button" 
-                            onClick={() => removeImage(idx)} 
-                            className="absolute -top-2 -right-2 bg-white rounded-full shadow p-1 text-gray-500 hover:text-red-500 transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                          {idx === 0 && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-xs text-center py-1 rounded-b-lg">
-                              Primary
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {fieldErrors.images && <div className="text-red-600 text-sm mt-2">{fieldErrors.images}</div>}
-                </div>
-              </div>
+              <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Category</h2>
               
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">
@@ -757,22 +715,142 @@ export default function VendorAddProductPage() {
                 <label className="block font-medium mb-1 flex items-center gap-1">
                   Colors <Info className="h-4 w-4 text-gray-400" />
                 </label>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                   {COLOR_OPTIONS.map(color => (
-                    <label key={color} className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={colors.includes(color)} 
-                        onChange={() => handleColorToggle(color)} 
-                        className="form-checkbox h-5 w-5 text-[#5A9BD8]" 
+                    <button
+                      key={color.name}
+                      type="button"
+                      onClick={() => handleColorSelect(color)}
+                      className={`
+                        flex flex-col items-center p-2 rounded-lg border-2 transition-all
+                        ${colorImageMap[color.name]
+                          ? 'border-[#5A9BD8] bg-[#5A9BD8]/10'
+                          : 'border-gray-200 hover:border-gray-300'
+                        }
+                      `}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full border border-gray-300 mb-1"
+                        style={{ backgroundColor: color.hex }}
                       />
-                      {color}
-                    </label>
+                      <span className="text-xs text-center">{color.name}</span>
+                    </button>
                   ))}
                 </div>
               </div>
               
-              <div className="mb-4">
+              
+            </section>
+
+            {/* Color Variants Section */}
+            {Object.keys(colorImageMap).length > 0 && (
+              <section>
+                <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Color Variants</h2>
+                
+                {Object.entries(colorImageMap).map(([color, colorData]) => (
+                  <div key={color} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    {/* Color header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-full border border-gray-300"
+                          style={{ backgroundColor: colorData.hex }}
+                        />
+                        <h3 className="text-lg font-medium capitalize">{color} Variant</h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeColorSection(color)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    {/* Stock input */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">Stock for {color} variant:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={colorData.stock}
+                        onChange={(e) => setColorImageMap(prev => ({
+                          ...prev,
+                          [color]: {
+                            ...prev[color],
+                            stock: parseInt(e.target.value) || 0
+                          }
+                        }))}
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
+                        placeholder="0"
+                      />
+                    </div>
+
+                    {/* Image upload */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Images for {color} variant:</label>
+                      <div className="grid grid-cols-4 gap-4">
+                        {/* Existing images */}
+                        {colorData.images.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={URL.createObjectURL(imageUrl)} 
+                              alt={`${color} variant ${index + 1}`} 
+                              className="w-full h-24 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeColorImage(color, index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add image button */}
+                        {colorData.images.length < 4 && (
+                          <div
+                            className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center h-24 cursor-pointer hover:border-[#5A9BD8] transition-colors"
+                            onDrop={(e) => handleColorImageDrop(color, e)}
+                            onDragOver={handleDragOver}
+                          >
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              id={`color-image-upload-${color}`}
+                              onChange={(e) => handleColorImageUpload(color, e)}
+                            />
+                            <label
+                              htmlFor={`color-image-upload-${color}`}
+                              className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
+                            >
+                              <Upload className="text-gray-400 mb-1" />
+                              <span className="text-xs text-gray-500 text-center px-2">
+                                Add Images<br />
+                                Max 4 per color ({colorData.images.length}/4)
+                              </span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {fieldErrors.colorImages && (
+              <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg mb-4">
+                {fieldErrors.colorImages}
+              </div>
+            )}
+
+            {error && <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</div>}
+            {success && <div className="text-green-600 font-medium bg-green-50 p-3 rounded-lg">Product added successfully! Redirecting...</div>}
+            <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">
                   Tags <Info className="h-4 w-4 text-gray-400" />
                 </label>
@@ -801,143 +879,6 @@ export default function VendorAddProductPage() {
                 />
                 <div className="text-xs text-gray-400 mt-1">{tags.length}/10 tags</div>
               </div>
-            </section>
-
-            {/* Render color-specific image upload sections */}
-            {colors.map(color => (
-              <div key={color} className="mb-4">
-                <Label className="block mb-2">Images for {color} Color</Label>
-                <div className="grid grid-cols-4 gap-4">
-                  {(colorImageMap[color]?.images || []).map((preview, idx) => (
-                    <div key={idx} className="relative">
-                      <img 
-                        src={URL.createObjectURL(preview)} 
-                        alt={`${color} color preview ${idx + 1}`} 
-                        className="w-full h-24 object-cover rounded"
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => removeColorImage(color, idx)}
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
-                      >
-                        X
-                      </button>
-                    </div>
-                  ))}
-                  {(colorImageMap[color]?.images || []).length < MAX_IMAGES && (
-                    <label className="border-2 border-dashed border-gray-300 flex items-center justify-center h-24 rounded cursor-pointer">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        multiple 
-                        className="hidden"
-                        id={`color-image-upload-${color}`}
-                        onChange={(e) => handleColorImageUpload(color, e)}
-                      />
-                      <Upload className="text-gray-400" />
-                    </label>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Color-specific image upload section */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Color-Specific Images</h3>
-              
-              {/* Add color button */}
-              <button 
-                type="button"
-                onClick={openColorPicker}
-                className="mb-4 flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition"
-              >
-                <Plus className="mr-2 h-5 w-5 text-gray-400" />
-                <span>Add Color Images</span>
-              </button>
-
-              {/* Color-specific image sections */}
-              {Object.entries(colorImageMap).map(([color, colorData]) => (
-                <div 
-                  key={color} 
-                  className="mb-6 p-4 border rounded-lg relative"
-                >
-                  {/* Remove color section button */}
-                  <button
-                    type="button"
-                    onClick={() => removeColorSection(color)}
-                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-
-                  {/* Color display */}
-                  <h4 className="text-md font-medium mb-3 flex items-center">
-                    <div 
-                      className="w-6 h-6 rounded-full mr-2 border" 
-                      style={{ 
-                        backgroundColor: colorData.hex || color.toLowerCase(),
-                        filter: ['white', 'beige', 'tan', 'yellow'].includes(color.toLowerCase()) 
-                          ? 'brightness(0.9)' 
-                          : 'none' 
-                      }}
-                    />
-                    {color} Color Images
-                  </h4>
-
-                  {/* Image upload grid */}
-                  <div className="grid grid-cols-4 gap-4">
-                    {/* Existing images */}
-                    {colorData.images.map((imageUrl, index) => (
-                      <div key={index} className="relative group">
-                        <img 
-                          src={URL.createObjectURL(imageUrl)} 
-                          alt={`${color} color image ${index + 1}`} 
-                          className="w-full h-24 object-cover rounded"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeColorImage(color, index)}
-                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          X
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Add image button */}
-                    {colorData.images.length < MAX_IMAGES && (
-                      <div
-                        className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center h-24 cursor-pointer hover:border-primary transition relative group"
-                        onDrop={(e) => handleColorImageDrop(color, e)}
-                        onDragOver={handleDragOver}
-                      >
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          id={`color-image-upload-${color}`}
-                          onChange={(e) => handleColorImageUpload(color, e)}
-                        />
-                        <label
-                          htmlFor={`color-image-upload-${color}`}
-                          className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
-                        >
-                          <Plus className="text-gray-400 group-hover:text-primary mb-1" />
-                          <span className="text-xs text-gray-500 text-center px-2">
-                            Drop or Click to Upload<br />
-                            Max 4 images
-                          </span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {error && <div className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</div>}
-            {success && <div className="text-green-600 font-medium bg-green-50 p-3 rounded-lg">Product added successfully! Redirecting...</div>}
             
             <div className="flex justify-end gap-4">
               <button
@@ -959,14 +900,6 @@ export default function VendorAddProductPage() {
         </div>
       </div>
 
-      {/* Color picker modal */}
-      {isColorPickerOpen && (
-        <SimpleColorPicker 
-          onColorSelect={handleColorSelect}
-          onClose={() => setIsColorPickerOpen(false)}
-          existingColors={Object.keys(colorImageMap)}
-        />
-      )}
     </VendorLayout>
   );
 } 

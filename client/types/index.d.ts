@@ -33,7 +33,6 @@ export interface Product {
     totalReviews: number;
     averageRating: number;
     status: 'active' | 'inactive' | 'draft' | 'scheduled';
-    currVariantSize?: string
     createdAt: string
     updatedAt: string
     productDetails?: {
@@ -64,10 +63,21 @@ export interface Product {
     adminRejectionReason?: string;
     // Virtual field for available sizes
 
-    // Add color-specific images
-    colorImages?: {
-      [color: string]: ProductImage[];
-    };
+    // Color variants with images
+    colorVariants?: ColorVariant[];
+    // Legacy color field (keep for backward compatibility)
+    color?: string;
+}
+
+// Color variant interface
+export interface ColorVariant {
+  colorName: string;
+  colorCode: string; // Hex color code
+  images: ProductImage[];
+  stock: number;
+  price?: number; // Optional price override for this color
+  mrp?: number; // Optional MRP override for this color
+  isActive: boolean;
 }
 
 // Product image interface

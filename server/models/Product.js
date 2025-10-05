@@ -1,5 +1,45 @@
 import mongoose from 'mongoose';
 
+const ColorVariantSchema = new mongoose.Schema({
+    colorName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    colorCode: {
+      type: String,
+      required: true,
+      trim: true,
+      match: [/^#[0-9A-Fa-f]{6}$/, "Invalid color code format"],
+    },
+    images: [
+      {
+        url: { type: String, required: true },
+        public_id: { type: String, required: true },
+        is_primary: { type: Boolean, default: false },
+      },
+    ],
+    stock: {
+      type: Number,
+      required: true,
+      min: [0, "Stock cannot be negative"],
+    },
+    price: {
+      type: Number,
+      min: [0, "Price cannot be negative"],
+    },
+    mrp: {
+      type: Number,
+      min: [0, "MRP cannot be negative"],
+    },
+    sizes: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    isActive: { type: Boolean, default: true },
+  });
 const ProductSchema = new mongoose.Schema({
     name: { 
         type: String, 
@@ -23,12 +63,6 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: [0, 'MRP cannot be negative'],
-    },
-    discount: {
-        type: Number,
-        default: 0,
-        min: [0, 'Discount cannot be negative'],
-        max: [100, 'Discount cannot exceed 100%']
     },
     vendorId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -55,17 +89,19 @@ const ProductSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admin',
     },
+
+    
     adminRejectionReason: {
         type: String,
         trim: true,
         maxlength: [500, 'Rejection reason cannot exceed 500 characters']
     },
+
     
-    // Multiple sizes for products
+    // Product attributes
     sizes: [{
         type: String,
-        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-        default: ['M']
+        trim: true
     }],
     category: {
         type: String,
@@ -115,44 +151,13 @@ const ProductSchema = new mongoose.Schema({
         default: true,
     },
     
-    // Cloudinary Images - Single source of truth
-    images: [{
-        url: {
-            type: String,
-            required: true
-        },
-        public_id: {
-            type: String,
-            required: true
-        },
-        width: Number,
-        height: Number,
-        format: String,
-        bytes: Number,
-        thumbnail_url: String,
-        small_thumbnail_url: String,
-        is_primary: {
-            type: Boolean,
-            default: false
-        }
-    }],
+    colorVariants: [ColorVariantSchema],
+
     
-    variant: {
-        type: Boolean,
-        default: false,
-    },
-    variantDetails: [{
-        size: String,
-        color: String,
-        price: Number,
-        mrp: Number,
-        stock: Number,
-    }],
     reviews: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review'
     }],
-    colors: [String],
     stock: {
         type: Number,
         default: 0,
@@ -174,11 +179,10 @@ const ProductSchema = new mongoose.Schema({
         enum: ['active', 'inactive', 'draft', 'scheduled'],
         default: 'active',
     },
-    currVariantSize: String,
-    keyFeatures: [{
-        type: String,
-        maxlength: [100, 'Key feature cannot exceed 100 characters']
-    }],
+    keyFeatures: {
+        type: [String],
+        default: []
+    },
     productDetails: {
         weight: { 
             type: String,
@@ -197,11 +201,10 @@ const ProductSchema = new mongoose.Schema({
             trim: true
         },
     },
-    tags: [{
-        type: String,
-        trim: true,
-        maxlength: [30, 'Tag cannot exceed 30 characters']
-    }],
+    tags: {
+        type: [String],
+        default: []
+    },
     
     // Pricing and offers
     offers: {
@@ -231,31 +234,6 @@ const ProductSchema = new mongoose.Schema({
         enum: ['pending', 'published', 'cancelled'],
         default: 'pending',
     },
-    // Add color-specific images to the schema
-    colorImages: {
-        type: Map,
-        of: [{
-            url: {
-                type: String,
-                required: true
-            },
-            public_id: {
-                type: String,
-                required: true
-            },
-            width: Number,
-            height: Number,
-            format: String,
-            bytes: Number,
-            thumbnail_url: String,
-            small_thumbnail_url: String,
-            is_primary: {
-                type: Boolean,
-                default: false
-            }
-        }],
-        default: {}
-    },
 }, { 
     timestamps: true,
     toJSON: { virtuals: true },
@@ -263,38 +241,11 @@ const ProductSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-ProductSchema.index({ name: 1 });
-ProductSchema.index({ categorySlug: 1 });
-ProductSchema.index({ vendorId: 1 });
-ProductSchema.index({ available: 1 });
-ProductSchema.index({ colors: 1 });
-ProductSchema.index({ status: 1 });
-ProductSchema.index({ isScheduled: 1 });
-ProductSchema.index({ scheduledPublishDate: 1 });
-ProductSchema.index({ scheduleStatus: 1 });
 ProductSchema.index({ slug: 1 });
-ProductSchema.index({ price: 1 });
-ProductSchema.index({ tags: 1 });
-ProductSchema.index({ sizes: 1 });
-
-// Virtual for primary image
-ProductSchema.virtual('primaryImage').get(function() {
-    if (this.images && this.images.length > 0) {
-        const primary = this.images.find(img => img.is_primary);
-        return primary ? primary.url : this.images[0].url;
-    }
-    return null;
-});
-
-// Virtual for thumbnail
-ProductSchema.virtual('thumbnail').get(function() {
-    if (this.images && this.images.length > 0) {
-        const primary = this.images.find(img => img.is_primary);
-        const image = primary || this.images[0];
-        return image.thumbnail_url || image.url;
-    }
-    return null;
-});
+ProductSchema.index({ vendorId: 1 });
+ProductSchema.index({ categorySlug: 1 });
+ProductSchema.index({ status: 1 });
+ProductSchema.index({ adminApproved: 1 });
 
 // Virtual for discount percentage
 ProductSchema.virtual('discountPercentage').get(function() {
@@ -304,16 +255,9 @@ ProductSchema.virtual('discountPercentage').get(function() {
     return 0;
 });
 
-// Virtual for available sizes
-ProductSchema.virtual('availableSizes').get(function() {
-    if (this.sizes && this.sizes.length > 0) {
-        return this.sizes;
-    }
-    return ['M']; // Default size if no sizes are set
-});
-
 // Pre-save middleware to generate slug if not provided
 ProductSchema.pre('save', function(next) {
+    // Generate slug if not provided
     if (!this.slug && this.name) {
         this.slug = this.name.toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
@@ -365,6 +309,37 @@ ProductSchema.methods.getAvailableSizes = function() {
         return this.sizes;
     }
     return ['M']; // Default size if no sizes are set
+};
+
+// Method to get available color variants
+ProductSchema.methods.getAvailableColorVariants = function() {
+    if (this.colorVariants && this.colorVariants.length > 0) {
+        return this.colorVariants.filter(variant => variant.isActive && variant.stock > 0);
+    }
+    return [];
+};
+
+// Method to get color variant by name
+ProductSchema.methods.getColorVariant = function(colorName) {
+    if (this.colorVariants && this.colorVariants.length > 0) {
+        return this.colorVariants.find(variant => 
+            variant.colorName.toLowerCase() === colorName.toLowerCase() && 
+            variant.isActive
+        );
+    }
+    return null;
+};
+
+// Method to get images for a specific color
+ProductSchema.methods.getColorImages = function(colorName) {
+    const variant = this.getColorVariant(colorName);
+    return variant ? variant.images : [];
+};
+
+// Method to check if color is in stock
+ProductSchema.methods.isColorInStock = function(colorName) {
+    const variant = this.getColorVariant(colorName);
+    return variant ? variant.stock > 0 : false;
 };
 
 const Product = mongoose.model('Product', ProductSchema);

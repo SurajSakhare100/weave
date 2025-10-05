@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Heart, Star, Share2, Copy, ChevronLeft, ChevronRight, BarChart3, ChevronDown } from 'lucide-react';
 import { ProductWithReviews } from '@/types';
@@ -26,6 +26,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const getPrimaryImage = () => {
     if (product.images && product.images.length > 0) {
       const primary = product.images.find(img => img.is_primary);
@@ -44,22 +45,27 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   };
 
   const getCurrentImage = () => {
-    if (product.images && product.images.length > 0) {
-      return product.images[currentImageIndex]?.url || getPrimaryImage();
+    if (displayImages && displayImages.length > 0) {
+      return displayImages[currentImageIndex]?.url || getPrimaryImage();
     }
     return getPrimaryImage();
   };
 
   const handlePreviousImage = () => {
-    if (product.images && product.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    if (displayImages && displayImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
     }
   };
 
   const handleNextImage = () => {
-    if (product.images && product.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+    if (displayImages && displayImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
     }
+  };
+
+  const handleColorSelect = (colorName: string) => {
+    setSelectedColor(selectedColor === colorName ? null : colorName);
+    setCurrentImageIndex(0); // Reset to first image when color changes
   };
 
   const handleShare = () => {
@@ -94,18 +100,93 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     }
   };
 
+  // Color variant logic - only use new colorVariants system
+  const availableColors = useMemo(() => {
+    if (!product?.colorVariants || product.colorVariants.length === 0) return [];
+
+    return product.colorVariants
+      .filter(variant => variant.isActive && variant.images && variant.images.length > 0)
+      .map(variant => ({
+        name: variant.colorName,
+        code: variant.colorCode,
+        stock: variant.stock,
+        isActive: variant.isActive,
+        imageCount: variant.images.length
+      }));
+  }, [product]);
+
+  // Auto-select first color with images when component mounts
+  React.useEffect(() => {
+    if (product?.colorVariants && product.colorVariants.length > 0 && !selectedColor) {
+      const firstActiveColorWithImages = product.colorVariants.find(variant => 
+        variant.isActive && 
+        variant.stock > 0 && 
+        variant.images && 
+        variant.images.length > 0
+      );
+      if (firstActiveColorWithImages) {
+        setSelectedColor(firstActiveColorWithImages.colorName);
+      }
+    }
+  }, [product]);
+
+  // Get display images based on selected color - only use colorVariants system
+  const displayImages = useMemo(() => {
+    // If no color selected, use main product images or first color variant's images
+    if (!selectedColor) {
+      if (product?.images && product.images.length > 0) {
+        return product.images;
+      }
+      // If no main images, use first color variant's images
+      if (product?.colorVariants && product.colorVariants.length > 0) {
+        const firstVariant = product.colorVariants.find(variant => 
+          variant.isActive && variant.images && variant.images.length > 0
+        );
+        if (firstVariant) {
+          return firstVariant.images;
+        }
+      }
+      return [];
+    }
+
+    // Find color-specific images from colorVariants
+    if (product?.colorVariants && product.colorVariants.length > 0) {
+      const selectedVariant = product.colorVariants.find(variant => 
+        variant.colorName === selectedColor && variant.isActive
+      );
+      
+      if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+        return selectedVariant.images;
+      }
+    }
+
+    // If selected color variant has no images, return empty array
+    return [];
+  }, [product, selectedColor]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-12">
       {/* Left: Images */}
       <div className="lg:max-w-3xl w-full">
         {/* Main Image */}
         <div className="relative w-full h-[500px] bg-[#FFFBF9] flex items-center justify-center rounded-lg overflow-hidden">
-          <Image
-            src={getCurrentImage()}
-            alt={product.name}
-            fill
-            className="object-contain sm:p-8 p-4 rounded-lg"
-          />
+          {displayImages.length > 0 ? (
+            <Image
+              src={getCurrentImage()}
+              alt={product.name}
+              fill
+              className="object-contain sm:p-8 p-4 rounded-lg"
+            />
+          ) : (
+            <div className="text-center text-gray-500">
+              <p className="text-lg font-medium">No images available</p>
+              {selectedColor ? (
+                <p className="text-sm mt-1">for the selected color "{selectedColor}"</p>
+              ) : (
+                <p className="text-sm mt-1">Please select a color to view images</p>
+              )}
+            </div>
+          )}
           
           {/* Top Right Icons */}
           <div className="absolute top-4 right-4 flex flex-col gap-2">
@@ -169,7 +250,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
           </div>
 
           {/* Image Navigation Arrows */}
-          {product.images && product.images.length > 1 && (
+          {displayImages && displayImages.length > 1 && (
             <>
               <button
                 onClick={handlePreviousImage}
@@ -216,9 +297,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         </div>
 
         {/* Thumbnails */}
-        {product.images && product.images.length > 1 && (
+        {displayImages && displayImages.length > 1 && (
           <div className="flex gap-4 mt-4 justify-start overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {product.images.map((img, idx) => (
+            {displayImages.map((img, idx) => (
               <button
                 key={img.public_id || idx}
                 onClick={() => setCurrentImageIndex(idx)}
@@ -264,19 +345,59 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
           <span className="ml-2 text-sm text-[#5E3A1C]">({product.totalReviews})</span>
         </div>
 
-        {/* Colors */}
-        {product.colors && product.colors.length > 0 && (
+        {/* Color Variants */}
+        {availableColors.length > 0 && (
           <div>
-            <span className="text-[#5E3A1C] text-sm mb-2 block">Color: {product.colors[0]}</span>
-            <div className="flex gap-2">
-              {product.colors.map((color) => (
-                <span
-                  key={color}
-                  className="w-5 h-5 sm:w-9 sm:h-9 rounded-full border border-[#E7D9CC]"
-                  style={{ backgroundColor: color }}
-                ></span>
+            <span className="text-[#5E3A1C] text-sm mb-2 block">
+              Color: {selectedColor || 'Select a color'}
+            </span>
+            <div className="flex gap-2 flex-wrap">
+              {availableColors.map(colorVariant => (
+                <div key={colorVariant.name} className="relative">
+                  <button
+                    onClick={() => handleColorSelect(colorVariant.name)}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      selectedColor === colorVariant.name
+                        ? 'border-[#EE346C] scale-110'
+                        : 'border-gray-300 hover:border-[#EE346C]'
+                    } ${!colorVariant.isActive || colorVariant.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    style={{
+                      backgroundColor: colorVariant.code || colorVariant.name.toLowerCase(),
+                      filter: ['white', 'beige', 'tan', 'yellow'].includes(colorVariant.name.toLowerCase())
+                        ? 'brightness(0.9)'
+                        : 'none'
+                    }}
+                    title={`${colorVariant.name} - ${colorVariant.stock} in stock, ${colorVariant.imageCount} images`}
+                    disabled={!colorVariant.isActive || colorVariant.stock <= 0}
+                  />
+                  {/* Image count indicator */}
+                  {colorVariant.imageCount > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-[#EE346C] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {colorVariant.imageCount}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Stock Status */}
+        {selectedColor && availableColors.length > 0 && (
+          <div className="text-sm">
+            {(() => {
+              const selectedVariant = availableColors.find(c => c.name === selectedColor);
+              if (selectedVariant) {
+                if (selectedVariant.stock <= 0) {
+                  return <span className="text-red-600 font-medium">Out of Stock</span>;
+                } else if (selectedVariant.stock <= 5) {
+                  return <span className="text-orange-600 font-medium">Only {selectedVariant.stock} left in stock</span>;
+                } else {
+                  return <span className="text-green-600 font-medium">{selectedVariant.stock} in stock</span>;
+                }
+              }
+              return null;
+            })()}
           </div>
         )}
 

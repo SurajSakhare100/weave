@@ -298,24 +298,9 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       throw new Error('Category is required');
     }
     
-    // Validate images
-    if (!imageFiles || imageFiles.length === 0) {
-      throw new Error('At least one image is required');
-    }
+    // Note: No main images required - only color-specific images
     
-    if (imageFiles.length > 4) {
-      throw new Error('Maximum 4 images allowed');
-    }
-    
-    // Validate image files
-    for (const file of imageFiles) {
-      if (!file.mimetype.startsWith('image/')) {
-        throw new Error('All files must be images');
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        throw new Error('Each image must be less than 5MB');
-      }
-    }
+    // Image validation removed - color variants handle their own images
     
     // Generate slug if not provided
     if (!productData.slug && productData.name) {
@@ -376,6 +361,33 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
     } else {
       productData.colors = [];
     }
+
+    // Handle colorVariants - parse JSON string if needed
+    if (productData.colorVariants) {
+      if (typeof productData.colorVariants === 'string') {
+        try {
+          productData.colorVariants = JSON.parse(productData.colorVariants);
+        } catch (error) {
+          console.error('Error parsing colorVariants:', error);
+          throw new Error('Invalid colorVariants format');
+        }
+      }
+      
+      // Ensure colorVariants is an array and validate structure
+      if (Array.isArray(productData.colorVariants)) {
+        productData.colorVariants = productData.colorVariants.map(variant => ({
+          colorName: String(variant.colorName),
+          colorCode: String(variant.colorCode),
+          stock: Number(variant.stock) || 0,
+          isActive: Boolean(variant.isActive !== undefined ? variant.isActive : true),
+          images: variant.images || [] // Will be populated if images are uploaded
+        }));
+      } else {
+        productData.colorVariants = [];
+      }
+    } else {
+      productData.colorVariants = [];
+    }
     
     // Handle key features - ensure it's an array
     if (productData.keyFeatures) {
@@ -434,13 +446,28 @@ export const createVendorProduct = async (productData, imageFiles, vendorId) => 
       }));
     }
 
+    // Calculate total stock from color variants and set main image
+    let totalStock = 0;
+    let mainImages = [];
+    
+    if (productData.colorVariants && productData.colorVariants.length > 0) {
+      totalStock = productData.colorVariants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
+      
+      // Set main image from first color variant's first image
+      const firstVariant = productData.colorVariants[0];
+      if (firstVariant && firstVariant.images && firstVariant.images.length > 0) {
+        mainImages = [firstVariant.images[0]]; // Use first image as main product image
+      }
+    }
+
     const product = await Product.create({
       ...productData,
       vendorId,
       vendor: true,
       adminApproved: false, // Require admin approval
       status: 'draft', // Set initial status as draft
-      images
+      stock: totalStock, // Set total stock from color variants
+      images: mainImages // Set main image from first color variant
     });
 
     return product;
@@ -544,6 +571,31 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
           .filter(color => color.length > 0);
       } else if (!Array.isArray(updateData.colors)) {
         updateData.colors = [];
+      }
+    }
+
+    // Handle colorVariants - parse JSON string if needed
+    if (updateData.colorVariants) {
+      if (typeof updateData.colorVariants === 'string') {
+        try {
+          updateData.colorVariants = JSON.parse(updateData.colorVariants);
+        } catch (error) {
+          console.error('Error parsing colorVariants:', error);
+          throw new Error('Invalid colorVariants format');
+        }
+      }
+      
+      // Ensure colorVariants is an array and validate structure
+      if (Array.isArray(updateData.colorVariants)) {
+        updateData.colorVariants = updateData.colorVariants.map(variant => ({
+          colorName: String(variant.colorName),
+          colorCode: String(variant.colorCode),
+          stock: Number(variant.stock) || 0,
+          isActive: Boolean(variant.isActive !== undefined ? variant.isActive : true),
+          images: variant.images || [] // Will be populated if images are uploaded
+        }));
+      } else {
+        updateData.colorVariants = [];
       }
     }
     

@@ -104,15 +104,17 @@ export const getProducts = asyncHandler(async (req, res) => {
       }
     }
     
-    // Color filter
+    // Color filter - support both legacy colors and new color variants
     if (colors) {
       const colorArray = colors.split(',').map(c => c.trim()).filter(Boolean);
       if (colorArray.length > 1) {
         orConditions.push({ colors: { $in: colorArray } });
         orConditions.push({ 'variantDetails.color': { $in: colorArray } });
+        orConditions.push({ 'colorVariants.colorName': { $in: colorArray } });
       } else {
         orConditions.push({ colors: colorArray[0] });
         orConditions.push({ 'variantDetails.color': colorArray[0] });
+        orConditions.push({ 'colorVariants.colorName': colorArray[0] });
       }
     }
     
@@ -361,6 +363,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       variantDetails,
       stock,
       colors,
+      colorVariants,
       status,
       keyFeatures,
       productDetails,
@@ -370,32 +373,29 @@ export const createProduct = asyncHandler(async (req, res) => {
       sizes
     } = req.body;
 
-    // Strong server-side validation
-    const errors = [];
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      errors.push('Product name is required.');
-    }
-    if (name && name.length > 100) {
-      errors.push('Product name cannot exceed 100 characters.');
-    }
-    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) {
-      errors.push('Valid price is required.');
-    }
-    if (mrp === undefined || mrp === null || isNaN(Number(mrp)) || Number(mrp) < 0) {
-      errors.push('Valid MRP is required.');
-    }
-    if (!category || typeof category !== 'string' || !category.trim()) {
-      errors.push('Category is required.');
-    }
-    if (!req.files || req.files.length === 0) {
-      errors.push('At least one image is required.');
-    }
-    if (errors.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: errors.join(' ') 
-      });
-    }
+
+    // Helper function to parse FormData fields that might be JSON strings
+    const parseFormDataField = (field) => {
+      if (!field) return field;
+      if (typeof field === 'string') {
+        try {
+          return JSON.parse(field);
+        } catch {
+          return field; // Return as string if not valid JSON
+        }
+      }
+      return field;
+    };
+
+    // Parse FormData fields that are sent as JSON strings
+    const parsedKeyFeatures = parseFormDataField(keyFeatures);
+    const parsedTags = parseFormDataField(tags);
+    const parsedSizes = parseFormDataField(sizes);
+
+    console.log('Received colorVariants:', colorVariants);
+
+    // Basic validation (detailed validation is handled by middleware)
+    // Note: No main images required - only color-specific images
 
     // Generate slug from name
     const slug = name.toLowerCase()
@@ -421,7 +421,6 @@ export const createProduct = asyncHandler(async (req, res) => {
     let images = [];
 
     // Debug: Log received files
-    console.log('Received files:', req.files?.length || 0);
     if (req.files && req.files.length > 0) {
       req.files.forEach((file, index) => {
         console.log(`File ${index}: fieldname=${file.fieldname}, originalname=${file.originalname}, size=${file.size}`);
@@ -504,13 +503,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       }
     }
 
-    // Validate that at least one image is uploaded
-    if (images.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'At least one image is required.' 
-      });
-    }
+    // Note: Main images validation removed - using color variant images
 
     // Calculate discount if not provided
     let calculatedDiscount = discount;
@@ -520,12 +513,109 @@ export const createProduct = asyncHandler(async (req, res) => {
 
     // Handle sizes field to prevent empty array issues
     let processedSizes = ['M']; // Default size
-    if (sizes !== undefined) {
-      if (Array.isArray(sizes) && sizes.length > 0) {
-        processedSizes = sizes;
+    if (parsedSizes !== undefined) {
+      if (Array.isArray(parsedSizes) && parsedSizes.length > 0) {
+        processedSizes = parsedSizes;
       }
     }
-    const product = await Product.create({
+
+    // Process colorVariants if provided
+    let colorVariantsData = [];
+    if (colorVariants) {
+      
+      try {
+        // Parse colorVariants if it's a JSON string
+        let parsedColorVariants;
+        if (typeof colorVariants === 'string') {
+          parsedColorVariants = JSON.parse(colorVariants);
+        } else if (Array.isArray(colorVariants)) {
+          parsedColorVariants = colorVariants;
+        } else {
+          throw new Error('colorVariants must be a JSON string or array');
+        }
+
+        if (Array.isArray(parsedColorVariants) && parsedColorVariants.length > 0) {
+          colorVariantsData = parsedColorVariants.map(variant => ({
+            colorName: String(variant.colorName),
+            colorCode: String(variant.colorCode),
+            stock: Number(variant.stock) || 0,
+            isActive: variant.isActive !== undefined ? Boolean(variant.isActive) : true,
+            images: [] // Will be populated below
+          }));
+        }
+        
+      } catch (parseError) {
+        console.error('Error parsing colorVariants:', parseError);
+        console.error('Raw colorVariants value:', colorVariants);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid colorVariants format.'
+        });
+      }
+    }
+
+    // Handle color variant image uploads
+    if (req.files && colorVariantsData.length > 0) {
+      try {
+        // Group files by color for new colorVariants system
+        const colorVariantFileMap = {};
+        for (const [fieldName, files] of Object.entries(req.files)) {
+          if (fieldName.startsWith('colorVariantImages[')) {
+            // Extract color name from field name like "colorVariantImages[Red][0]"
+            const colorMatch = fieldName.match(/colorVariantImages\[([^\]]+)\]/);
+            if (colorMatch) {
+              const colorName = colorMatch[1];
+              if (!colorVariantFileMap[colorName]) {
+                colorVariantFileMap[colorName] = [];
+              }
+              colorVariantFileMap[colorName].push(...files);
+            }
+          }
+        }
+
+        // Upload color-specific images for new system
+        for (const [color, files] of Object.entries(colorVariantFileMap)) {
+          const imageBuffers = files.map(file => file.buffer);
+          const uploadResults = await uploadMultipleImages(
+            imageBuffers, 
+            'weave-products', 
+            `product_${slug}_${color}_${Date.now()}`
+          );
+
+          // Process upload results for this color
+          const colorImages = uploadResults.map((result, index) => ({
+            url: result.url,
+            public_id: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+            thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+            small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+            is_primary: index === 0 // First image is primary
+          }));
+
+          // Add images to the corresponding color variant
+          const colorVariant = colorVariantsData.find(cv => cv.colorName === color);
+          if (colorVariant) {
+            colorVariant.images = colorImages;
+          }
+        }
+      } catch (uploadError) {
+        console.error('Color variant image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload color variant images. Please try again.'
+        });
+      }
+    }
+    // Debug: Log the data being passed to Product.create
+    console.log('Creating product with colorVariantsData:', colorVariantsData);
+    console.log('Type of colorVariantsData:', typeof colorVariantsData);
+    console.log('Is colorVariantsData array:', Array.isArray(colorVariantsData));
+
+    // Build the product data object
+    const productData = {
       name: name.trim(),
       slug,
       price: Number(price),
@@ -550,13 +640,32 @@ export const createProduct = asyncHandler(async (req, res) => {
       status: status || 'active',
       images,
       colorImages,
-      keyFeatures: Array.isArray(keyFeatures) ? keyFeatures.filter(f => f.trim()) : [],
+      keyFeatures: Array.isArray(parsedKeyFeatures) ? parsedKeyFeatures.filter(f => f.trim()) : [],
       productDetails: productDetails || {},
-      tags: Array.isArray(tags) ? tags.filter(t => t.trim()) : [],
+      tags: Array.isArray(parsedTags) ? parsedTags.filter(t => t.trim()) : [],
       offers: offers || false,
       salePrice: salePrice ? Number(salePrice) : undefined,
       sizes: processedSizes
-    });
+    };
+
+    // Only add colorVariants if it's properly formatted
+    if (Array.isArray(colorVariantsData) && colorVariantsData.length > 0) {
+      productData.colorVariants = colorVariantsData;
+      
+      // Calculate total stock from all color variants
+      const totalStock = colorVariantsData.reduce((sum, variant) => sum + (variant.stock || 0), 0);
+      productData.stock = totalStock;
+      
+      // Set main product image from first color variant's first image
+      const firstVariant = colorVariantsData[0];
+      if (firstVariant && firstVariant.images && firstVariant.images.length > 0) {
+        productData.images = [firstVariant.images[0]]; // Use first color variant's first image as main image
+      }
+    }
+
+    console.log('Final product data:', JSON.stringify(productData, null, 2));
+
+    const product = await Product.create(productData);
 
     res.status(201).json({
       success: true,
@@ -640,15 +749,34 @@ export const updateProduct = asyncHandler(async (req, res) => {
       });
     }
 
+    // Helper function to parse FormData fields (same as create)
+    const parseFormDataField = (field) => {
+      if (!field) return field;
+      if (typeof field === 'string') {
+        try {
+          return JSON.parse(field);
+        } catch {
+          return field;
+        }
+      }
+      return field;
+    };
+
+    // Parse FormData fields that are sent as JSON strings
+    const parsedColors = parseFormDataField(colors);
+    const parsedSizes = parseFormDataField(req.body.sizes);
+
     // Process colors array
-    if (colors) {
-      req.body.colors = Array.isArray(colors) ? colors : [colors];
+    if (parsedColors) {
+      req.body.colors = Array.isArray(parsedColors) ? parsedColors : [parsedColors];
     }
 
     // Handle sizes field to prevent empty array issues
-    if (req.body.sizes !== undefined) {
-      if (Array.isArray(req.body.sizes) && req.body.sizes.length === 0) {
+    if (parsedSizes !== undefined) {
+      if (Array.isArray(parsedSizes) && parsedSizes.length === 0) {
         req.body.sizes = ['M']; // Set default size if empty array
+      } else {
+        req.body.sizes = parsedSizes;
       }
     }
 
@@ -754,12 +882,125 @@ export const updateProduct = asyncHandler(async (req, res) => {
       }
     }
 
-    // Update product with color images
+    // Process colorVariants if provided (same logic as create)
+    let colorVariantsData = [];
+    if (req.body.colorVariants) {
+      console.log('Update - Received colorVariants:', req.body.colorVariants);
+      console.log('Update - Type of colorVariants:', typeof req.body.colorVariants);
+      
+      try {
+        let parsedColorVariants;
+        if (typeof req.body.colorVariants === 'string') {
+          parsedColorVariants = JSON.parse(req.body.colorVariants);
+        } else if (Array.isArray(req.body.colorVariants)) {
+          parsedColorVariants = req.body.colorVariants;
+        } else {
+          throw new Error('colorVariants must be a JSON string or array');
+        }
+
+        if (Array.isArray(parsedColorVariants) && parsedColorVariants.length > 0) {
+          colorVariantsData = parsedColorVariants.map(variant => ({
+            colorName: String(variant.colorName),
+            colorCode: String(variant.colorCode),
+            stock: Number(variant.stock) || 0,
+            isActive: variant.isActive !== undefined ? Boolean(variant.isActive) : true,
+            images: [] // Will be populated below if images are uploaded
+          }));
+        }
+        
+        console.log('Update - Final colorVariantsData:', colorVariantsData);
+      } catch (parseError) {
+        console.error('Update - Error parsing colorVariants:', parseError);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid colorVariants format.'
+        });
+      }
+    }
+
+    // Handle color variant image uploads for updates
+    if (req.files && colorVariantsData.length > 0) {
+      try {
+        const colorVariantFileMap = {};
+        for (const [fieldName, files] of Object.entries(req.files)) {
+          if (fieldName.startsWith('colorVariantImages[')) {
+            const colorMatch = fieldName.match(/colorVariantImages\[([^\]]+)\]/);
+            if (colorMatch) {
+              const colorName = colorMatch[1];
+              if (!colorVariantFileMap[colorName]) {
+                colorVariantFileMap[colorName] = [];
+              }
+              colorVariantFileMap[colorName].push(...files);
+            }
+          }
+        }
+
+        // Upload color-specific images for new system
+        for (const [color, files] of Object.entries(colorVariantFileMap)) {
+          const imageBuffers = files.map(file => file.buffer);
+          const uploadResults = await uploadMultipleImages(
+            imageBuffers, 
+            'weave-products', 
+            `product_${product.slug}_${color}_${Date.now()}`
+          );
+
+          // Process upload results for this color
+          const colorImages = uploadResults.map((result, index) => ({
+            url: result.url,
+            public_id: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+            thumbnail_url: result.eager && result.eager[0] ? result.eager[0].url : result.url,
+            small_thumbnail_url: result.eager && result.eager[1] ? result.eager[1].url : result.url,
+            is_primary: index === 0
+          }));
+
+          // Add images to the corresponding color variant
+          const colorVariant = colorVariantsData.find(cv => cv.colorName === color);
+          if (colorVariant) {
+            colorVariant.images = colorImages;
+          }
+        }
+      } catch (uploadError) {
+        console.error('Update - Color variant image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload color variant images. Please try again.'
+        });
+      }
+    }
+
+    // Create update data object, excluding colorVariants from req.body to avoid string casting
     let updateData = { 
       ...req.body, 
       images, 
       colorImages 
     };
+
+    // Remove colorVariants from updateData if it exists (we'll add it properly below)
+    if (updateData.colorVariants) {
+      delete updateData.colorVariants;
+    }
+
+    // Only add colorVariants if it's properly formatted
+    if (Array.isArray(colorVariantsData) && colorVariantsData.length > 0) {
+      updateData.colorVariants = colorVariantsData;
+      
+      // Calculate total stock from all color variants
+      const totalStock = colorVariantsData.reduce((sum, variant) => sum + (variant.stock || 0), 0);
+      updateData.stock = totalStock;
+      
+      // Update main product image from first color variant's first image if no main images exist
+      if ((!images || images.length === 0)) {
+        const firstVariant = colorVariantsData[0];
+        if (firstVariant && firstVariant.images && firstVariant.images.length > 0) {
+          images = [firstVariant.images[0]]; // Use first color variant's first image as main image
+          updateData.images = images;
+        }
+      }
+    }
 
     // Calculate discount if price or MRP changed
     if ((req.body.price !== undefined || req.body.mrp !== undefined) && !req.body.discount) {
@@ -1524,6 +1765,119 @@ export const getComparableProducts = asyncHandler(async (req, res) => {
     res.json({ success: true, data: comparableProducts });
   } catch (error) {
     console.error('Get comparable products error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get available colors for products
+export const getAvailableColors = asyncHandler(async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    // Build base filter
+    const filter = {
+      status: 'active',
+      available: true,
+      adminApproved: true,
+      $or: [
+        { vendor: { $ne: true } },
+        { vendor: true, adminApproved: true }
+      ]
+    };
+
+    // Add category filter if specified
+    if (category) {
+      filter.categorySlug = { $regex: category, $options: 'i' };
+    }
+
+    // Aggregate to get unique colors with counts
+    const colorAggregation = await Product.aggregate([
+      { $match: filter },
+      { $unwind: { path: '$colorVariants', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          'colorVariants.isActive': true,
+          'colorVariants.stock': { $gt: 0 }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            colorName: '$colorVariants.colorName',
+            colorCode: '$colorVariants.colorCode'
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          colorName: '$_id.colorName',
+          colorCode: '$_id.colorCode',
+          count: 1
+        }
+      },
+      { $sort: { colorName: 1 } }
+    ]);
+
+    // Also get legacy colors
+    const legacyColorAggregation = await Product.aggregate([
+      { $match: filter },
+      { $unwind: { path: '$colors', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          colors: { $exists: true, $ne: null, $ne: '' }
+        }
+      },
+      {
+        $group: {
+          _id: '$colors',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          colorName: '$_id',
+          colorCode: null, // Legacy colors don't have color codes
+          count: 1
+        }
+      },
+      { $sort: { colorName: 1 } }
+    ]);
+
+    // Combine and deduplicate colors
+    const allColors = [...colorAggregation, ...legacyColorAggregation];
+    const colorMap = new Map();
+
+    allColors.forEach(color => {
+      const key = color.colorName.toLowerCase();
+      if (colorMap.has(key)) {
+        colorMap.get(key).count += color.count;
+        // Use color code from colorVariants if available
+        if (!colorMap.get(key).colorCode && color.colorCode) {
+          colorMap.get(key).colorCode = color.colorCode;
+        }
+      } else {
+        colorMap.set(key, {
+          colorName: color.colorName,
+          colorCode: color.colorCode || '#cccccc', // Default color for legacy colors
+          count: color.count
+        });
+      }
+    });
+
+    const availableColors = Array.from(colorMap.values())
+      .filter(color => color.count > 0)
+      .sort((a, b) => a.colorName.localeCompare(b.colorName));
+
+    res.json({
+      success: true,
+      data: availableColors,
+      total: availableColors.length
+    });
+  } catch (error) {
+    console.error('Get available colors error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 }); 

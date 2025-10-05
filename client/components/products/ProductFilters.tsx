@@ -15,6 +15,7 @@ interface ProductFiltersProps {
     availability: string;
     size: string;
     colors: string;
+    selectedColor: string | null;
     minPrice: string;
     maxPrice: string;
     sort: string;
@@ -23,9 +24,15 @@ interface ProductFiltersProps {
     min: number;
     max: number;
   };
+  availableColors: Array<{
+    colorName: string;
+    colorCode: string;
+    count: number;
+  }>;
   openFilters: { [key: string]: boolean };
   onFilterChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onColorSwatchClick: (color: string) => void;
+  onColorSelect: (colorName: string | null) => void;
   onPriceChange: (min: number, max: number) => void;
   onSizeClick: (sizeOption: string) => void;
   onClearFilters: () => void;
@@ -57,9 +64,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   categories,
   filters,
   priceRange,
+  availableColors,
   openFilters,
   onFilterChange,
   onColorSwatchClick,
+  onColorSelect,
   onPriceChange,
   onSizeClick,
   onClearFilters,
@@ -163,24 +172,71 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
           {openFilters.color && (
             <div className="mt-3">
-              <div className="flex flex-wrap gap-2 items-center">
-                {COLOR_SWATCHES.map((colorItem) => {
-                  const isSelected = !!(filters.colors && filters.colors.split(',').includes(colorItem.name));
-                  return (
+              {/* New color filter with dynamic colors from products */}
+              {availableColors && availableColors.length > 0 ? (
+                <div className="space-y-2">
+                  {/* All colors option */}
+                  <button
+                    onClick={() => onColorSelect(null)}
+                    className={`
+                      w-full flex items-center justify-between p-2 rounded-lg border text-sm transition-colors
+                      ${filters.selectedColor === null
+                        ? 'bg-primary/10 border-primary text-primary'
+                        : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <span>All Colors</span>
+                    <span className="text-xs text-gray-500">
+                      {availableColors.reduce((sum, color) => sum + color.count, 0)} items
+                    </span>
+                  </button>
+
+                  {/* Individual color options */}
+                  {availableColors.map((color) => (
                     <button
-                      key={colorItem.name}
-                      type="button"
-                      className={`w-4 h-4 sm:w-6 sm:h-6 m-1 p-1 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
-                        isSelected ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: colorItem.hex }}
-                      onClick={() => onColorSwatchClick(colorItem.name)}
-                      aria-label={colorItem.name}
-                      title={colorItem.name}
-                    />
-                  );
-                })}
-              </div>
+                      key={color.colorName}
+                      onClick={() => onColorSelect(color.colorName)}
+                      className={`
+                        w-full flex items-center justify-between p-2 rounded-lg border text-sm transition-colors
+                        ${filters.selectedColor === color.colorName
+                          ? 'bg-primary/10 border-primary text-primary'
+                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color.colorCode }}
+                        />
+                        <span className="capitalize">{color.colorName}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">{color.count} items</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                /* Fallback to static color swatches */
+                <div className="flex flex-wrap gap-2 items-center">
+                  {COLOR_SWATCHES.map((colorItem) => {
+                    const isSelected = !!(filters.colors && filters.colors.split(',').includes(colorItem.name));
+                    return (
+                      <button
+                        key={colorItem.name}
+                        type="button"
+                        className={`w-4 h-4 sm:w-6 sm:h-6 m-1 p-1 rounded-full transition-transform duration-150 focus:outline-none focus:ring-1 focus:ring-offset-2 ${
+                          isSelected ? 'ring-1 ring-secondary ring-offset-2 scale-105' : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: colorItem.hex }}
+                        onClick={() => onColorSwatchClick(colorItem.name)}
+                        aria-label={colorItem.name}
+                        title={colorItem.name}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

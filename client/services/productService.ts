@@ -25,7 +25,7 @@ export async function getProducts(params?: ProductQueryParams) {
     return res.data;
   } catch (error) {
     console.error('Failed to fetch products:', error);
-    throw new Error('Failed to fetch products');
+    return Error('Failed to fetch products');
   }
 }
 
@@ -41,7 +41,7 @@ export async function searchProducts(params: ProductQueryParams) {
     return res.data;
   } catch (error) {
     console.error('Failed to search products:', error);
-    throw new Error('Failed to search products');
+    return Error('Failed to search products');
   }
 }
 
@@ -51,7 +51,7 @@ export async function getProductsByCategory(categorySlug: string, params?: any) 
     return res.data;
   } catch (error) {
     console.error('Failed to fetch products by category:', error);
-    throw new Error('Failed to fetch products by category');
+    return Error('Failed to fetch products by category');
   }
 }
 
@@ -61,7 +61,7 @@ export async function getProductBySlug(slug: string) {
     return res.data;
   } catch (error) {
     console.error('Failed to fetch product by slug:', error);
-    throw new Error('Failed to fetch product');
+    return Error('Failed to fetch product');
   }
 }
 
@@ -71,25 +71,25 @@ export async function getProductById(id: string) {
     return res.data;
   } catch (error: any) {
     console.error('Failed to fetch product by ID:', error);
-    
+
     // Handle specific error cases
     if (error.response?.status === 404) {
       const reason = error.response?.data?.reason;
       const message = error.response?.data?.message;
-      
+
       if (reason === 'pending_approval') {
-        throw new Error('Product not available - pending approval');
+        return Error('Product not available - pending approval');
       } else if (message === 'Product not available') {
-        throw new Error('Product not available');
+        return Error('Product not available');
       } else {
-        throw new Error('Product not found');
+        return Error('Product not found');
       }
     } else if (error.response?.status === 400) {
-      throw new Error('Invalid product ID');
+      return Error('Invalid product ID');
     } else if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
+      return Error(error.response.data.message);
     } else {
-      throw new Error('Failed to fetch product');
+      return Error('Failed to fetch product');
     }
   }
 }
@@ -100,7 +100,7 @@ export async function getSimilarProducts(id: string) {
     return res.data;
   } catch (error) {
     console.error('Failed to fetch similar products:', error);
-    throw new Error('Failed to fetch similar products');
+    return Error('Failed to fetch similar products');
   }
 }
 
@@ -110,7 +110,7 @@ export async function getFrequentlyBoughtTogether(id: string, limit: number = 4)
     return res.data;
   } catch (error) {
     console.error('Failed to fetch frequently bought together products:', error);
-    throw new Error('Failed to fetch frequently bought together products');
+    return Error('Failed to fetch frequently bought together products');
   }
 }
 
@@ -120,31 +120,31 @@ export async function getComparableProducts(id: string, limit: number = 4) {
     return res.data;
   } catch (error) {
     console.error('Failed to fetch comparable products:', error);
-    throw new Error('Failed to fetch comparable products');
+    return Error('Failed to fetch comparable products');
   }
 }
 
 export async function createProduct(data: any) {
   try {
-    const res = await api.post('/products', data, { 
-      headers: { 'Content-Type': 'multipart/form-data' } 
+    const res = await api.post('/products', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data;
   } catch (error) {
     console.error('Failed to create product:', error);
-    throw new Error(error.response?.data?.message || 'Failed to create product');
+    return Error(error.response?.data?.message || 'Failed to create product');
   }
 }
 
 export async function updateProduct(id: string, data: any) {
   try {
-    const res = await api.put(`/products/${id}`, data, { 
-      headers: { 'Content-Type': 'multipart/form-data' } 
+    const res = await api.put(`/products/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data;
   } catch (error) {
     console.error('Failed to update product:', error);
-    throw new Error(error.response?.data?.message || 'Failed to update product');
+    return Error(error.response?.data?.message || 'Failed to update product');
   }
 }
 
@@ -154,6 +154,6 @@ export async function deleteProduct(id: string) {
     return res.data;
   } catch (error) {
     console.error('Failed to delete product:', error);
-    throw new Error('Failed to delete product');
+    return Error('Failed to delete product');
   }
 } 

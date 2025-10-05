@@ -9,7 +9,10 @@
     "dev": "nodemon server.js",
     "build": "echo 'No build step required for Node.js'",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "seed": "node seeds/seedDatabase.js",
+    "seed:dev": "nodemon seeds/seedDatabase.js",
+    "upload-images": "node utils/uploadImagesToCloudinary.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
