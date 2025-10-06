@@ -14,7 +14,7 @@ import {
   getVendorOrderById,
   updateVendorOrderStatus,
   getVendorOrderStats
-} from '../controllers/orderController.js';
+} from '../controllers/order/index.js';
 import {
   recordOnlineSalesFromOrder,
   updateOrderStatusAndRecordSales,

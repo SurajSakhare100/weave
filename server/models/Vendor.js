@@ -9,9 +9,13 @@ const VendorSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email'],
   },
   password: { type: String, required: true },
-  number: { type: String },
+  number: { 
+    type: String,
+    match: [/^[6-9]\d{9}$/, 'Please enter a valid 10-digit phone number'],
+  },
   
   // Admin approval fields
   adminApproved: { type: Boolean, default: false },
@@ -44,8 +48,7 @@ const VendorSchema = new mongoose.Schema({
   },
   defaultPaymentMethods: [{
     type: String,
-    enum: ['cash', 'card', 'upi', 'bank_transfer', 'other'],
-    default: ['cash', 'card', 'upi']
+    enum: ['cash', 'card', 'upi', 'bank_transfer', 'other']
   }],
   
   // Stock management settings
@@ -234,6 +237,24 @@ VendorSchema.methods.canManageOfflineSales = function() {
 VendorSchema.methods.canManageStock = function() {
   return this.stockManagementEnabled && this.adminApproved && this.status === 'approved';
 };
+
+// Cascade delete middleware
+VendorSchema.pre('deleteOne', { document: true, query: false }, async function() {
+    const Product = mongoose.model('Product');
+    const VendorSales = mongoose.model('VendorSales');
+    const StockMovement = mongoose.model('StockMovement');
+    
+    // Delete related documents
+    await Product.deleteMany({ vendorId: this._id });
+    await VendorSales.deleteMany({ vendorId: this._id });
+    await StockMovement.deleteMany({ vendorId: this._id });
+});
+
+// Indexes for better query performance
+VendorSchema.index({ email: 1 });
+VendorSchema.index({ status: 1 });
+VendorSchema.index({ adminApproved: 1 });
+VendorSchema.index({ businessType: 1 });
 
 const Vendor = mongoose.model('Vendor', VendorSchema);
 

@@ -69,10 +69,6 @@ const ProductSchema = new mongoose.Schema({
         ref: 'Vendor', 
         required: true 
     },
-    vendor: {
-        type: Boolean,
-        default: false,
-    },
     available: { 
         type: Boolean, 
         default: true,
@@ -104,16 +100,11 @@ const ProductSchema = new mongoose.Schema({
         trim: true
     }],
     category: {
-        type: String,
-        required: true,
-        trim: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        required: true
     },
-    categorySlug: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    srtDescription: {
+    shortDescription: {
         type: String,
         trim: true,
         maxlength: [200, 'Short description cannot exceed 200 characters']
@@ -138,7 +129,7 @@ const ProductSchema = new mongoose.Schema({
         trim: true,
         maxlength: [60, 'SEO title cannot exceed 60 characters']
     },
-    pickup_location: {
+    pickupLocation: {
         type: String,
         trim: true
     },
@@ -243,9 +234,11 @@ const ProductSchema = new mongoose.Schema({
 // Indexes for better query performance
 ProductSchema.index({ slug: 1 });
 ProductSchema.index({ vendorId: 1 });
-ProductSchema.index({ categorySlug: 1 });
+ProductSchema.index({ category: 1 }); // Changed from categorySlug to category
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ adminApproved: 1 });
+ProductSchema.index({ available: 1 });
+ProductSchema.index({ 'colorVariants.isActive': 1 });
 
 // Virtual for discount percentage
 ProductSchema.virtual('discountPercentage').get(function() {
@@ -253,6 +246,22 @@ ProductSchema.virtual('discountPercentage').get(function() {
         return Math.round(((this.mrp - this.price) / this.mrp) * 100);
     }
     return 0;
+});
+
+// Virtual for category details (populated)
+ProductSchema.virtual('categoryDetails', {
+    ref: 'Category',
+    localField: 'category',
+    foreignField: '_id',
+    justOne: true
+});
+
+// Virtual for vendor details (populated)
+ProductSchema.virtual('vendorDetails', {
+    ref: 'Vendor',
+    localField: 'vendorId',
+    foreignField: '_id',
+    justOne: true
 });
 
 // Pre-save middleware to generate slug if not provided
@@ -341,6 +350,92 @@ ProductSchema.methods.isColorInStock = function(colorName) {
     const variant = this.getColorVariant(colorName);
     return variant ? variant.stock > 0 : false;
 };
+
+// Method to get color variant by color code
+ProductSchema.methods.getColorVariantByCode = function(colorCode) {
+    if (this.colorVariants && this.colorVariants.length > 0) {
+        return this.colorVariants.find(variant => 
+            variant.colorCode.toLowerCase() === colorCode.toLowerCase() && 
+            variant.isActive
+        );
+    }
+    return null;
+};
+
+// Method to get all available colors with basic info
+ProductSchema.methods.getAvailableColors = function() {
+    if (this.colorVariants && this.colorVariants.length > 0) {
+        return this.colorVariants
+            .filter(variant => variant.isActive && variant.stock > 0)
+            .map(variant => ({
+                colorName: variant.colorName,
+                colorCode: variant.colorCode,
+                price: variant.price || this.price,
+                mrp: variant.mrp || this.mrp,
+                stock: variant.stock,
+                primaryImage: variant.images.find(img => img.is_primary)?.url || variant.images[0]?.url,
+                sizes: variant.sizes || this.sizes
+            }));
+    }
+    return [];
+};
+
+// Method to get color variant details for swapping
+ProductSchema.methods.getColorSwapData = function(colorName) {
+    const variant = this.getColorVariant(colorName);
+    if (!variant) return null;
+    
+    return {
+        colorName: variant.colorName,
+        colorCode: variant.colorCode,
+        price: variant.price || this.price,
+        mrp: variant.mrp || this.mrp,
+        stock: variant.stock,
+        isInStock: variant.stock > 0,
+        images: variant.images,
+        sizes: variant.sizes || this.sizes,
+        discountPercentage: this.calculateDiscountPercentage(variant.price || this.price, variant.mrp || this.mrp)
+    };
+};
+
+// Method to calculate discount percentage for color variant
+ProductSchema.methods.calculateDiscountPercentage = function(price, mrp) {
+    if (mrp && price && mrp > price) {
+        return Math.round(((mrp - price) / mrp) * 100);
+    }
+    return 0;
+};
+
+// Method to get primary color (most in stock or first available)
+ProductSchema.methods.getPrimaryColor = function() {
+    if (this.colorVariants && this.colorVariants.length > 0) {
+        const availableColors = this.colorVariants.filter(v => v.isActive && v.stock > 0);
+        if (availableColors.length === 0) return null;
+        
+        // Return color with highest stock or first available
+        return availableColors.reduce((prev, current) => 
+            (current.stock > prev.stock) ? current : prev
+        );
+    }
+    return null;
+};
+
+// Method to check if product has multiple colors
+ProductSchema.methods.hasMultipleColors = function() {
+    return this.colorVariants && this.colorVariants.length > 1;
+};
+
+// Cascade delete middleware
+ProductSchema.pre('deleteOne', { document: true, query: false }, async function() {
+    const Review = mongoose.model('Review');
+    const StockMovement = mongoose.model('StockMovement');
+    const VendorSales = mongoose.model('VendorSales');
+    
+    // Delete related documents
+    await Review.deleteMany({ proId: this._id });
+    await StockMovement.deleteMany({ productId: this._id });
+    await VendorSales.deleteMany({ productId: this._id });
+});
 
 const Product = mongoose.model('Product', ProductSchema);
 

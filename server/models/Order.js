@@ -2,13 +2,12 @@ import mongoose from 'mongoose';
 
 const OrderItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    name: { type: String, required: true },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true },
-    mrp: { type: Number, required: true },
-    sizes: { type: String, default: 'M' }, // Make sizes optional with default
-    variantSize: { type: String, default: 'M' }, // Make variantSize optional with default
-    image: String,
+    quantity: { type: Number, required: true, min: 1 },
+    size: { type: String, default: 'M' },
+    colorVariant: { type: String, default: null },
+    // Store price at time of order for historical accuracy
+    priceAtTime: { type: Number, required: true },
+    mrpAtTime: { type: Number, required: true },
     status: {
         type: String,
         enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
