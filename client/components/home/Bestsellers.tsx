@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { getProducts } from '@/services/productService';
 import { Product } from '@/types/index';
 import ProductCard from '@/components/products/ProductCard';
-import { Loader2 } from 'lucide-react';
 import FullPageLoader from '@/components/ui/FullPageLoader';
 
 const Bestsellers: React.FC = () => {
@@ -10,14 +9,10 @@ const Bestsellers: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     const fetchBestsellers = async () => {
       try {
-        // Use a valid sort field and correct type for limit
-        const res = await getProducts({ sort: '-sales', limit: 4 });
-        if (res.success) {
-          setProducts(res.data);
-        }
+        const res = await getProducts({ limit: 4 });
+        if (res.success) setProducts(res.data);
       } catch (error) {
         console.error('Failed to fetch bestsellers', error);
       } finally {
@@ -31,26 +26,31 @@ const Bestsellers: React.FC = () => {
   if (loading) return <FullPageLoader text="Loading bestsellers..." />;
 
   return (
-    <section className="py-16 " style={{ backgroundColor: '#F9F9F9' }}>
+    <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-       <div className="w-full flex justify-between items-center mb-12">
-        <div className="text-primary text-2xl font-medium leading-7 tracking-wide">
-          Bestsellers
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-primary text-2xl md:text-3xl font-semibold leading-snug tracking-wide">
+            Bestsellers
+          </h2>
+          <div className="text-secondary font-medium underline cursor-pointer hover:text-primary transition-colors">
+            View all
+          </div>
         </div>
-        <div className="text-text-secondary text-base font-medium underline leading-tight cursor-pointer">
-          View all
-        </div>
-      </div>
 
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product: Product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
+        {/* Product Cards: Horizontal scroll on mobile, grid on desktop */}
+        <div className="relative">
+          <div className="flex gap-4 overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8 scrollbar-hide">
+            {products.map((product) => (
+              <div key={product._id} className="flex-shrink-0 w-72 sm:w-auto">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-export default Bestsellers; 
+export default Bestsellers;

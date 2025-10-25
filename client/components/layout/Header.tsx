@@ -63,18 +63,18 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="bg-white" style={{ color: '#5E3A1C' }}>
-        <div className="bg-[#5E3A1C] text-white text-center py-2 text-sm ">
-          Shipping available across the globe!
+      <div >
+        <div className="bg-none bg-primary">
+         <p className="text-accent text-center py-2 text-sm"> Shipping available across the globe!</p>
         </div>
         
-        <header className="bg-white sticky top-0 z-40 border-b ">
+        <header className="bg-white sticky top-0 z-40 border-b border-[#F0F0F0]">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Desktop header */}
             <div className="hidden md:grid grid-cols-3 items-center h-20">
               <nav className="text-sm items-center gap-6 xl:gap-8 text-secondary flex">
                 <div className="relative group">
-                  <button className="flex items-center font-medium focus:outline-none hover:text-[#6c4323]">
+                  <button className="flex items-center font-medium focus:outline-none text-secondary hover:text-bold">
                     Shop <span className="ml-1">
                       <ChevronDown className="h-4 w-4" />
                     </span>
@@ -92,16 +92,16 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                     ))}
                   </div>
                 </div>
-                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors xl:hidden">
+                <Link href="/wholesale" className="font-medium text-secondary hover:text-bold transition-colors xl:hidden">
                   Wholesale
                 </Link>
-                <Link href="/wholesale" className="font-medium hover:text-[#6c4323] transition-colors hidden xl:inline">
+                <Link href="/wholesale" className="font-medium text-secondary hover:text-bold transition-colors hidden xl:inline">
                   Wholesale & Bulk Inquiry
                 </Link>
-                <Link href="/about" className="font-medium hover:text-[#6c4323] transition-colors">
+                <Link href="/about" className="font-medium text-secondary hover:text-bold transition-colors">
                   About Us
                 </Link>
-                <Link href="/products" className="font-medium hover:text-[#6c4323] transition-colors">
+                <Link href="/products" className="font-medium text-secondary hover:text-bold transition-colors">
                   Products
                 </Link>
               </nav>
@@ -114,26 +114,26 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
               </div>
 
               <div className="items-center space-x-2 text-sm justify-end text-secondary flex">
-                <Link href="/search" className="p-2 hover:text-[#6c4323] transition-colors">
+                <Link href="/search" className="p-2 text-secondary hover:text-bold transition-colors">
                   <Search className="w-5 h-5" />
                 </Link>
-                <Link href="/cart" className="relative p-2 hover:text-[#6c4323] transition-colors">
+                <Link href="/cart" className="relative p-2 text-secondary hover:text-bold transition-colors">
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-primary text-accent text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
                 </Link>
-                <Link href="/user/wishlist" className="p-2 hover:text-[#6c4323] transition-colors">
+                <Link href="/user/wishlist" className="p-2 text-secondary hover:text-bold transition-colors">
                   <Heart className="w-5 h-5" />
                 </Link>
                 {isAuthenticated && token ? (
-                  <Link href="/user/settings" className="p-2 hover:text-[#6c4323] transition-colors">
+                  <Link href="/user/settings" className="p-2 text-secondary hover:text-bold transition-colors">
                     <User className="w-5 h-5" />
                   </Link>
                 ) : (
-                  <Link href="/login" className="p-2 hover:text-[#6c4323] transition-colors">
+                  <Link href="/login" className="p-2 text-secondary hover:text-bold transition-colors">
                     <User className="w-5 h-5" />
                   </Link>
                 )}
@@ -145,7 +145,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
               <button
                 aria-label="Open menu"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 text-[#5E3A1C]"
+                className="p-2 text-primary"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -155,14 +155,14 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 <img src="/landing/navImage.png" alt="Weave Logo" className="h-6 w-auto" />
               </Link>
 
-              <div className="flex items-center gap-3 text-[#5E3A1C]">
+              <div className="flex items-center gap-3 text-primary">
                 <Link href="/search" aria-label="Search" className="p-1">
                   <Search className="w-5 h-5" />
                 </Link>
                 <Link href="/cart" aria-label="Cart" className="relative p-1">
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-primary text-accent text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
@@ -195,14 +195,14 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 <button
                   aria-label="Close menu"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-[#5E3A1C]"
+                  className="p-2 text-primary"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="px-4">
                 <button 
-                  className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" 
+                  className="w-full flex items-center justify-between py-5 text-primary text-xl" 
                   onClick={() => { 
                     router.push('/products'); 
                     setIsMobileMenuOpen(false); 
@@ -214,7 +214,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 {categories.map((category) => (
                   <button
                     key={category._id}
-                    className="w-full flex items-center justify-between py-4 text-[#5E3A1C] text-base pl-4"
+                    className="w-full flex items-center justify-between py-4 text-primary text-base pl-4"
                     onClick={() => {
                       router.push(`/products?category=${category.slug}`);
                       setIsMobileMenuOpen(false);
@@ -224,25 +224,25 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 ))}
-                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push({ pathname: '/products', query: { sort: '-discount' } }); setIsMobileMenuOpen(false); }}>
+                <button className="w-full flex items-center justify-between py-5 text-primary text-xl" onClick={() => { router.push({ pathname: '/products', query: { sort: '-discount' } }); setIsMobileMenuOpen(false); }}>
                   <span>Sale</span>
                   <ChevronDown className="w-5 h-5" />
                 </button>
-                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
+                <button className="w-full flex items-center justify-between py-5 text-primary text-xl" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
                   <span>About Us</span>
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push('/wholesale'); setIsMobileMenuOpen(false); }}>
+                <button className="w-full flex items-center justify-between py-5 text-primary text-xl" onClick={() => { router.push('/wholesale'); setIsMobileMenuOpen(false); }}>
                   <span>Wholesale & Export Inquiry</span>
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <button className="w-full flex items-center justify-between py-5 text-[#5E3A1C] text-xl" onClick={() => { router.push(isAuthenticated && token ? '/user/settings' : '/login'); setIsMobileMenuOpen(false); }}>
+                <button className="w-full flex items-center justify-between py-5 text-primary text-xl" onClick={() => { router.push(isAuthenticated && token ? '/user/settings' : '/login'); setIsMobileMenuOpen(false); }}>
                   <span>My Account</span>
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
               <div className="absolute left-0 right-0 bottom-6 px-6">
-                <Link href="/user/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[#5E3A1C]">
+                <Link href="/user/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-primary">
                   <Heart className="w-6 h-6" />
                   <span className="underline text-lg">View Wishlist</span>
                 </Link>
