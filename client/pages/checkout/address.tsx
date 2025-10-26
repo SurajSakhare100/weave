@@ -198,9 +198,9 @@ function CheckoutAddressPageContent() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="min-h-screen bg-bg-tertiary flex items-center justify-center">
+        <div className="min-h-screen bg-tertiary flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-bg-button mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-button mx-auto mb-4"></div>
             <p className="text-primary text-lg">Loading your addresses...</p>
           </div>
         </div>
@@ -261,7 +261,7 @@ function CheckoutAddressPageContent() {
           {addresses.length === 0 ? (
             <div className="text-center py-16">
               <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-24 h-24 bg-tertiary rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -273,7 +273,7 @@ function CheckoutAddressPageContent() {
                 </p>
                 <Button
                   onClick={handleAddNewClick}
-                  className="bg-bg-button hover:opacity-90 text-white px-8 py-4 rounded-lg font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="bg-button hover:opacity-90 text-white px-8 py-4 rounded-lg font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -304,7 +304,7 @@ function CheckoutAddressPageContent() {
           {/* Add New Address Link */}
           <div className="mt-24 text-center">
             <button
-              className="text-bg-button text-lg font-medium hover:opacity-80 transition-colors underline underline-offset-2 cursor-pointer"
+              className="text-button text-lg font-medium hover:opacity-80 transition-colors underline underline-offset-2 cursor-pointer"
               onClick={handleAddNewClick}
             >
               Add Delivery Address

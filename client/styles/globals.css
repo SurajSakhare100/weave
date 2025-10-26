@@ -156,7 +156,9 @@
 .border-tertiary {
   border-color: var(--border-tertiary);
 }
-
+.text-button{
+   color: var(--bg-button);
+}
 
 /* =========================
    BASE STYLES
@@ -188,7 +190,7 @@ body {
 /* =========================
    TEXT SIZE UTILITIES
    ========================= */
-.text-xs { font-size: 12px; line-height: 16px; }
+/* .text-xs { font-size: 12px; line-height: 16px; }
 .text-sm { font-size: 14px; line-height: 20px; }
 .text-base { font-size: 16px; line-height: 20px; }
 .text-lg { font-size: 18px; line-height: 28px; }
@@ -200,7 +202,7 @@ body {
 .text-6xl { font-size: 60px; line-height: 1; }
 .text-7xl { font-size: 72px; line-height: 1; }
 .text-8xl { font-size: 96px; line-height: 1; }
-.text-9xl { font-size: 128px; line-height: 1; }
+.text-9xl { font-size: 128px; line-height: 1; } */
 
 /* =========================
    HERO SECTION

@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store/store';
-import { fetchCart, updateCartQuantity, removeCartItem, clearCartAsync } from '../features/cart/cartSlice';
-import { Button } from '../components/ui/button';
+import { RootState, AppDispatch } from '../../store/store';
+import { fetchCart, updateCartQuantity, removeCartItem, clearCartAsync } from '../../features/cart/cartSlice';
+import { Button } from '../../components/ui/button';
 import { useRouter } from 'next/router';
 import MainLayout from "@/components/layout/MainLayout"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import MobilePageHeader from "@/components/ui/MobilePageHeader"
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { calculateCartSummary } from '../utils/cartCalculations';
+import { calculateCartSummary } from '../../utils/cartCalculations';
 import { CartItemType } from '@/types';
 import CartItem from '@/components/cart/CartItem';
 
@@ -91,11 +91,13 @@ const CartPage = () => {
   if (isInitialLoading) {
     return (
       <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+         <section className="py-8 sm:py-12 lg:py-16 bg-[#faf5f2] min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="flex justify-center items-center py-12 sm:py-16 lg:py-20">
+              <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 border-b-2 border-pink-500"></div>
+            </div>
           </div>
-        </div>
+        </section>
       </MainLayout>
     );
   }
@@ -129,8 +131,7 @@ const CartPage = () => {
 
   return (
     <MainLayout>
-      <MobilePageHeader title="Cart" />
-      <div className="min-h-screen bg-white pb-28 sm:pb-12 pt-2 sm:pt-12">
+      <div className=" mt-16 sm:mt-0 min-h-screen bg-white pb-28 sm:pb-12 pt-2 sm:pt-12">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className='hidden sm:block'>
             <Breadcrumb
@@ -143,7 +144,7 @@ const CartPage = () => {
           </div>
           <div className="w-full lg:w-7xl flex-col lg:flex-row flex gap-6 sm:gap-8">
             {/* Cart Items */}
-            <div className="w-full lg:w-lg flex flex-col gap-4 sm:gap-6">
+            <div className="w-full lg:w-lg flex flex-col gap-4 sm:gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-300 scrollbar-none sm:max-h-[60vh]">
               {filteredItems.map((item: CartItemType) => (
                 <CartItem
                   key={item.proId}
@@ -212,7 +213,7 @@ const CartPage = () => {
               <div className="hidden sm:flex justify-start py-8">
                 <Button
                   onClick={() => router.push('/checkout/address')}
-                  className="bg-button hover:.bg-hover text-white px-10 py-5 text-base font-semibold rounded-sm w-[320px]"
+                  className="bg-button hover:bg-hover text-white px-10 py-5 text-base font-semibold rounded-sm w-[320px] cursor-pointer"
                 >
                   Continue to checkout
                 </Button>
@@ -222,12 +223,12 @@ const CartPage = () => {
         </div>
         <div
           className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-gray-200 sm:hidden"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)' }}
         >
           <div className="max-w-7xl mx-auto px-5 py-3 h-auto flex items-center justify-between">
             <Button
               onClick={() => router.push('/checkout/address')}
-              className="w-full h-full bg-[#EF3B6D] hover:bg-[#e22e61] text-white py-4 text-base font-semibold rounded-lg"
+              className="w-full h-full bg-[#EF3B6D] hover:bg-[#e22e61] text-white py-3 text-base font-semibold rounded-sm cursor-pointer"
             >
               Continue to checkout
             </Button>

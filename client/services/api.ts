@@ -4,21 +4,16 @@ import Cookies from 'js-cookie';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api',
   withCredentials: true,
-  timeout: 10000,
 });
 
-// Cookie names for different user types
 const USER_TOKEN_KEY = 'userToken';
 const VENDOR_TOKEN_KEY = 'vendorToken';
-// Note: ADMIN_TOKEN_KEY is not used for admin routes as they use HTTP-only cookies
 
 function getAuthToken(url: string): string | undefined {
-  // For admin routes, don't add Authorization header as they use HTTP-only cookies
   if (url.includes('/admin') || url.includes('/admins')) {
     return undefined; // Let the browser handle HTTP-only cookies automatically
   }
   
-  // Determine which token to use based on the URL path
   if (url.includes('/vendors') || url.includes('/vendor') || url.includes('/orders/vendor')) {
     return Cookies.get(VENDOR_TOKEN_KEY);
   }

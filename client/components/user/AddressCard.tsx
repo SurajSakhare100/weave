@@ -47,7 +47,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
 
   return (
     <div className={`rounded-xl  p-6 transition-all duration-200 ${isSelected
-        ? 'bg-bg-tertiary'
+        ? 'bg-tertiary'
         : 'bg-white '
       }`}>
       <div className="flex items-start space-x-4">
@@ -62,7 +62,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             aria-label={`Select ${address.firstName} ${address.lastName}'s address`}
           >
             {isSelected && (
-              <div className="w-2.5 h-2.5 bg-bg-selected rounded-full cursor-pointer"></div>
+              <div className="w-2.5 h-2.5 bg-selected rounded-full cursor-pointer"></div>
             )}
           </button>
         </div>
@@ -118,7 +118,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             <button
               onClick={handleContinue}
               disabled={submitting}
-              className="w-fit bg-bg-button text-white font-semibold py-2 px-12 rounded hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-fit bg-button cursor-pointer text-white font-semibold py-2 px-12 rounded hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Processing...' : 'Deliver to this address'}
             </button>

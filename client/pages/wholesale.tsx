@@ -183,6 +183,7 @@ export default function WholesalePage() {
                       Quantity Required *
                     </label>
                     <select
+                      
                       name="quantity"
                       value={formData.quantity}
                       onChange={handleInputChange}

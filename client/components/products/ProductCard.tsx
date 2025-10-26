@@ -133,7 +133,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const defaultColors = ['#FF69B4', '#000000', '#8B4513', '#006400', '#FF8C00', '#808000'];
 
   return (
-    <div className=" bg-white rounded-lg p-2 sm:p-4 h-full flex flex-col gap-2 sm:gap-3 w-full lg:max-w-[320px]">
+    <div className=" bg-white rounded-lg p-2 sm:p-4 h-full flex flex-col gap-2  w-full lg:max-w-[420px]">
       <Link href={`/products/${product._id}`} className="block flex-1 ">
         {/* Product Image Container */}
         <div className="relative  w-full aspect-[4/3] rounded-xl bg-[#FFFBF8] overflow-hidden">
@@ -177,7 +177,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Product Details */}
       <div className="flex flex-col gap-1 sm:gap-3.5">
         {/* Product Name */}
-        <h3 className="sm:text-base font-medium self-stretch  text-[#6c4323] line-clamp-none  sm:leading-snug">
+        <h3 className=" text-sm sm:text-md font-medium self-stretch  text-primary line-clamp-none  sm:leading-snug">
           {product.name}
         </h3>
 
@@ -205,7 +205,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Rating */}
        <div className='flex items-center justify-between'>
        
-        <span className="hidden sm:block text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
+        <span className="hidden sm:block text-sm sm:text-base font-bold text-primary">₹ {product.price.toLocaleString('en-IN')}</span>
         <div className="flex items-center">
           <div className="flex text-yellow-400 text-xs sm:text-sm  items-center">
             {[...Array(5)].map((_, i) => (
@@ -219,7 +219,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               />
             ))}
           </div>
-          <span className="text-gray-600 ml-1 text-xs sm:text-sm">
+          <span className="text-secondary ml-1 text-sm sm:text-base">
             ({product.totalReviews || 745})
           </span>
         </div>
@@ -229,12 +229,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
        
       </div>
       <div className="flex items-center justify-between ">
-          <span className="block sm:hidden text-sm sm:text-base font-bold text-[#6c4323]">₹ {product.price.toLocaleString('en-IN')}</span>
+          <span className="block sm:hidden text-sm sm:text-base font-bold text-primary">₹ {product.price.toLocaleString('en-IN')}</span>
           <button
           
             onClick={handleAddToCart}
             disabled={!product.available || stock <= 0}
-            className={`text-[#FF4E8D] text-xs sm:text-sm font-medium border border-[#FF4E8D] px-3 py-2 rounded-lg transition-colors sm:hidden ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
+            className={`text-[#FF4E8D] text-xs sm:text-sm font-medium border border-[#FF4E8D] px-2 py-1 rounded-sm transition-colors sm:hidden ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
           >
             Add to cart
           </button>
@@ -244,7 +244,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleAddToCart}
           disabled={!product.available || stock <= 0}
-          className={`hidden sm:block w-full text-[#FF4E8D] border border-[#FF4E8D] py-3 rounded-lg font-semibold transition-colors ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
+          className={`hidden sm:block w-full text-[#FF4E8D] border border-[#FF4E8D] py-2 rounded-sm font-semibold transition-colors ${(!product.available || stock <= 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF4E8D] hover:text-white'}`}
         >
           Add to cart
         </button>

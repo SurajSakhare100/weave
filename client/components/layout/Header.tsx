@@ -159,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Weave - Multi-Vendor E-commerc
                 <Link href="/search" aria-label="Search" className="p-1">
                   <Search className="w-5 h-5" />
                 </Link>
-                <Link href="/cart" aria-label="Cart" className="relative p-1">
+                <Link href="/user/cart" aria-label="Cart" className="relative p-1">
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-primary text-accent text-[10px] rounded-full w-4 h-4 flex items-center justify-center">

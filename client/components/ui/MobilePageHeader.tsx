@@ -39,11 +39,13 @@ const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({
 
   return (
     <div
-      className={`sm:hidden sticky top-0 z-30 ${
-        tone === 'brand'
-          ? 'bg-[#6c4323] text-[#FFF4EC]'
-          : 'bg-white/95 text-[#6c4323] backdrop-blur supports-[backdrop-filter]:bg-white/75'
-      } ${className || ''}`}
+      // className={`sm:hidden sticky top-0 z-30 ${
+      //   tone === 'brand'
+      //     ? 'bg-primary text-secondary'
+      //     : 'bg-white/95 text-primary backdrop-blur supports-[backdrop-filter]:bg-white/75'
+      // } ${className || ''}`}
+
+      className='text-primary fixed top-0 z-50 bg-white w-full sm:hidden'
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
     >
       <div className="max-w-7xl mx-auto px-4 py-3">
@@ -53,12 +55,12 @@ const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({
               onClick={handleBack}
               aria-label="Go back"
               className={`p-1 rounded-md active:scale-95 transition ${
-                tone === 'brand' ? 'text-[#FFF4EC] hover:bg-white/10' : 'text-[#6c4323] hover:bg-[#fff3ea]'
+                tone === 'brand' ? 'text-secondary hover:bg-white/10' : 'text-primary hover:bg-[#fff3ea]'
               }`}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h1 className={`text-lg font-semibold truncate ${tone === 'brand' ? 'text-[#FFF4EC]' : 'text-[#6c4323]'}`}>{title}</h1>
+            <h1 className={`text-lg font-semibold truncate ${tone === 'brand' ? 'text-secondary' : 'text-primary'}`}>{title}</h1>
           </div>
 
           {rightActionLabel && (
@@ -66,8 +68,8 @@ const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({
               onClick={handleRightAction}
               className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
                 tone === 'brand'
-                  ? 'bg-white/10 border-white/20 text-[#FFF4EC] hover:bg-white/15'
-                  : 'bg-[#FFF4EC] border-[#E7D9CC] text-[#6c4323] hover:bg-[#FFF4EC]'
+                  ? 'bg-white/10 border-white/20 text-secondary hover:bg-white/15'
+                  : 'bg-secondary border-[#E7D9CC] text-primary hover:bg-secondary'
               }`}
             >
               {rightActionLabel}
