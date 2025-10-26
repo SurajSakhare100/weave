@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { clearCartAsync } from '../../features/cart/cartSlice';
 import { AppDispatch } from '../../store/store';
 import { calculateCartSummary } from '../../utils/cartCalculations';
-import { CartItem } from '@/types/index.d';
+import { CartItemType } from '@/types';
 
 interface CheckoutItem {
   proId: string;
@@ -184,7 +184,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         setCartItems([]);
       } else {
         const items = response.result || [];
-        setCartItems(items.map((item: CartItem) => ({
+        setCartItems(items.map((item: CartItemType) => ({
           proId: item.proId,
           name: item.item?.name || 'Product',
           price: item.price,
@@ -208,7 +208,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
   }, []);
 
   // Replace existing calculations with new utility
-  const cartSummary = calculateCartSummary(cartItems as unknown as CartItem[]);
+  const cartSummary = calculateCartSummary(cartItems as unknown as CartItemType[]);
   const { subtotal, mrpTotal, shipping, discount, total } = cartSummary;
 
   const handlePlaceOrder = async (): Promise<{ success: boolean; message?: string; data?: { _id: string } }> => {

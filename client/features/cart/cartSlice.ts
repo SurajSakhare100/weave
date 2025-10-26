@@ -1,33 +1,25 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import { getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearCartAPI } from '@/services/cartService'
+import { CartItemType, CartState } from '@/types'
 
-interface CartItem {
-  proId: string
-  quantity: number
-  price: number
-  mrp: number
-  variantSize?: string
-  item: {
-    _id: string
-    name: string
-    images?: {
-      url: string
-    }[]
-    color?: string
-    size?: string
-  }
-}
-
-interface CartState {
-  items: CartItem[]
-  loading: boolean
-  error: string | null
-}
 
 const initialState: CartState = {
   items: [],
   loading: false,
   error: null,
+}
+const isValidCartItem = (item: any): item is CartItemType => {
+  return (
+    item &&
+    typeof item.proId === 'string' &&
+    typeof item.quantity === 'number' &&
+    item.quantity > 0 &&
+    typeof item.price === 'number' &&
+    typeof item.mrp === 'number' &&
+    item.item &&
+    typeof item.item._id === 'string' &&
+    typeof item.item.name === 'string'
+  )
 }
 
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
@@ -38,9 +30,8 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
       return rejectWithValue(data.message || 'Could not load cart')
     }
     
-    // The server returns { success: true, result: [...], amount: {...} }
-    const result = data.result || [];
-    return result;
+    const result = data.result || []
+    return result
   } catch (err: any) {
     return rejectWithValue(err.message || 'Could not load cart')
   }
@@ -48,9 +39,8 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
 
 export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product, quantity, variantSize }: { product: any, quantity: number, variantSize?: string }, { rejectWithValue }) => {
   try {
-    // Validate input
     if (!product || !product._id) {
-      return rejectWithValue('Invalid product data');
+      return rejectWithValue('Invalid product data')
     }
 
     const result = await addToCart(product, quantity, variantSize)
@@ -59,7 +49,6 @@ export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product
       return rejectWithValue(result.message || 'Could not add to cart')
     }
     
-    // The server returns { success: true, result: [...], amount: {...} }
     return result.result || []
   } catch (err: any) {
     return rejectWithValue(err.message || 'Could not add to cart')
@@ -68,11 +57,15 @@ export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product
 
 export const updateCartQuantity = createAsyncThunk('cart/updateCartQuantity', async ({ proId, quantity }: { proId: string, quantity: number }, { rejectWithValue }) => {
   try {
+    if (quantity < 1) {
+      return rejectWithValue('Quantity must be at least 1')
+    }
+
     const result = await updateCartItem(proId, quantity)
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not update cart')
     }
-    // The server returns { success: true, result: [...], amount: {...} }
+    
     return result.result || []
   } catch (err: any) {
     return rejectWithValue('Could not update cart')
@@ -86,7 +79,6 @@ export const removeCartItem = createAsyncThunk('cart/removeCartItem', async (pro
       return rejectWithValue(result.message || 'Could not remove from cart')
     }
     
-    // The server returns { success: true, result: [...], amount: {...} }
     return result.result || []
   } catch (err: any) {
     return rejectWithValue('Could not remove from cart')
@@ -99,7 +91,7 @@ export const clearCartAsync = createAsyncThunk('cart/clearCartAsync', async (_, 
     if (result.success === false) {
       return rejectWithValue(result.message || 'Could not clear cart')
     }
-    // The server returns { success: true, result: [...], amount: {...} }
+    
     return result.result || []
   } catch (err: any) {
     return rejectWithValue('Could not clear cart')
@@ -112,86 +104,74 @@ const cartSlice = createSlice({
   reducers: {
     clearCart: (state) => {
       state.items = []
+      state.error = null
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch Cart
       .addCase(fetchCart.pending, (state) => {
         state.loading = true
         state.error = null
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
-        // Temporarily less strict filtering for debugging
-        const validItems = action.payload.filter(item => {
-          const hasProId = item && item.proId;
-          const hasItem = item && item.item;
-          const isValid = hasProId && hasItem;
-          
-          if (!hasProId) {
-          }
-          if (!hasItem) {
-          }
-          
-          return isValid;
-        });
-                    
-        state.items = validItems
+        state.items = action.payload.filter(isValidCartItem)
         state.loading = false
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })
+      
+      // Add Cart Item
       .addCase(addCartItem.pending, (state) => {
         state.loading = true
         state.error = null
       })
       .addCase(addCartItem.fulfilled, (state, action) => {
-        // Filter out any items with null proId for safety
-        const validItems = action.payload.filter(item => item && item.proId && item.item);
-        state.items = validItems
+        state.items = action.payload.filter(isValidCartItem)
         state.loading = false
       })
       .addCase(addCartItem.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })
+      
+      // Update Cart Quantity
       .addCase(updateCartQuantity.pending, (state) => {
         state.loading = true
         state.error = null
       })
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
-        // Filter out any items with null proId for safety
-        const validItems = action.payload.filter(item => item && item.proId && item.item);
-        state.items = validItems
+        state.items = action.payload.filter(isValidCartItem)
         state.loading = false
       })
       .addCase(updateCartQuantity.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })
+      
+      // Remove Cart Item
       .addCase(removeCartItem.pending, (state) => {
         state.loading = true
         state.error = null
       })
       .addCase(removeCartItem.fulfilled, (state, action) => {
-        // Filter out any items with null proId for safety
-        const validItems = action.payload.filter(item => item && item.proId && item.item);
-        state.items = validItems
+        state.items = action.payload.filter(isValidCartItem)
         state.loading = false
       })
       .addCase(removeCartItem.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })
+      
+      // Clear Cart
       .addCase(clearCartAsync.pending, (state) => {
         state.loading = true
         state.error = null
       })
       .addCase(clearCartAsync.fulfilled, (state, action) => {
-        // Filter out any items with null proId for safety
-        const validItems = action.payload.filter(item => item && item.proId && item.item);
-        state.items = validItems
+        state.items = action.payload.filter(isValidCartItem)
         state.loading = false
       })
       .addCase(clearCartAsync.rejected, (state, action) => {
@@ -202,4 +182,4 @@ const cartSlice = createSlice({
 })
 
 export const { clearCart } = cartSlice.actions
-export default cartSlice.reducer 
+export default cartSlice.reducer

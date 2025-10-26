@@ -23,17 +23,17 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' }) => {
   };
 
   return (
-    <nav className={`flex items-center space-x-2 text-md ${className}`}>
+    <nav className={`flex items-center space-x-2  ${className}`}>
       {items.map((item, index) => (
         <React.Fragment key={index}>
           <span
-            className={`transition-colors ${
+            className={`transition-colors  text-lg  ${
               item.isCurrent
                 ? 'text-primary font-medium'
                 : item.href
                 ? 'text-primary hover:text-secondary cursor-pointer'
                 : 'text-primary'
-            }`}
+            } `}
             onClick={() => handleClick(item)}
           >
             {item.label}

@@ -23,9 +23,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import SalesChart from './SalesChart';
 
-interface SalesDashboardProps {}
 
-const SalesDashboard: React.FC<SalesDashboardProps> = () => {
+const SalesDashboard = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

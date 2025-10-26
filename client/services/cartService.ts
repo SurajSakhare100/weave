@@ -11,7 +11,6 @@ export async function getCart() {
 
 export async function addToCart(product: any, quantity: number = 1, variantSize?: string) {
   try {
-    // Validate product data
     if (!product || !product._id) {
       throw new Error('Invalid product data');
     }
@@ -20,7 +19,6 @@ export async function addToCart(product: any, quantity: number = 1, variantSize?
       throw new Error('Product price and MRP are required');
     }
 
-    // Ensure we have a valid size - use provided variantSize, fallback to product sizes, then default to 'M'
     let selectedSize = 'M';
     if (variantSize) {
       selectedSize = variantSize;
@@ -32,26 +30,38 @@ export async function addToCart(product: any, quantity: number = 1, variantSize?
 
     const cartItem = {
       proId: product._id,
-      quantity: Math.max(1, quantity), // Ensure quantity is at least 1
+      quantity: Math.max(1, quantity),
       price: product.price,
       mrp: product.mrp,
-      variantSize: selectedSize
+      variantSize: selectedSize,
+      item: {
+        _id: product._id,
+        name: product.name || 'Unknown Product',
+        images: product.images || [],
+        color: product.color,
+        size: product.size
+      }
     };
     
     const res = await api.post(`/users/cart`, cartItem);
     
     return res.data;
   } catch (error: any) {
-    return { success: false, message: error.message || 'Failed to add item to cart' };
+    return { success: false, result: [], message: error.message || 'Failed to add item to cart' };
   }
 }
 
 export async function updateCartItem(itemId: string, quantity: number) {
   try {
+    // Validate quantity
+    if (quantity < 1) {
+      throw new Error('Quantity must be at least 1');
+    }
+
     const res = await api.put(`/users/cart/${itemId}`, { quantity });
     return res.data;
   } catch (error: any) {
-    return { success: false, message: 'Failed to update cart item' };
+    return { success: false, result: [], message: 'Failed to update cart item' };
   }
 }
 
@@ -60,7 +70,7 @@ export async function removeFromCart(itemId: string) {
     const res = await api.delete(`/users/cart/${itemId}`);
     return res.data;
   } catch (error: any) {
-    return { success: false, message: 'Failed to remove item from cart' };
+    return { success: false, result: [], message: 'Failed to remove item from cart' };
   }
 }
 
@@ -69,6 +79,6 @@ export async function clearCart() {
     const res = await api.delete(`/users/cart`);  // Clear the entire cart
     return res.data;
   } catch (error: any) {
-    return { success: false, message: 'Failed to clear cart' };
+    return { success: false, result: [], message: 'Failed to clear cart' };
   }
-} 
+}

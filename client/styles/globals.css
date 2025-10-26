@@ -46,7 +46,7 @@
   --bg-tertiary: #FFF4EC;
   --bg-button: #EE346C;
   --bg-selected: #8C6A52;
-  --bg-hover: #FDF4F2;
+  --bg-hover: #4e3c41;
   --border-tertiary: #EAD6CA;
 
   /* --- Sidebar --- */
@@ -223,7 +223,6 @@ body {
    ========================= */
 .text-feedback-success {
   color: #6E8A61;
-  font-size: 0.75rem;
   line-height: 1rem;
 }
 

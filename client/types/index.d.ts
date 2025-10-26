@@ -131,8 +131,7 @@ export interface ProductWithReviews extends Product {
     count: number;
   }>;
 }
-
-export interface CartItem {
+export interface CartItemType {
   proId: string;
   quantity: number;
   price: number;
@@ -147,7 +146,12 @@ export interface CartItem {
     color?: string;
     size?: string;
   };
-  image?: string;
-  color?: string;
-  size?: string;
+}
+
+
+
+interface CartState {
+  items: CartItem[]
+  loading: boolean
+  error: string | null
 }

@@ -77,20 +77,9 @@ function DashboardComp() {
         topProducts: []
     }
 
-    // Handle errors
-    useEffect(() => {
-        if (error?.status === 401) {
-            logout()
-        }
-    }, [error, logout])
+   
 
-    // Auto refresh every 5 minutes
-    useEffect(() => {
-        const interval = setInterval(() => {
-            refetch()
-        }, 5 * 60 * 1000)
-        return () => clearInterval(interval)
-    }, [refetch])
+  
 
     if (isLoading) {
         return (

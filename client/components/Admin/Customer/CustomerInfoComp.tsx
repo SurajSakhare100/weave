@@ -1,13 +1,13 @@
-import React from 'react'
-
-import { useParams } from 'next/navigation'
+/* eslint-disable react-hooks/rules-of-hooks */
+import React, { use } from 'react'
 import { Loader } from 'lucide-react'
-import { useGetCustomerByIdQuery } from '@/services/adminApi';
+import {  useGetCustomerOrdersQuery } from '@/services/adminApi';
 
 export default function CustomerInfoComp({id}: {id: string}) {
     if(!id) return <Loader/>;
-    const { data: customer, isLoading, error } = useGetCustomerByIdQuery(id);
+    const { data: customer, isLoading, error } = useGetCustomerOrdersQuery(id);
     if (isLoading) return <div>Loading...</div>;
+    
     if (error) return <div>Error: { 'An unknown error occurred'}</div>;
     if (!customer) return <div>Customer not found</div>;
    
