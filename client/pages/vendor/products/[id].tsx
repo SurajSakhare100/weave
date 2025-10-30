@@ -209,84 +209,82 @@ export default function VendorEditProductPage() {
     setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // Handle color-specific image uploads
-  const handleColorImageUpload = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    // Validate number of images
-    const currentColorData = colorImageMap[color];
-    const currentImages = currentColorData?.images || [];
-    const currentImageUrls = currentColorData?.imageUrls || [];
-    
-    if (currentImages.length + currentImageUrls.length + files.length > MAX_IMAGES) {
-      toast.error(`You can only upload a maximum of ${MAX_IMAGES} images for ${color}`);
-      return;
+ // Handle color-specific image uploads
+const handleColorImageUpload = (color: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+
+  const currentColorData = colorImageMap[color] || {};
+  const currentImages = currentColorData?.images || [];
+  const currentImageUrls = currentColorData?.imageUrls || [];
+
+  if (currentImages.length + currentImageUrls.length + files.length > MAX_IMAGES) {
+    toast.error(`You can only upload a maximum of ${MAX_IMAGES} images for ${color}`);
+    return;
+  }
+
+  const validFiles: File[] = [];
+  const previewUrls: string[] = [];
+
+  files.forEach(file => {
+    const error = validateImage(file);
+    if (error) {
+      toast.error(`${file.name}: ${error}`);
+    } else {
+      validFiles.push(file);
+      previewUrls.push(URL.createObjectURL(file));
+    }
+  });
+
+  setColorImageMap(prev => ({
+    ...prev,
+    [color]: {
+      ...prev[color],
+      images: [...(prev[color]?.images || []), ...validFiles],
+      previewUrls: [...(prev[color]?.previewUrls || []), ...previewUrls],
+      imageUrls: prev[color]?.imageUrls || [], // keep backend URLs separate
+    },
+  }));
+
+  // Prevent double trigger
+  e.target.value = '';
+};
+
+// Remove a specific image (local preview or existing backend image)
+const removeColorImage = (color: string, index: number, type: 'preview' | 'uploaded' = 'preview') => {
+  setColorImageMap(prev => {
+    const updated = { ...prev };
+    const colorData = { ...updated[color] };
+
+    if (type === 'preview') {
+      const url = colorData.previewUrls?.[index];
+      if (url) URL.revokeObjectURL(url);
+      colorData.previewUrls = colorData.previewUrls?.filter((_, i) => i !== index);
+      colorData.images = colorData.images?.filter((_, i) => i !== index);
+    } else {
+      colorData.imageUrls = colorData.imageUrls?.filter((_, i) => i !== index);
     }
 
-    // Validate each file
-    const validFiles: File[] = [];
-    const validPreviews: string[] = [];
+    updated[color] = colorData;
+    return updated;
+  });
+};
 
-    files.forEach(file => {
-      const error = validateImage(file);
-      if (error) {
-        toast.error(`${file.name}: ${error}`);
-      } else {
-        validFiles.push(file);
-        validPreviews.push(URL.createObjectURL(file));
-      }
-    });
+// Remove entire color section
+const removeColorSection = (color: string) => {
+  setColorImageMap(prev => {
+    const newMap = { ...prev };
 
-    setColorImageMap(prev => ({
-      ...prev,
-      [color]: {
-        ...prev[color],
-        images: [...(prev[color]?.images || []), ...validFiles],
-        imageUrls: [...(prev[color]?.imageUrls || []), ...validPreviews]
-      }
-    }));
-    
-    // Clear the input
-    e.target.value = '';
-  };
+    // Revoke all preview URLs
+    if (newMap[color]?.previewUrls) {
+      newMap[color].previewUrls.forEach(url => URL.revokeObjectURL(url));
+    }
 
-  // Remove color image
-  const removeColorImage = (color: string, index: number) => {
-    setColorImageMap(prev => {
-      const colorData = {...prev[color]};
-      
-      // Revoke object URL if exists
-      if (colorData.imageUrls?.[index]) {
-        URL.revokeObjectURL(colorData.imageUrls[index]);
-      }
+    delete newMap[color];
+    return newMap;
+  });
+};
 
-      // Remove image
-      colorData.images.splice(index, 1);
-      colorData.imageUrls?.splice(index, 1);
-
-      return {
-        ...prev,
-        [color]: colorData
-      };
-    });
-  };
-
-  // Remove entire color section
-  const removeColorSection = (color: string) => {
-    setColorImageMap(prev => {
-      const newMap = {...prev};
-      
-      // Revoke all preview URLs
-      if (newMap[color]?.imageUrls) {
-        newMap[color].imageUrls.forEach(url => URL.revokeObjectURL(url));
-      }
-      
-      // Remove color
-      delete newMap[color];
-      
-      return newMap;
-    });
-  };
 
   const handleFeatureChange = (idx: number, value: string) => {
     setKeyFeatures(prev => prev.map((f, i) => (i === idx ? value : f)));
@@ -385,77 +383,61 @@ export default function VendorEditProductPage() {
 
     return errors;
   };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setFieldErrors({});
+  
+  const errors = validateForm();
+  if (Object.keys(errors).length > 0) {
+    setFieldErrors(errors);
+    toast.error('Fix the highlighted errors.');
+    return;
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFieldErrors({});
+  setLoading(true);
+  try {
+    const formData = new FormData();
 
-    // Client-side validation
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setFieldErrors(validationErrors);
-      toast.error('Please fix the errors in the form');
-      return;
+    // Basic fields
+    const basicFields = { name, description, price, mrp, category, offers, salePrice, srtDescription: additionalDetails };
+    for (const [key, value] of Object.entries(basicFields)) {
+      if (value) formData.append(key, String(value).trim());
     }
 
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      formData.append('description', description.trim());
-      formData.append('srtDescription', additionalDetails.trim());
-      formData.append('price', price);
-      formData.append('mrp', mrp);
-      formData.append('category', category);
-      formData.append('offers', String(offers));
-      if (offers && salePrice) {
-        formData.append('salePrice', salePrice);
-      }
-      formData.append('productDetails', JSON.stringify(productDetails));
-      
-      // Add key features (filter out empty ones)
-      const nonEmptyFeatures = keyFeatures.filter(f => f.trim());
-      nonEmptyFeatures.forEach((f, i) => formData.append(`keyFeature${i+1}`, f.trim()));
+    // Product details, tags, sizes
+    formData.append('productDetails', JSON.stringify(productDetails));
+    keyFeatures.filter(Boolean).forEach(f => formData.append('keyFeatures', f.trim()));
+    tags.forEach(tag => formData.append('tags', tag.trim()));
+    sizes.forEach(size => formData.append('sizes', size.trim().toUpperCase()));
 
-      // Add sizes and tags
-      sizes.forEach(size => formData.append('sizes', size));
-      tags.forEach(tag => formData.append('tags', tag));
+    // Color variants (no nested madness)
+    const colorVariants = Object.entries(colorImageMap).map(([color, data]) => ({
+      colorName: color,
+      colorCode: data.hex,
+      stock: data.stock,
+      isActive: true,
+    }));
+    formData.append('colorVariants', JSON.stringify(colorVariants));
 
-      // Add color variants with images and stock
-      const colorVariants = Object.entries(colorImageMap).map(([colorName, colorData]) => ({
-        colorName,
-        colorCode: colorData.hex,
-        stock: colorData.stock,
-        isActive: true
-      }));
+    // Color images
+    Object.entries(colorImageMap).forEach(([color, data]) => {
+      data.images.forEach(img => formData.append(`colorImages_${color}`, img));
+    });
 
-      formData.append('colorVariants', JSON.stringify(colorVariants));
+    // Product images
+    formData.append('existingImages', JSON.stringify(existingImages));
+    images.forEach(img => formData.append('images', img));
 
-      // Add color-specific images
-      Object.entries(colorImageMap).forEach(([color, colorData]) => {
-        colorData.images.forEach((file, index) => {
-          const fieldName = `colorVariantImages[${color}][${index}]`;
-          formData.append(fieldName, file);
-        });
-      });
-      
-      // Add existing images and new images
-      formData.append('existingImages', JSON.stringify(existingImages));
-      images.forEach(img => formData.append('images', img));
+    await editVendorProduct(id as string, formData);
+    toast.success('Product updated! Awaiting admin review.');
+    router.push('/vendor/products');
+  } catch (err: any) {
+    toast.error(err?.response?.data?.message || 'Update failed');
+  } finally {
+    setLoading(false);
+  }
+};
 
-      await editVendorProduct(id as string, formData);
-      setSuccess(true);
-      toast.success('Product updated successfully! Changes will be reviewed by admin before going live.');
-      setTimeout(() => router.push('/vendor/products'), 2000);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      const errorMessage = error?.response?.data?.message || 'Failed to update product';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Show loading state
   if (loading) {
@@ -654,7 +636,7 @@ export default function VendorEditProductPage() {
                 >
                   <option value="" disabled>Select category</option>
                   {categories.map(cat => (
-                    <option key={cat._id} value={cat.slug}>{cat.name}</option>
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
                   ))}
                 </select>
                 {fieldErrors.category && <div className="text-red-600 text-sm mt-1">{fieldErrors.category}</div>}

@@ -95,6 +95,7 @@ export async function createVendorProduct(productData: FormData) {
 }
 
 export async function updateVendorProduct(productId: string, productData: any) {
+  console.log('Updating vendor product with ID:', productData);
   const res = await api.put(`/vendors/products/${productId}`, productData);
   return res.data;
 }

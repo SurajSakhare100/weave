@@ -75,7 +75,7 @@ UserSchema.pre('deleteOne', { document: true, query: false }, async function() {
 });
 
 // Indexes for better query performance
-UserSchema.index({ email: 1 });
+// UserSchema.index({ email: 1 });
 UserSchema.index({ isActive: 1 });
 
 const User = mongoose.model('User', UserSchema);

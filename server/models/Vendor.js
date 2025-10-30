@@ -251,7 +251,7 @@ VendorSchema.pre('deleteOne', { document: true, query: false }, async function()
 });
 
 // Indexes for better query performance
-VendorSchema.index({ email: 1 });
+// VendorSchema.index({ email: 1 });
 VendorSchema.index({ status: 1 });
 VendorSchema.index({ adminApproved: 1 });
 VendorSchema.index({ businessType: 1 });

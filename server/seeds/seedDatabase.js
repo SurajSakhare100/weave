@@ -43,278 +43,331 @@ const sampleUser = {
 };
 
 const sampleProducts = [
-    {
-        name: 'Premium T-Shirt',
-        price: 299,
-        mrp: 399,
-        category: 'Clothing',
-        categorySlug: 'clothing',
-        srtDescription: 'Premium quality cotton t-shirt for everyday comfort',
-        description: 'High-quality cotton t-shirt with premium fabric and comfortable fit. Perfect for casual wear and daily activities.',
-        seoDescription: 'Premium cotton t-shirt with comfortable fit - available in multiple colors and sizes',
-        seoKeyword: 'premium t-shirt, cotton t-shirt, casual wear, comfortable clothing',
-        seoTitle: 'Premium Cotton T-Shirt - Comfortable & Stylish',
-        pickup_location: 'Mumbai Warehouse',
-        return: true,
-        cancellation: true,
-        sizes: ['S', 'M', 'L', 'XL'],
-        status: 'active',
-        adminApproved: true,
-        adminApprovedAt: new Date(),
-        available: true,
-        vendor: true,
-        keyFeatures: ['100% Cotton', 'Comfortable Fit', 'Durable Fabric', 'Machine Washable'],
-        productDetails: {
-            weight: '200g',
-            dimensions: 'Standard fit',
-            capacity: 'N/A',
-            materials: '100% Premium Cotton'
-        },
-        tags: ['casual', 'cotton', 'comfortable', 'daily wear'],
-        offers: true,
-        salePrice: 249,
-        colorVariants: [
-            {
-                colorName: 'Red',
-                colorCode: '#FF0000',
-                stock: 50,
-                price: 299,
-                mrp: 399,
-                sizes: ['S', 'M', 'L', 'XL'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80',
-                    public_id: 'tshirt_red_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'Blue',
-                colorCode: '#0000FF',
-                stock: 30,
-                price: 299,
-                mrp: 399,
-                sizes: ['S', 'M', 'L', 'XL'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=800&q=80',
-                    public_id: 'tshirt_blue_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'Black',
-                colorCode: '#000000',
-                stock: 25,
-                price: 299,
-                mrp: 399,
-                sizes: ['S', 'M', 'L', 'XL'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=800&q=80',
-                    public_id: 'tshirt_black_unsplash',
-                    is_primary: true
-                }]
-            }
-        ]
+  {
+    name: 'Classic Canvas Tote Bag',
+    price: 599,
+    mrp: 899,
+    category: 'Accessories',
+    categorySlug: 'accessories',
+    srtDescription: 'Durable and eco-friendly canvas tote for everyday use',
+    description: 'A premium tote bag made from 100% organic cotton canvas. Designed to carry your daily essentials with style and strength.',
+    seoDescription: 'Classic canvas tote bag made from eco-friendly materials – stylish, strong, and sustainable.',
+    seoKeyword: 'canvas tote bag, eco-friendly bag, reusable tote, sustainable accessories',
+    seoTitle: 'Classic Canvas Tote Bag - Sustainable Everyday Essential',
+    pickup_location: 'Delhi Warehouse',
+    return: true,
+    cancellation: true,
+    sizes: ['One Size'],
+    status: 'active',
+    adminApproved: true,
+    adminApprovedAt: new Date(),
+    available: true,
+    vendor: true,
+    keyFeatures: ['Organic Cotton', 'Reinforced Handles', 'Spacious Design', 'Machine Washable'],
+    productDetails: {
+      weight: '180g',
+      dimensions: '40cm x 35cm x 10cm',
+      capacity: '15L',
+      materials: '100% Organic Cotton Canvas'
     },
-    {
-        name: 'Canvas Tote Bag',
+    tags: ['eco-friendly', 'canvas', 'sustainable', 'reusable'],
+    offers: true,
+    salePrice: 499,
+    colorVariants: [
+      {
+        colorName: 'Natural',
+        colorCode: '#F5F5DC',
+        stock: 40,
         price: 599,
         mrp: 899,
-        category: 'Accessories',
-        categorySlug: 'accessories',
-        srtDescription: 'Eco-friendly canvas tote bag for daily use',
-        description: 'Durable canvas tote bag made from sustainable materials. Perfect for shopping, work, or casual outings.',
-        seoDescription: 'Eco-friendly canvas tote bag - sustainable, durable, and stylish',
-        seoKeyword: 'canvas tote bag, eco-friendly bag, sustainable accessories, reusable bag',
-        seoTitle: 'Canvas Tote Bag - Eco-Friendly & Durable',
-        pickup_location: 'Chennai Warehouse',
-        return: true,
-        cancellation: true,
         sizes: ['One Size'],
-        status: 'active',
-        adminApproved: true,
-        adminApprovedAt: new Date(),
-        available: true,
-        vendor: true,
-        keyFeatures: ['100% Canvas', 'Eco-Friendly', 'Large Capacity', 'Reinforced Handles'],
-        productDetails: {
-            weight: '150g',
-            dimensions: '40cm x 35cm x 10cm',
-            capacity: '15L',
-            materials: '100% Organic Canvas'
-        },
-        tags: ['eco-friendly', 'canvas', 'tote', 'sustainable'],
-        offers: true,
-        salePrice: 499,
-        colorVariants: [
-            {
-                colorName: 'Beige',
-                colorCode: '#F5F5DC',
-                stock: 40,
-                price: 599,
-                mrp: 899,
-                sizes: ['One Size'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80',
-                    public_id: 'totebag_beige_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'Black',
-                colorCode: '#000000',
-                stock: 35,
-                price: 599,
-                mrp: 899,
-                sizes: ['One Size'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
-                    public_id: 'totebag_black_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'White',
-                colorCode: '#FFFFFF',
-                stock: 30,
-                price: 599,
-                mrp: 899,
-                sizes: ['One Size'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&q=80',
-                    public_id: 'totebag_white_unsplash',
-                    is_primary: true
-                }]
-            }
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80',
+            public_id: 'tote_natural_unsplash',
+            is_primary: true
+          }
         ]
-    },
-    {
-        name: 'Wireless Headphones',
-        price: 1999,
-        mrp: 2999,
-        category: 'Electronics',
-        categorySlug: 'electronics',
-        srtDescription: 'Premium wireless headphones with noise cancellation',
-        description: 'High-quality wireless headphones with active noise cancellation, long battery life, and superior sound quality.',
-        seoDescription: 'Wireless headphones with noise cancellation - premium sound quality and long battery life',
-        seoKeyword: 'wireless headphones, noise cancellation, bluetooth headphones, premium audio',
-        seoTitle: 'Wireless Noise Cancelling Headphones - Premium Audio',
-        pickup_location: 'Delhi Warehouse',
-        return: true,
-        cancellation: true,
+      },
+      {
+        colorName: 'Black',
+        colorCode: '#000000',
+        stock: 30,
+        price: 599,
+        mrp: 899,
         sizes: ['One Size'],
-        status: 'active',
-        adminApproved: true,
-        adminApprovedAt: new Date(),
-        available: true,
-        vendor: true,
-        keyFeatures: ['Active Noise Cancellation', '30-hour Battery', 'Bluetooth 5.0', 'Premium Sound Quality'],
-        productDetails: {
-            weight: '250g',
-            dimensions: '18cm x 16cm x 7cm',
-            capacity: 'N/A',
-            materials: 'Premium Plastic and Metal'
-        },
-        tags: ['wireless', 'headphones', 'noise cancellation', 'bluetooth'],
-        offers: true,
-        salePrice: 1699,
-        colorVariants: [
-            {
-                colorName: 'Black',
-                colorCode: '#000000',
-                stock: 20,
-                price: 1999,
-                mrp: 2999,
-                sizes: ['One Size'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-                    public_id: 'headphones_black_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'White',
-                colorCode: '#FFFFFF',
-                stock: 15,
-                price: 1999,
-                mrp: 2999,
-                sizes: ['One Size'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80',
-                    public_id: 'headphones_white_unsplash',
-                    is_primary: true
-                }]
-            }
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
+            public_id: 'tote_black_unsplash',
+            is_primary: true
+          }
         ]
+      }
+    ]
+  },
+  {
+    name: 'Minimalist Cotton Tote Bag',
+    price: 649,
+    mrp: 999,
+    category: 'Accessories',
+    categorySlug: 'accessories',
+    srtDescription: 'Sleek minimalist tote perfect for work or casual outings',
+    description: 'A stylish tote bag designed with minimalism in mind. Crafted from premium cotton canvas with soft straps and ample space.',
+    seoDescription: 'Minimalist cotton tote bag – elegant design, sustainable materials, and spacious layout.',
+    seoKeyword: 'minimal tote bag, cotton tote, eco-friendly handbag, daily carry bag',
+    seoTitle: 'Minimalist Cotton Tote Bag - Elegant & Eco-Friendly',
+    pickup_location: 'Mumbai Warehouse',
+    return: true,
+    cancellation: true,
+    sizes: ['One Size'],
+    status: 'active',
+    adminApproved: true,
+    adminApprovedAt: new Date(),
+    available: true,
+    vendor: true,
+    keyFeatures: ['Soft Cotton Canvas', 'Minimal Design', 'Reinforced Base', 'Eco-Friendly Material'],
+    productDetails: {
+      weight: '160g',
+      dimensions: '38cm x 34cm x 10cm',
+      capacity: '14L',
+      materials: 'Cotton Canvas'
     },
-    {
-        name: 'Running Shoes',
+    tags: ['minimal', 'cotton', 'eco', 'daily use'],
+    offers: false,
+    colorVariants: [
+      {
+        colorName: 'Beige',
+        colorCode: '#F5F5DC',
+        stock: 25,
+        price: 649,
+        mrp: 999,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1592878904946-36d0e1fd86d4?w=800&q=80',
+            public_id: 'tote_beige_unsplash',
+            is_primary: true
+          }
+        ]
+      },
+      {
+        colorName: 'Olive',
+        colorCode: '#708238',
+        stock: 20,
+        price: 649,
+        mrp: 999,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1618354691405-5f0e66fbd6e9?w=800&q=80',
+            public_id: 'tote_olive_unsplash',
+            is_primary: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name: 'Foldable Travel Tote Bag',
+    price: 799,
+    mrp: 1199,
+    category: 'Accessories',
+    categorySlug: 'accessories',
+    srtDescription: 'Compact foldable tote ideal for travel and daily errands',
+    description: 'This foldable travel tote is made from water-resistant material, lightweight yet strong, perfect for travel or gym use.',
+    seoDescription: 'Foldable travel tote bag – water-resistant, durable, and portable. Perfect for travelers.',
+    seoKeyword: 'foldable tote bag, travel bag, lightweight tote, waterproof tote',
+    seoTitle: 'Foldable Travel Tote Bag - Lightweight & Water-Resistant',
+    pickup_location: 'Bangalore Warehouse',
+    return: true,
+    cancellation: true,
+    sizes: ['One Size'],
+    status: 'active',
+    adminApproved: true,
+    adminApprovedAt: new Date(),
+    available: true,
+    vendor: true,
+    keyFeatures: ['Foldable Design', 'Water-Resistant', 'Lightweight', 'Durable Nylon Material'],
+    productDetails: {
+      weight: '120g',
+      dimensions: '42cm x 36cm x 10cm',
+      capacity: '18L',
+      materials: 'Nylon and Polyester'
+    },
+    tags: ['travel', 'foldable', 'lightweight', 'nylon'],
+    offers: true,
+    salePrice: 699,
+    colorVariants: [
+      {
+        colorName: 'Navy Blue',
+        colorCode: '#000080',
+        stock: 30,
+        price: 799,
+        mrp: 1199,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1603808033192-082d6919d7b8?w=800&q=80',
+            public_id: 'tote_navy_unsplash',
+            is_primary: true
+          }
+        ]
+      },
+      {
+        colorName: 'Gray',
+        colorCode: '#808080',
+        stock: 25,
+        price: 799,
+        mrp: 1199,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1586790170597-8a9d14b83e8d?w=800&q=80',
+            public_id: 'tote_gray_unsplash',
+            is_primary: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name: 'Printed Eco Tote Bag',
+    price: 699,
+    mrp: 999,
+    category: 'Accessories',
+    categorySlug: 'accessories',
+    srtDescription: 'Stylish printed tote for shopping or casual use',
+    description: 'A trendy printed tote bag made from 100% recycled cotton with artistic prints for a stylish look.',
+    seoDescription: 'Printed eco tote bag – made from recycled cotton, sustainable and fashionable.',
+    seoKeyword: 'printed tote bag, eco-friendly print bag, recycled cotton tote',
+    seoTitle: 'Printed Eco Tote Bag - Sustainable & Stylish',
+    pickup_location: 'Chennai Warehouse',
+    return: true,
+    cancellation: true,
+    sizes: ['One Size'],
+    status: 'active',
+    adminApproved: true,
+    adminApprovedAt: new Date(),
+    available: true,
+    vendor: true,
+    keyFeatures: ['Recycled Cotton', 'Vivid Prints', 'Eco-Friendly Dyes', 'Washable'],
+    productDetails: {
+      weight: '170g',
+      dimensions: '39cm x 35cm x 10cm',
+      capacity: '14L',
+      materials: 'Recycled Cotton Canvas'
+    },
+    tags: ['printed', 'eco', 'fashion', 'cotton'],
+    offers: true,
+    salePrice: 599,
+    colorVariants: [
+      {
+        colorName: 'Floral Print',
+        colorCode: '#FFFFFF',
+        stock: 40,
+        price: 699,
+        mrp: 999,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1612178994549-4e59a0e8a8ed?w=800&q=80',
+            public_id: 'tote_floral_unsplash',
+            is_primary: true
+          }
+        ]
+      },
+      {
+        colorName: 'Abstract Beige',
+        colorCode: '#E0CDA9',
+        stock: 35,
+        price: 699,
+        mrp: 999,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1606925797302-8b0500b13411?w=800&q=80',
+            public_id: 'tote_abstract_unsplash',
+            is_primary: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name: 'Luxury Leather Tote Bag',
+    price: 2499,
+    mrp: 3499,
+    category: 'Accessories',
+    categorySlug: 'accessories',
+    srtDescription: 'Elegant leather tote for professionals and travelers',
+    description: 'Crafted from high-quality vegan leather, this luxury tote combines style, comfort, and utility. Ideal for work or travel.',
+    seoDescription: 'Luxury vegan leather tote bag – professional, elegant, and durable.',
+    seoKeyword: 'leather tote bag, vegan leather, luxury tote, work bag',
+    seoTitle: 'Luxury Leather Tote Bag - Elegant & Durable',
+    pickup_location: 'Pune Warehouse',
+    return: true,
+    cancellation: true,
+    sizes: ['One Size'],
+    status: 'active',
+    adminApproved: true,
+    adminApprovedAt: new Date(),
+    available: true,
+    vendor: true,
+    keyFeatures: ['Vegan Leather', 'Padded Laptop Compartment', 'Zipper Closure', 'Durable Stitching'],
+    productDetails: {
+      weight: '600g',
+      dimensions: '42cm x 32cm x 12cm',
+      capacity: '20L',
+      materials: 'Premium Vegan Leather'
+    },
+    tags: ['leather', 'vegan', 'luxury', 'work'],
+    offers: false,
+    colorVariants: [
+      {
+        colorName: 'Brown',
+        colorCode: '#8B4513',
+        stock: 15,
         price: 2499,
         mrp: 3499,
-        category: 'Sports',
-        categorySlug: 'sports',
-        srtDescription: 'Professional running shoes with superior grip and comfort',
-        description: 'Comfortable running shoes with excellent grip, cushioning, and breathable material. Perfect for daily runs and athletic activities.',
-        seoDescription: 'Professional running shoes with superior grip and comfort - perfect for athletes',
-        seoKeyword: 'running shoes, athletic shoes, sports footwear, comfortable shoes',
-        seoTitle: 'Professional Running Shoes - Superior Comfort & Grip',
-        pickup_location: 'Bangalore Warehouse',
-        return: true,
-        cancellation: true,
-        sizes: ['7', '8', '9', '10', '11'],
-        status: 'active',
-        adminApproved: true,
-        adminApprovedAt: new Date(),
-        available: true,
-        vendor: true,
-        keyFeatures: ['Superior Grip', 'Breathable Material', 'Cushioned Sole', 'Lightweight Design'],
-        productDetails: {
-            weight: '300g per shoe',
-            dimensions: 'Standard athletic fit',
-            capacity: 'N/A',
-            materials: 'Synthetic mesh and rubber sole'
-        },
-        tags: ['running', 'sports', 'athletic', 'comfortable'],
-        offers: false,
-        colorVariants: [
-            {
-                colorName: 'Blue',
-                colorCode: '#0000FF',
-                stock: 40,
-                price: 2499,
-                mrp: 3499,
-                sizes: ['7', '8', '9', '10', '11'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80',
-                    public_id: 'shoes_blue_unsplash',
-                    is_primary: true
-                }]
-            },
-            {
-                colorName: 'Gray',
-                colorCode: '#808080',
-                stock: 35,
-                price: 2499,
-                mrp: 3499,
-                sizes: ['7', '8', '9', '10', '11'],
-                isActive: true,
-                images: [{
-                    url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80',
-                    public_id: 'shoes_gray_unsplash',
-                    is_primary: true
-                }]
-            }
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&q=80',
+            public_id: 'tote_brown_unsplash',
+            is_primary: true
+          }
         ]
-    }
-];
+      },
+      {
+        colorName: 'Tan',
+        colorCode: '#D2B48C',
+        stock: 12,
+        price: 2499,
+        mrp: 3499,
+        sizes: ['One Size'],
+        isActive: true,
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1585386959984-a41552231693?w=800&q=80',
+            public_id: 'tote_tan_unsplash',
+            is_primary: true
+          }
+        ]
+      }
+    ]
+  }
+]
+
 
 async function seedDatabase() {
     try {
