@@ -121,14 +121,33 @@ export default function VendorProductsPage() {
   const filteredProducts = productsList;
 
   const getImageUrl = (product: any) => {
-    // Backend now provides primaryImage field
-    if (product.primaryImage) {
-      return product.primaryImage;
+    // 1) Prefer first color variant image (primary if set)
+    if (Array.isArray(product.colorVariants) && product.colorVariants.length > 0) {
+      const variant =
+        product.colorVariants.find((v: any) => v.isActive && Array.isArray(v.images) && v.images.length > 0) ||
+        product.colorVariants.find((v: any) => Array.isArray(v.images) && v.images.length > 0);
+
+      if (variant && Array.isArray(variant.images) && variant.images.length > 0) {
+        // find primary image flag (schema uses `is_primary`)
+        const imgObj = variant.images.find((i: any) => !!(i && (i.is_primary || i.is_primary === true))) || variant.images[0];
+        if (imgObj) {
+          if (typeof imgObj === 'string') return imgObj;
+          if (imgObj.url) return imgObj.url;
+        }
+      }
     }
-    // Fallback to images array
+
+    // 2) Then prefer explicit primaryImage field if backend provides it
+    if (product.primaryImage) return product.primaryImage;
+
+    // 3) Fallback to top-level images array (support string or object items)
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images[0];
+      const first = product.images[0];
+      if (typeof first === 'string') return first;
+      if (first && first.url) return first.url;
     }
+
+    // final fallback
     return '/products/product.png';
   };
 
@@ -484,4 +503,4 @@ export default function VendorProductsPage() {
       </section>
     </VendorLayout>
   );
-} 
+}

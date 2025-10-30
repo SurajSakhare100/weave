@@ -58,7 +58,7 @@ export default function VendorEditProductPage() {
   const [keyFeatures, setKeyFeatures] = useState(['', '', '', '']);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<{url: string; public_id: string}[]>([]);
+  const [existingImages, setExistingImages] = useState<{url: string; public_id?: string}[]>([]);
   const [price, setPrice] = useState('');
   const [mrp, setMrp] = useState('');
   const [offers, setOffers] = useState(false);
@@ -68,13 +68,17 @@ export default function VendorEditProductPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
-  // State for color variants with images and stock
+  // State for color variants with images and stock (now includes price & mrp)
   const [colorImageMap, setColorImageMap] = useState<{
     [color: string]: {
       hex: string;
       images: File[];
-      imageUrls?: string[];
+      previewUrls?: string[];
+      imageUrls?: { url: string; public_id?: string; is_primary?: boolean }[];
       stock: number;
+      price?: number;
+      
+      mrp?: number;
     }
   }>({});
 
@@ -101,42 +105,49 @@ export default function VendorEditProductPage() {
       }
       setName(p.name || '');
       setDescription(p.description || '');
-      setAdditionalDetails(p.srtDescription || '');
+      // updated field name to match model
+      setAdditionalDetails(p.shortDescription || '');
       setProductDetails(p.productDetails || { weight: '', dimensions: '', capacity: '', materials: '' });
       setKeyFeatures(p.keyFeatures || ['', '', '', '']);
+      // keep for backwards compatibility if top-level images exist in older docs
       setExistingImages(p.images || []);
       setPrice(p.price?.toString() || '');
       setMrp(p.mrp?.toString() || '');
       setOffers(!!p.offers);
       setSalePrice(p.salePrice?.toString() || '');
-      setCategory(p.categorySlug || '');
+      // category in model is ObjectId or populated object
+      setCategory(p.category?._id || p.category || '');
       setSizes(p.sizes || []);
       setTags(p.tags || []);
 
-      // Load color variants
+      // Load color variants (preferred model)
       if (p.colorVariants && p.colorVariants.length > 0) {
-        const colorMap: {[color: string]: {hex: string; images: File[]; imageUrls?: string[]; stock: number}} = {};
+        const colorMap: {[color: string]: any} = {};
         p.colorVariants.forEach((variant: any) => {
           colorMap[variant.colorName] = {
-            hex: variant.colorCode,
+            hex: variant.colorCode || '#cccccc',
             images: [],
-            imageUrls: variant.images?.map((img: any) => img.url) || [],
-            stock: variant.stock || 0
+            previewUrls: [],
+            imageUrls: variant.images?.map((img: any) => ({ url: img.url, public_id: img.public_id, is_primary: img.is_primary })) || [],
+            stock: variant.stock || 0,
+            price: typeof variant.price !== 'undefined' ? variant.price : (p.price || 0),
+            mrp: typeof variant.mrp !== 'undefined' ? variant.mrp : (p.mrp || 0),
           };
         });
         setColorImageMap(colorMap);
-      } else if (p.colorImages) {
-        // Legacy color images support
-        const colorMap: {[color: string]: {hex: string; images: File[]; imageUrls?: string[]; stock: number}} = {};
-        Object.entries(p.colorImages).forEach(([color, images]) => {
-          colorMap[color] = {
-            hex: '#cccccc', // Default color for legacy
+      } else if (p.images && p.images.length > 0) {
+        // legacy top-level images -> create a default variant view
+        setColorImageMap({
+          Default: {
+            hex: '#000000',
             images: [],
-            imageUrls: (images as any[])?.map((img: any) => img.url) || [],
-            stock: 0
-          };
+            previewUrls: [],
+            imageUrls: p.images?.map((img: any) => ({ url: img.url, public_id: img.public_id })) || [],
+            stock: p.stock || 0,
+            price: p.price || 0,
+            mrp: p.mrp || 0,
+          }
         });
-        setColorImageMap(colorMap);
       }
     }).catch((err) => {
       if (err.response?.status === 404) {
@@ -243,6 +254,9 @@ const handleColorImageUpload = (color: string, e: React.ChangeEvent<HTMLInputEle
       images: [...(prev[color]?.images || []), ...validFiles],
       previewUrls: [...(prev[color]?.previewUrls || []), ...previewUrls],
       imageUrls: prev[color]?.imageUrls || [], // keep backend URLs separate
+      stock: prev[color]?.stock ?? 0,
+      price: prev[color]?.price ?? Number(price || 0),
+      mrp: prev[color]?.mrp ?? Number(mrp || 0),
     },
   }));
 
@@ -304,13 +318,17 @@ const removeColorSection = (color: string) => {
         return newColorImages;
       });
     } else {
-      // Add new color
+      // Add new color with price/mrp defaults from top-level fields
       setColorImageMap(prev => ({
         ...prev,
         [colorOption.name]: {
           hex: colorOption.hex,
           images: [],
-          stock: 0
+          previewUrls: [],
+          imageUrls: [],
+          stock: 0,
+          price: Number(price || 0),
+          mrp: Number(mrp || 0),
         }
       }));
     }
@@ -370,7 +388,18 @@ const removeColorSection = (color: string) => {
       errors.category = 'Category is required';
     }
 
-    const totalImages = existingImages.length + images.length;
+    // Count images across color variants or fallback to legacy fields
+    let totalImages = 0;
+    const variantKeys = Object.keys(colorImageMap);
+    if (variantKeys.length > 0) {
+      variantKeys.forEach(k => {
+        const d = colorImageMap[k];
+        totalImages += (d.imageUrls?.length || 0) + (d.images?.length || 0);
+      });
+    } else {
+      totalImages = existingImages.length + images.length;
+    }
+
     if (totalImages === 0) {
       errors.images = 'At least one image is required';
     } else if (totalImages > MAX_IMAGES) {
@@ -398,10 +427,10 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     const formData = new FormData();
 
-    // Basic fields
-    const basicFields = { name, description, price, mrp, category, offers, salePrice, srtDescription: additionalDetails };
+    // Basic fields - note shortDescription renamed to match model
+    const basicFields = { name, description, price, mrp, category, offers, salePrice, shortDescription: additionalDetails };
     for (const [key, value] of Object.entries(basicFields)) {
-      if (value) formData.append(key, String(value).trim());
+      if (value !== undefined && value !== null && String(value).trim() !== '') formData.append(key, String(value).trim());
     }
 
     // Product details, tags, sizes
@@ -410,23 +439,53 @@ const handleSubmit = async (e: React.FormEvent) => {
     tags.forEach(tag => formData.append('tags', tag.trim()));
     sizes.forEach(size => formData.append('sizes', size.trim().toUpperCase()));
 
-    // Color variants (no nested madness)
-    const colorVariants = Object.entries(colorImageMap).map(([color, data]) => ({
-      colorName: color,
-      colorCode: data.hex,
-      stock: data.stock,
-      isActive: true,
-    }));
-    formData.append('colorVariants', JSON.stringify(colorVariants));
+    // Build colorVariants payload from colorImageMap
+    const builtColorVariants: any[] = [];
 
-    // Color images
-    Object.entries(colorImageMap).forEach(([color, data]) => {
-      data.images.forEach(img => formData.append(`colorImages_${color}`, img));
-    });
+    const variantKeys = Object.keys(colorImageMap);
+    if (variantKeys.length > 0) {
+      variantKeys.forEach(color => {
+        const data = colorImageMap[color];
+        builtColorVariants.push({
+          colorName: color,
+          colorCode: data.hex,
+          stock: data.stock || 0,
+          price: typeof data.price !== 'undefined' ? data.price : Number(price || 0),
+          mrp: typeof data.mrp !== 'undefined' ? data.mrp : Number(mrp || 0),
+          isActive: true,
+        });
 
-    // Product images
-    formData.append('existingImages', JSON.stringify(existingImages));
-    images.forEach(img => formData.append('images', img));
+        // append files for this variant
+        (data.images || []).forEach(img => formData.append(`colorImages_${color}`, img));
+        // Note: existing uploaded URLs are kept in JSON so backend can skip re-upload
+        if (data.imageUrls && data.imageUrls.length > 0) {
+          formData.append(`existingColorImages_${color}`, JSON.stringify(data.imageUrls));
+        }
+      });
+    } else {
+      // No explicit variants selected -> create a default variant (for compatibility with model)
+      const defaultVariant = {
+        colorName: 'Default',
+        colorCode: '#000000',
+        stock: 0,
+        price: Number(price || 0),
+        mrp: Number(mrp || 0),
+        isActive: true,
+      };
+      builtColorVariants.push(defaultVariant);
+
+      // append new images
+      images.forEach(img => formData.append(`colorImages_Default`, img));
+      // append legacy existing images info (if any)
+      if (existingImages.length > 0) {
+        formData.append(`existingColorImages_Default`, JSON.stringify(existingImages));
+      }
+    }
+
+    formData.append('colorVariants', JSON.stringify(builtColorVariants));
+
+    // For backwards compatibility also send top-level sizes/tags if backend expects them
+    // (already appended above)
 
     await editVendorProduct(id as string, formData);
     toast.success('Product updated! Awaiting admin review.');
@@ -557,7 +616,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </section>
 
             {/* Images & Category */}
-            <section>
+            {/* <section>
               <h2 className="text-xl font-semibold text-[#357ab8] mb-4">Images & Category</h2>
               <div className="mb-4">
                 <label className="block font-medium mb-1 flex items-center gap-1">
@@ -641,7 +700,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </select>
                 {fieldErrors.category && <div className="text-red-600 text-sm mt-1">{fieldErrors.category}</div>}
               </div>
-            </section>
+            </section> */}
 
             {/* Price */}
             <section>
@@ -840,6 +899,44 @@ const handleSubmit = async (e: React.FormEvent) => {
                       />
                     </div>
 
+                    {/* Price & MRP inputs */}
+                    <div className="mb-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Price for {color} (₹):</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={colorData.price ?? ''}
+                          onChange={(e) => setColorImageMap(prev => ({
+                            ...prev,
+                            [color]: {
+                              ...prev[color],
+                              price: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                            }
+                          }))}
+                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">MRP for {color} (₹):</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={colorData.mrp ?? ''}
+                          onChange={(e) => setColorImageMap(prev => ({
+                            ...prev,
+                            [color]: {
+                              ...prev[color],
+                              mrp: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                            }
+                          }))}
+                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5A9BD8]"
+                        />
+                      </div>
+                    </div>
+
                     {/* Image upload */}
                     <div>
                       <label className="block text-sm font-medium mb-2">Images for {color} variant:</label>
@@ -848,13 +945,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                         {colorData.imageUrls?.map((imageUrl, index) => (
                           <div key={`existing-${index}`} className="relative group">
                             <img 
-                              src={imageUrl} 
+                              src={imageUrl.url} 
                               alt={`${color} variant ${index + 1}`} 
                               className="w-full h-24 object-cover rounded-lg border"
                             />
                             <button
                               type="button"
-                              onClick={() => removeColorImage(color, index)}
+                              // Mark as 'uploaded' so the code removes from imageUrls (backend URLs)
+                              onClick={() => removeColorImage(color, index, 'uploaded')}
                               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="h-3 w-3" />
@@ -872,7 +970,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                             />
                             <button
                               type="button"
-                              onClick={() => removeColorImage(color, index)}
+                              // Explicitly remove preview/local image
+                              onClick={() => removeColorImage(color, index, 'preview')}
                               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="h-3 w-3" />
@@ -934,4 +1033,4 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
     </VendorLayout>
   );
-} 
+}

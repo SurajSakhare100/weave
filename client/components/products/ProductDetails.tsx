@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Heart, Star, Share2, Copy, ChevronLeft, ChevronRight, BarChart3, ChevronDown } from 'lucide-react';
 import { ProductWithReviews } from '@/types';
@@ -27,28 +27,100 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const getPrimaryImage = () => {
-    if (product.images && product.images.length > 0) {
-      const primary = product.images.find(img => img.is_primary);
-      return primary ? primary.url : product.images[0].url;
+
+  // Auto-select first color with images when component mounts
+  useEffect(() => {
+    if (product?.colorVariants && product.colorVariants.length > 0 && !selectedColor) {
+      const firstActiveColorWithImages = product.colorVariants.find(variant =>
+        variant.isActive &&
+        variant.stock > 0 &&
+        variant.images &&
+        variant.images.length > 0
+      );
+      if (firstActiveColorWithImages) {
+        setSelectedColor(firstActiveColorWithImages.colorName);
+      }
     }
-    return '/products/product.png';
+  }, [product, selectedColor]);
+
+  // Selected variant object (if any)
+  const selectedVariant = useMemo(() => {
+    if (!selectedColor || !product?.colorVariants) return null;
+    return product.colorVariants.find((v: any) => v.colorName === selectedColor && v.isActive) || null;
+  }, [product, selectedColor]);
+
+  // Get display images based on selected color - only use colorVariants system
+  const displayImages = useMemo(() => {
+    // If no color selected, use main product images or first color variant's images
+    if (!selectedColor) {
+      if (product?.images && product.images.length > 0) {
+        return product.images;
+      }
+      // If no main images, use first color variant's images
+      if (product?.colorVariants && product.colorVariants.length > 0) {
+        const firstVariant = product.colorVariants.find(variant =>
+          variant.isActive && variant.images && variant.images.length > 0
+        );
+        if (firstVariant) {
+          return firstVariant.images;
+        }
+      }
+      return [];
+    }
+
+    // Find color-specific images from colorVariants
+    if (product?.colorVariants && product.colorVariants.length > 0) {
+      const sel = product.colorVariants.find(variant =>
+        variant.colorName === selectedColor && variant.isActive
+      );
+
+      if (sel && sel.images && sel.images.length > 0) {
+        return sel.images;
+      }
+    }
+
+    // If selected color variant has no images, return empty array
+    return [];
+  }, [product, selectedColor]);
+
+  // reset current image index when images list changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [displayImages]);
+
+  // derive primary image url from displayImages + currentIndex with fallbacks
+  const getPrimaryImage = () => {
+    const imgItem = (displayImages && displayImages.length > 0) ? displayImages[currentImageIndex] : null;
+
+    const resolveUrl = (it: any) => {
+      if (!it) return null;
+      if (typeof it === 'string') return it;
+      if (it.url) return it.url;
+      return null;
+    };
+
+    const url =
+      resolveUrl(imgItem) ||
+      resolveUrl(displayImages?.[0]) ||
+      (product.primaryImage as string | undefined) ||
+      resolveUrl(product.images?.[0]) ||
+      '/products/product.png';
+
+    return url;
   };
 
-  const getStarRating = (rating: number) => {
-    return Math.round(rating);
-  };
+  // Price/mrp based on selected variant fallback to main product
+  const displayPrice = (selectedVariant?.price ?? product.price) as number;
+  const displayMrp = (selectedVariant?.mrp ?? product.mrp) as number;
 
   const calculateDiscount = () => {
-    if (!product) return 0;
-    return Math.round(((product.mrp - product.price) / product.mrp) * 100);
+    if (!displayMrp || !displayPrice || displayMrp <= displayPrice) return 0;
+    return Math.round(((displayMrp - displayPrice) / displayMrp) * 100);
   };
 
-  const getCurrentImage = () => {
-    if (displayImages && displayImages.length > 0) {
-      return displayImages[currentImageIndex]?.url || getPrimaryImage();
-    }
-    return getPrimaryImage();
+  // helper used by star rendering remains unchanged
+  const getStarRating = (rating: number) => {
+    return Math.round(rating);
   };
 
   const handlePreviousImage = () => {
@@ -115,55 +187,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
       }));
   }, [product]);
 
-  // Auto-select first color with images when component mounts
-  React.useEffect(() => {
-    if (product?.colorVariants && product.colorVariants.length > 0 && !selectedColor) {
-      const firstActiveColorWithImages = product.colorVariants.find(variant => 
-        variant.isActive && 
-        variant.stock > 0 && 
-        variant.images && 
-        variant.images.length > 0
-      );
-      if (firstActiveColorWithImages) {
-        setSelectedColor(firstActiveColorWithImages.colorName);
-      }
-    }
-  }, [product]);
-
-  // Get display images based on selected color - only use colorVariants system
-  const displayImages = useMemo(() => {
-    // If no color selected, use main product images or first color variant's images
-    if (!selectedColor) {
-      if (product?.images && product.images.length > 0) {
-        return product.images;
-      }
-      // If no main images, use first color variant's images
-      if (product?.colorVariants && product.colorVariants.length > 0) {
-        const firstVariant = product.colorVariants.find(variant => 
-          variant.isActive && variant.images && variant.images.length > 0
-        );
-        if (firstVariant) {
-          return firstVariant.images;
-        }
-      }
-      return [];
-    }
-
-    // Find color-specific images from colorVariants
-    if (product?.colorVariants && product.colorVariants.length > 0) {
-      const selectedVariant = product.colorVariants.find(variant => 
-        variant.colorName === selectedColor && variant.isActive
-      );
-      
-      if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
-        return selectedVariant.images;
-      }
-    }
-
-    // If selected color variant has no images, return empty array
-    return [];
-  }, [product, selectedColor]);
-
   return (
     <div className="flex flex-col lg:flex-row gap-12">
       {/* Left: Images */}
@@ -172,7 +195,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         <div className="relative w-full h-[500px] bg-[#FFFBF9] flex items-center justify-center rounded-lg overflow-hidden">
           {displayImages.length > 0 ? (
             <Image
-              src={getCurrentImage()}
+              src={getPrimaryImage()}
               alt={product.name}
               fill
               className="object-contain sm:p-8 p-4 rounded-lg"
@@ -187,7 +210,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               )}
             </div>
           )}
-          
+
           {/* Top Right Icons */}
           <div className="absolute top-4 right-4 flex flex-col gap-2">
             {/* Wishlist Icon */}
@@ -235,8 +258,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               )}
             </div>
 
-
-
             {/* Compare Icon */}
             {onCompare && (
               <button
@@ -259,7 +280,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               >
                 <ChevronLeft className="h-5 w-5 text-white" />
               </button>
-              
+
               <button
                 onClick={handleNextImage}
                 className="absolute bottom-4 left-1/2 ml-3 transform -translate-y-1/2 bg-primary backdrop-blur-sm p-2 rounded-full shadow-md  transition-all mr-16"
@@ -269,55 +290,34 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               </button>
             </>
           )}
-
-          {/* Product Navigation Buttons */}
-          {/* <div className="absolute bottom-4 left-4 flex gap-2">
-            {onPrevious && (
-              <button
-                onClick={onPrevious}
-                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md  transition-all flex items-center gap-2"
-                title="Previous Product"
-              >
-                <ChevronLeft className="h-4 w-4 text-[#5E3A1C]" />
-                <span className="text-sm font-medium text-[#5E3A1C]">Previous</span>
-              </button>
-            )}
-            
-            {onNext && (
-              <button
-                onClick={onNext}
-                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md  transition-all flex items-center gap-2"
-                title="Next Product"
-              >
-                <span className="text-sm font-medium text-[#5E3A1C]">Next</span>
-                <ChevronRight className="h-4 w-4 text-[#5E3A1C]" />
-              </button>
-            )}
-          </div> */}
         </div>
 
         {/* Thumbnails */}
         {displayImages && displayImages.length > 1 && (
           <div className="flex gap-4 mt-4 justify-start overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {displayImages.map((img, idx) => (
-              <button
-                key={img.public_id || idx}
-                onClick={() => setCurrentImageIndex(idx)}
-                className={`shrink-0 w-16 h-16 overflow-hidden rounded-lg border-2 transition-all ${
-                  currentImageIndex === idx
-                    ? 'border-[#EE346C] ring-2 ring-[#EE346C]/20'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <Image
-                  src={img.url}
-                  alt={`${product.name} - Image ${idx + 1}`}
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              </button>
-            ))}
+            {displayImages.map((img: any, idx: number) => {
+              const url = typeof img === 'string' ? img : img?.url;
+              const key = (img && img.public_id) || url || idx;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setCurrentImageIndex(idx)}
+                  className={`shrink-0 w-16 h-16 overflow-hidden rounded-lg border-2 transition-all ${
+                    currentImageIndex === idx
+                      ? 'border-[#EE346C] ring-2 ring-[#EE346C]/20'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Image
+                    src={url || '/products/product.png'}
+                    alt={`${product.name} - Image ${idx + 1}`}
+                    width={64}
+                    height={64}
+                    className="object-cover w-full h-full"
+                  />
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -401,38 +401,56 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
           </div>
         )}
 
+
+{
+  product.sizes && product.sizes.length > 0 && (
+  
+    <div>
+      <span className="text-[#5E3A1C] text-sm mb-2 block">
+        Size:
+      </span>
+      <div className="flex gap-2 flex-wrap">
+        {product.sizes.map((size) => (
+          <button
+            key={size}
+            className="px-3 py-1 border border-gray-300 rounded hover:border-[#EE346C] text-sm text-[#5E3A1C]"
+          >
+            {size}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
         {/* Price Section */}
         <div>
-        <div className="flex items-center gap-4">
-          <div className="text-[#B04848] text-2xl font-medium">
-            -{calculateDiscount()}%
+          <div className="flex items-center gap-4">
+            <div className="text-[#B04848] text-2xl font-medium">
+              -{calculateDiscount()}%
+            </div>
+            <div className="text-[#5E3A1C] text-2xl font-bold">
+              ₹{Number(displayPrice).toLocaleString('en-IN')}
+            </div>
+
+            <div className="bg-[#B59C8A] w-fit text-white px-3 py-1 rounded-md inline-flex items-center gap-2 text-sm">
+              <span className="font-medium">Limited Deal</span>
+            </div>
           </div>
-          <div className="text-[#5E3A1C] text-2xl font-bold">
-            ₹{product.price.toLocaleString('en-IN')}
-          </div>
-          
-          <div className="bg-[#B59C8A] w-fit text-white px-3 py-1 rounded-md inline-flex items-center gap-2 text-sm">
-          <span className="font-medium">Limited Deal</span>
-        </div>
-        </div>
-        {product.mrp > product.price && (
+          {displayMrp > displayPrice && (
             <span className="text-sm text-[#5E3A1C] line-through opacity-70">
-              M.R.P.: ₹{product.mrp.toLocaleString('en-IN')}
+              M.R.P.: ₹{Number(displayMrp).toLocaleString('en-IN')}
             </span>
           )}
         </div>
-        
-        {/* Limited Deal Badge */}
-        
 
         {/* Note */}
         <div className=''>
-        <div className="text-[#EE346C] text-sm sm:text-base pb-2 ">
-          Note: We offer worldwide shipping for all orders.
-        </div>
-        <div className="text-[#5E3A1C] text-sm sm:text-base">
-          Delivery expected within the next 3-4 business days to 🇮🇳
-        </div>
+          <div className="text-[#EE346C] text-sm sm:text-base pb-2 ">
+            Note: We offer worldwide shipping for all orders.
+          </div>
+          <div className="text-[#5E3A1C] text-sm sm:text-base">
+            Delivery expected within the next 3-4 business days to 🇮🇳
+          </div>
         </div>
 
         {/* Buttons */}

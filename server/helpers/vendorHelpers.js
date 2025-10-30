@@ -533,7 +533,8 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
     }
 
     // ========= HANDLE EXISTING IMAGES =========
-    let images = product.images || [];
+    // top-level images (legacy)
+    let images = product.images ? JSON.parse(JSON.stringify(product.images)) : [];
     if (updateData.existingImages) {
       try {
         images = JSON.parse(updateData.existingImages);
@@ -548,7 +549,7 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
 
     if (newImageFiles && newImageFiles.length > 0) {
       for (const file of newImageFiles) {
-        if (file.fieldname.startsWith('colorImages_')) {
+        if (file.fieldname && file.fieldname.startsWith('colorImages_')) {
           const colorKey = file.fieldname.replace('colorImages_', '').trim().toLowerCase();
           if (!colorVariantFiles[colorKey]) colorVariantFiles[colorKey] = [];
           colorVariantFiles[colorKey].push(file);
@@ -558,9 +559,12 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
       }
     }
 
+    // keep list of public_ids to delete from cloudinary
+    const toDeletePublicIds = [];
+
     // ========= UPLOAD GENERAL IMAGES =========
     if (generalFiles.length > 0) {
-      if (images.length + generalFiles.length > 4) throw new Error('Maximum 4 images allowed');
+      if (images.length + generalFiles.length > MAX_IMAGES) throw new Error(`Maximum ${MAX_IMAGES} images allowed`);
       const buffers = generalFiles.map((f) => f.buffer);
       const uploaded = await uploadMultipleImages(buffers, 'weave-products', `product_${product.slug}_${Date.now()}`);
       const formatted = uploaded.map((r, i) => ({
@@ -577,38 +581,118 @@ export const updateVendorProduct = async (productId, updateData, newImageFiles, 
       images = [...images, ...formatted];
     }
 
-   // ========= UPLOAD COLOR VARIANT IMAGES =========
-if (Array.isArray(updateData.colorVariants) && Object.keys(colorVariantFiles).length > 0) {
-  for (const variant of updateData.colorVariants) {
-    const colorKey = variant.colorName?.toLowerCase();
-    const filesForColor = colorVariantFiles[colorKey];
-    if (!filesForColor?.length) continue;
+    // ========= HANDLE COLOR VARIANT IMAGES + DELETIONS =========
+    // We'll build a new colorVariants array to save (merge with incoming updateData)
+    const incomingVariants = Array.isArray(updateData.colorVariants) ? updateData.colorVariants : [];
+    const existingProductVariants = product.colorVariants || [];
 
-    const buffers = filesForColor.map(f => f.buffer);
-    const uploaded = await uploadMultipleImages(
-      buffers,
-      'weave-products',
-      `variant_${colorKey}_${Date.now()}`
-    );
+    // Helper to get previous images for a variant (by colorName case-insensitive)
+    const getPreviousVariantImages = (colorName) => {
+      const prev = existingProductVariants.find(v => String(v.colorName).toLowerCase() === String(colorName).toLowerCase());
+      return prev && Array.isArray(prev.images) ? prev.images.map(i => ({ ...i })) : [];
+    };
 
-    variant.images = [
-      ...(variant.images || []),
-      ...uploaded.map(r => ({
-        url: r.url,
-        public_id: r.public_id,
-        width: r.width,
-        height: r.height,
-        format: r.format,
-        bytes: r.bytes,
-        thumbnail_url: r.eager?.[0]?.url || r.url,
-      })),
-    ];
-  }
-}
+    for (const variant of incomingVariants) {
+      const colorKey = String(variant.colorName || '').toLowerCase();
 
+      // 1) parse existingColorImages if provided (field name may be exact or lowercased)
+      let providedExistingKeyExact = `existingColorImages_${variant.colorName}`;
+      let providedExistingKeyLower = `existingColorImages_${colorKey}`;
+      let providedExisting = null;
 
-    // ========= FINAL VALIDATION =========
-    if (images.length === 0) throw new Error('At least one image is required');
+      if (updateData[providedExistingKeyExact]) {
+        try { providedExisting = JSON.parse(updateData[providedExistingKeyExact]); } catch { providedExisting = null; }
+      } else if (updateData[providedExistingKeyLower]) {
+        try { providedExisting = JSON.parse(updateData[providedExistingKeyLower]); } catch { providedExisting = null; }
+      }
+
+      // previous images from DB for this variant
+      const prevImages = getPreviousVariantImages(variant.colorName);
+
+      // If providedExisting is present, ensure variant.images starts from that (keeps public_id/url)
+      if (Array.isArray(providedExisting)) {
+        // determine which prevImages were removed (present before but not in providedExisting by public_id)
+        const providedPublicIds = providedExisting.map(i => i.public_id).filter(Boolean);
+        const removedFromPrev = prevImages.filter(pi => pi.public_id && !providedPublicIds.includes(pi.public_id));
+        removedFromPrev.forEach(r => { if (r.public_id) toDeletePublicIds.push(r.public_id); });
+
+        // set variant.images to providedExisting (these likely contain url/public_id)
+        variant.images = providedExisting.map(i => ({
+          url: i.url,
+          public_id: i.public_id,
+          is_primary: !!i.is_primary,
+          width: i.width,
+          height: i.height,
+          format: i.format,
+        }));
+      } else {
+        // if not provided, start with prevImages
+        variant.images = prevImages.map(i => ({ ...i }));
+      }
+
+      // 2) handle newly uploaded files for this color (if any)
+      const filesForColor = colorVariantFiles[colorKey] || [];
+      if (filesForColor.length > 0) {
+        const buffers = filesForColor.map(f => f.buffer);
+        const uploaded = await uploadMultipleImages(buffers, 'weave-products', `variant_${colorKey}_${Date.now()}`);
+        const uploadedFormatted = uploaded.map(r => ({
+          url: r.url,
+          public_id: r.public_id,
+          width: r.width,
+          height: r.height,
+          format: r.format,
+          bytes: r.bytes,
+          thumbnail_url: r.eager?.[0]?.url || r.url,
+        }));
+        // append uploaded images to variant.images
+        variant.images = [...(variant.images || []), ...uploadedFormatted];
+      }
+
+      // ensure numeric fields
+      variant.stock = Number(variant.stock) || 0;
+      variant.price = typeof variant.price !== 'undefined' ? Number(variant.price) : undefined;
+      variant.mrp = typeof variant.mrp !== 'undefined' ? Number(variant.mrp) : undefined;
+      variant.colorCode = variant.colorCode || '#000000';
+      variant.isActive = variant.isActive === undefined ? true : !!variant.isActive;
+    }
+
+    // ========= CLEANUP TOP-LEVEL IMAGES REMOVED =========
+    // If updateData.existingImages provided earlier, we parsed `images` accordingly.
+    // Determine which top-level images from DB are removed and schedule delete.
+    const prevTopLevelPublicIds = (product.images || []).map(i => i.public_id).filter(Boolean);
+    const keptTopLevelPublicIds = (images || []).map(i => i.public_id).filter(Boolean);
+    const removedTopLevel = prevTopLevelPublicIds.filter(pid => !keptTopLevelPublicIds.includes(pid));
+    removedTopLevel.forEach(pid => toDeletePublicIds.push(pid));
+
+    // ========= FINAL VALIDATION - ensure at least one image via color variants or top-level images =========
+    // prefer color variant images as main images
+    let mainImages = [];
+    if (incomingVariants.length > 0) {
+      // collect first image of first variant that has images
+      const firstWithImages = incomingVariants.find(v => Array.isArray(v.images) && v.images.length > 0);
+      if (firstWithImages) {
+        mainImages = [incomingVariants[0].images && incomingVariants[0].images[0] ? incomingVariants[0].images[0] : firstWithImages.images[0]].filter(Boolean);
+      }
+    }
+
+    // fallback to top-level images if no variant images present
+    if (mainImages.length === 0 && images.length > 0) {
+      mainImages = [images[0]];
+    }
+
+    if (mainImages.length === 0) {
+      throw new Error('At least one image is required');
+    }
+
+    // delete scheduled public_ids from cloudinary
+    if (toDeletePublicIds.length > 0) {
+      try {
+        await deleteMultipleImages(toDeletePublicIds);
+      } catch (delErr) {
+        // log but do not fail the whole update for deletion failures
+        console.error('Failed to delete some images from cloudinary:', delErr);
+      }
+    }
 
     // Reset admin review
     updateData.adminApproved = false;
@@ -617,9 +701,22 @@ if (Array.isArray(updateData.colorVariants) && Object.keys(colorVariantFiles).le
     updateData.adminRejectionReason = null;
     updateData.status = 'draft';
 
+    // attach computed images/main images and colorVariants
+    let finalUpdate = { ...updateData };
+    finalUpdate.images = mainImages;
+    // If colorVariants present in updateData, use that as final colorVariants (already mutated above)
+    if (incomingVariants.length > 0) {
+      finalUpdate.colorVariants = incomingVariants;
+      // compute overall stock from variants
+      finalUpdate.stock = incomingVariants.reduce((s, v) => s + (Number(v.stock) || 0), 0);
+    } else {
+      // keep existing variants if not updating variants
+      finalUpdate.colorVariants = product.colorVariants || [];
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      { ...updateData, images },
+      finalUpdate,
       { new: true, runValidators: true }
     );
 
@@ -757,4 +854,4 @@ export const searchVendorProducts = async (vendorId, searchTerm, options = {}) =
     console.error('Error searching vendor products:', error);
     throw new Error('Failed to search products');
   }
-}; 
+};

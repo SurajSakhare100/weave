@@ -39,8 +39,44 @@ export default function ProductDetailPage() {
   const [compareProducts, setCompareProducts] = useState<(Product | ProductWithReviews)[]>([])
   const [showCompareModal, setShowCompareModal] = useState(false)
 
-  // Update image gallery to use displayImages
+  // Update image gallery to use displayImages (prefer colorVariants images)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Build displayImages preferring colorVariants' primary images, fallback to top-level images
+  const displayImages = useMemo(() => {
+    if (!product) return [];
+    // prefer colorVariants images when available
+    if (Array.isArray(product.colorVariants) && product.colorVariants.length > 0) {
+      const imgs: string[] = [];
+      for (const v of product.colorVariants) {
+        if (!Array.isArray(v.images) || v.images.length === 0) continue;
+        const primary = v.images.find((i: any) => i.is_primary) || v.images[0];
+        if (primary?.url) imgs.push(primary.url);
+        for (const img of v.images) {
+          if (img.url && img.url !== primary?.url) imgs.push(img.url);
+        }
+      }
+      if (imgs.length) return imgs;
+      // final fallback to top-level
+      return (product.images || []).map((i: any) => i.url).filter(Boolean);
+    }
+    // no variants -> use top-level images
+    return (product.images || []).map((i: any) => i.url).filter(Boolean);
+  }, [product]);
+
+  // keep selectedImage in sync with available displayImages
+  useEffect(() => {
+    setSelectedImage(displayImages[0] || null);
+  }, [displayImages]);
+
+  // Create a UI-safe product object that ensures ProductDetails sees preferred images in `images`
+  const productForUI = useMemo(() => {
+    if (!product) return null;
+    return {
+      ...product,
+      images: displayImages.map((url) => ({ url })),
+    };
+  }, [product, displayImages]);
 
   const { wishlist, isAuthenticated } = useSelector((state: RootState) => state.user)
   const inWishlist = product && wishlist.includes(product._id)
@@ -296,20 +332,22 @@ export default function ProductDetailPage() {
     )
   }
 
+  console.log('Rendering product detail for:', productForUI);
+
   return (
     <MainLayout>
       <div className="bg-white min-h-screen">
         <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Main Product Section */}
           <ProductDetails
-            product={product}
-            inWishlist={inWishlist}
-            onWishlistToggle={handleWishlistToggle}
-            onAddToCart={handleAddToCart}
-            onCompare={handleCompare}
-            onNext={similarProducts.length > 0 ? handleNextProduct : undefined}
-            onPrevious={similarProducts.length > 0 ? handlePreviousProduct : undefined}
-          />
+             product={productForUI || product}
+             inWishlist={inWishlist}
+             onWishlistToggle={handleWishlistToggle}
+             onAddToCart={handleAddToCart}
+             onCompare={handleCompare}
+             onNext={similarProducts.length > 0 ? handleNextProduct : undefined}
+             onPrevious={similarProducts.length > 0 ? handlePreviousProduct : undefined}
+           />
 
 
           {/* Frequently Bought Together */}

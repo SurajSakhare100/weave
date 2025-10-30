@@ -22,7 +22,6 @@ const ColorVariantSchema = new mongoose.Schema({
   stock: { type: Number, required: true, min: 0 },
   price: { type: Number, required: true, min: 0 },
   mrp: { type: Number, required: true, min: 0 },
-  sizes: [{ type: String, trim: true }],
   isActive: { type: Boolean, default: true },
 });
 
