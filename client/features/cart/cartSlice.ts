@@ -37,53 +37,103 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
   }
 })
 
-export const addCartItem = createAsyncThunk('cart/addCartItem', async ({ product, quantity, variantSize }: { product: any, quantity: number, variantSize?: string }, { rejectWithValue }) => {
-  try {
-    if (!product || !product._id) {
-      return rejectWithValue('Invalid product data')
-    }
+export const addCartItem = createAsyncThunk(
+  'cart/addCartItem',
+  async (
+    payload: {
+      productId: string;
+      quantity?: number;
+      variantId?: string;
+      size?: string | null;
+      price?: number;
+      mrp?: number;
+      name?: string;
+      image?: string;
+      color?: string;
+      colorCode?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!payload || !payload.productId) {
+        return rejectWithValue('Invalid product data')
+      }
 
-    const result = await addToCart(product, quantity, variantSize)
-    
-    if (result.success === false) {
-      return rejectWithValue(result.message || 'Could not add to cart')
+      // Forward the full payload to service so server can create separate rows per variant/size
+      const result = await addToCart(payload)
+      
+      if (result.success === false) {
+        return rejectWithValue(result.message || 'Could not add to cart')
+      }
+      
+      return result.result || []
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Could not add to cart')
     }
-    
-    return result.result || []
-  } catch (err: any) {
-    return rejectWithValue(err.message || 'Could not add to cart')
   }
-})
+)
 
-export const updateCartQuantity = createAsyncThunk('cart/updateCartQuantity', async ({ proId, quantity }: { proId: string, quantity: number }, { rejectWithValue }) => {
-  try {
-    if (quantity < 1) {
-      return rejectWithValue('Quantity must be at least 1')
-    }
+export const updateCartQuantity = createAsyncThunk(
+  'cart/updateCartQuantity',
+  async (
+    args: {
+      proId: string;
+      quantity: number;
+      variantId?: string;
+      size?: string | null;
+      cartItemId?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { proId, quantity, variantId, size, cartItemId } = args;
+      if (!proId) return rejectWithValue('Invalid product id')
+      if (typeof quantity !== 'number' || quantity < 1) {
+        return rejectWithValue('Quantity must be at least 1')
+      }
 
-    const result = await updateCartItem(proId, quantity)
-    if (result.success === false) {
-      return rejectWithValue(result.message || 'Could not update cart')
+      // Pass detailed identifiers to backend so right row is updated
+      const result = await updateCartItem({ proId, quantity, variantId, size, cartItemId })
+      if (result.success === false) {
+        return rejectWithValue(result.message || 'Could not update cart')
+      }
+      
+      return result.result || []
+    } catch (err: any) {
+      return rejectWithValue('Could not update cart')
     }
-    
-    return result.result || []
-  } catch (err: any) {
-    return rejectWithValue('Could not update cart')
   }
-})
+)
 
-export const removeCartItem = createAsyncThunk('cart/removeCartItem', async (proId: string, { rejectWithValue }) => {
-  try {
-    const result = await removeFromCart(proId)
-    if (result.success === false) {
-      return rejectWithValue(result.message || 'Could not remove from cart')
+export const removeCartItem = createAsyncThunk(
+  'cart/removeCartItem',
+  async (
+    args: {
+      proId: string;
+      variantId?: string;
+      size?: string | null;
+      cartItemId?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { proId, variantId, size, cartItemId } = args;
+      if (!proId && !cartItemId) {
+        return rejectWithValue('Invalid item identifier')
+      }
+
+      // Forward detailed identifiers so server can remove the correct cart row
+      const result = await removeFromCart({ proId, variantId, size, cartItemId })
+      if (result.success === false) {
+        return rejectWithValue(result.message || 'Could not remove from cart')
+      }
+      
+      return result.result || []
+    } catch (err: any) {
+      return rejectWithValue('Could not remove from cart')
     }
-    
-    return result.result || []
-  } catch (err: any) {
-    return rejectWithValue('Could not remove from cart')
   }
-})
+)
 
 export const clearCartAsync = createAsyncThunk('cart/clearCartAsync', async (_, { rejectWithValue }) => {
   try {

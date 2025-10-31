@@ -25,11 +25,7 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
     return null;
   }
 
-  const handleQuantityChange = (newQuantity) => {
-    if (newQuantity >= 1 && onQuantityChange) {
-      onQuantityChange(item.proId, newQuantity);
-    }
-  };
+ 
 
   const handleRemove = () => {
     if (onRemove) {
@@ -77,7 +73,7 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
            
             {item.quantity > 1 ? (
               <button
-                onClick={() => handleQuantityChange(item.quantity - 1)}
+                onClick={() => onQuantityChange(item.quantity - 1)}
                 className=" text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors   rounded  items-center justify-center cursor-pointer"
                 aria-label="Decrease quantity"
               >
@@ -96,7 +92,7 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
               {item.quantity}
             </span>
             <button
-              onClick={() => handleQuantityChange(item.quantity + 1)}
+              onClick={() => onQuantityChange(item.quantity + 1)}
               className="text-[#EF3B6D] hover:text-pink-600 disabled:opacity-50 transition-colors rounded  flex items-center justify-center cursor-pointer"
               aria-label="Increase quantity"
             >
@@ -109,3 +105,97 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
 };
 
 export default CartItem;
+// import React from 'react';
+// import Image from 'next/image';
+// import { Minus, Plus, Trash } from 'lucide-react';
+
+// type Props = {
+//   item: any; // Cart item after normalization
+//   onQuantityChange: (q: number) => void;
+//   onRemove: () => void;
+// };
+
+// const CartItem: React.FC<Props> = ({ item, onQuantityChange, onRemove }) => {
+//   const qty = Number(item.quantity ?? item.item?.quantity ?? 1);
+//   const title = item.title ?? item.item?.name ?? item.item?.productName ?? 'Product';
+//   const price = Number(item.price ?? item.item?.price ?? 0);
+//   const mrp = Number(item.mrp ?? item.item?.mrp ?? 0);
+//   const image = item.image ?? '/products/product.png';
+//   const size = item.size ?? null;
+//   const color = item.color ?? null;
+//   const colorCode = item.colorCode ?? null;
+
+//   return (
+//     <div className="flex gap-4 items-center p-4 border rounded-md bg-white">
+//       <div className="w-20 h-20 relative flex-shrink-0">
+//         <Image src={image || '/products/product.png'} alt={title} fill className="object-contain rounded" />
+//       </div>
+
+//       <div className="flex-1 min-w-0">
+//         <div className="flex items-start justify-between gap-2">
+//           <div>
+//             <div className="font-medium text-sm text-[#5E3A1C] line-clamp-2">{title}</div>
+
+//             <div className="flex items-center gap-3 mt-2 text-xs">
+//               {color && (
+//                 <div className="flex items-center gap-2">
+//                   <span className="text-[#9B7C62]">Color</span>
+//                   <div
+//                     className="w-5 h-5 rounded-full border"
+//                     style={{
+//                       backgroundColor: colorCode || color || '#ffffff',
+//                       boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)'
+//                     }}
+//                     title={String(color)}
+//                   />
+//                 </div>
+//               )}
+
+//               {size && (
+//                 <div className="flex items-center gap-2">
+//                   <span className="text-[#9B7C62]">Size</span>
+//                   <span className="font-medium text-sm">{size}</span>
+//                 </div>
+//               )}
+//             </div>
+//           </div>
+
+//           <div className="text-right">
+//             <div className="font-semibold">₹{price.toLocaleString()}</div>
+//             {mrp > price && <div className="text-xs line-through text-gray-400">₹{mrp.toLocaleString()}</div>}
+//           </div>
+//         </div>
+
+//         <div className="mt-3 flex items-center justify-between">
+//           <div className="flex items-center gap-2 border rounded-md overflow-hidden">
+//             <button
+//               onClick={() => onQuantityChange(Math.max(1, qty - 1))}
+//               className="px-3 py-1 bg-gray-50"
+//               aria-label="Decrease quantity"
+//             >
+//               <Minus className="w-4 h-4" />
+//             </button>
+//             <div className="px-4 py-1 font-medium">{qty}</div>
+//             <button
+//               onClick={() => onQuantityChange(qty + 1)}
+//               className="px-3 py-1 bg-gray-50"
+//               aria-label="Increase quantity"
+//             >
+//               <Plus className="w-4 h-4" />
+//             </button>
+//           </div>
+
+//           <button
+//             onClick={onRemove}
+//             className="text-red-600 ml-4 p-2 rounded hover:bg-red-50"
+//             aria-label="Remove item"
+//           >
+//             <Trash className="w-4 h-4" />
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default CartItem;

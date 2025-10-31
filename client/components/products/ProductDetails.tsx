@@ -6,9 +6,22 @@ import { toast } from 'sonner';
 
 interface ProductDetailsProps {
   product: ProductWithReviews;
+  product_id?: string | number;
   inWishlist: boolean;
   onWishlistToggle: () => void;
-  onAddToCart: () => void;
+  // onAddToCart now receives a detailed payload so cart can differentiate color/size/variant
+  onAddToCart: (item: {
+    productId: string;
+    variantId?: string;
+    color?: string;
+    colorCode?: string;
+    size?: string | null;
+    price: number;
+    mrp: number;
+    quantity?: number;
+    name?: string;
+    image?: string;
+  }) => void;
   onCompare?: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
@@ -27,6 +40,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   // Auto-select first color with images when component mounts
   useEffect(() => {
@@ -49,6 +63,14 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     return product.colorVariants.find((v: any) => v.colorName === selectedColor && v.isActive) || null;
   }, [product, selectedColor]);
 
+  // Sizes available for selection - prefer variant-specific sizes, fallback to product.sizes
+  const availableSizes = useMemo(() => {
+    if (selectedVariant && Array.isArray((selectedVariant as any).sizes) && (selectedVariant as any).sizes.length > 0) {
+      return (selectedVariant as any).sizes;
+    }
+    return Array.isArray(product?.sizes) && product.sizes.length > 0 ? product.sizes : [];
+  }, [product, selectedVariant]);
+  
   // Get display images based on selected color - only use colorVariants system
   const displayImages = useMemo(() => {
     // If no color selected, use main product images or first color variant's images
@@ -138,6 +160,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const handleColorSelect = (colorName: string) => {
     setSelectedColor(selectedColor === colorName ? null : colorName);
     setCurrentImageIndex(0); // Reset to first image when color changes
+    // reset size selection when color changes (optional but helpful)
+    setSelectedSize(null);
   };
 
   const handleShare = () => {
@@ -403,17 +427,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
 
 {
-  product.sizes && product.sizes.length > 0 && (
-  
+  availableSizes && availableSizes.length > 0 && (
     <div>
       <span className="text-[#5E3A1C] text-sm mb-2 block">
         Size:
       </span>
       <div className="flex gap-2 flex-wrap">
-        {product.sizes.map((size) => (
+        {availableSizes.map((size) => (
           <button
             key={size}
-            className="px-3 py-1 border border-gray-300 rounded hover:border-[#EE346C] text-sm text-[#5E3A1C]"
+            onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+            className={`px-3 py-1 border rounded text-sm text-[#5E3A1C] ${
+              selectedSize === size ? 'border-[#EE346C] bg-[#FFF4EC] font-medium' : 'border-gray-300 hover:border-[#EE346C]'
+            }`}
+            title={`Select size ${size}`}
           >
             {size}
           </button>
@@ -456,7 +483,42 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         {/* Buttons */}
         <div className="flex gap-4">
           <button
-            onClick={onAddToCart}
+            onClick={() => {
+              // Validate selection: if color variants exist, require color
+              if (availableColors.length > 0 && !selectedColor) {
+                toast.error('Please select a color before adding to cart');
+                return;
+              }
+              // If product has sizes, require size selection
+              if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+                toast.error('Please select a size before adding to cart');
+                return;
+              }
+
+              // Resolve the selected variant object (if any)
+              const selVariant = selectedVariant as any;
+              const variantId = selVariant?.id ?? selVariant?._id ?? undefined;
+
+              const price = Number(selVariant?.price ?? product.price ?? 0);
+              const mrp = Number(selVariant?.mrp ?? product.mrp ?? 0);
+
+              const payload = {
+                productId: product?.id ?? (product._id as any),
+                variantId,
+                color: selectedColor ?? undefined,
+                colorCode: selVariant?.colorCode ?? undefined,
+                size: selectedSize ?? null,
+                // send both keys so server/services accept either naming
+                variantSize: selectedSize ?? null,
+                price,
+                mrp,
+                quantity: 1,
+                name: product.name,
+                image: getPrimaryImage(),
+              };
+
+              onAddToCart(payload);
+            }}
             className="flex-1 bg-white border border-[#E7D9CC] text-[#5E3A1C] h-12 rounded-lg font-medium hover:bg-[#FFF4EC] transition"
           >
             Add to Cart

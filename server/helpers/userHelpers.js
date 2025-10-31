@@ -131,82 +131,80 @@ export default {
 
     addToCart: async ({ userId, item }) => {
         try {
-            console.log('addToCart called with:', { userId, item });
-            
-            // Check if database connection is ready
-            if (mongoose.connection.readyState !== 1) {
-                throw new Error('Database connection not ready');
-            }
-            
             // Validate input parameters
             if (!userId) {
                 throw new Error('User ID is required');
             }
-            
             if (!item || !item.proId) {
                 throw new Error('Product ID is required');
             }
-            
-            console.log('Original proId:', item.proId, 'Type:', typeof item.proId);
-            
-            // Ensure proId is an ObjectId
+
             const proId = toObjectId(item.proId);
-            console.log('Converted proId:', proId, 'Type:', typeof proId);
-            
             if (!proId) {
                 throw new Error('Invalid product ID');
             }
-            
-            // Verify that the product exists and is available
+
+            // Verify product exists
             const product = await Product.findById(proId);
-            console.log('Found product:', product ? product._id : 'null');
-            
             if (!product) {
                 throw new Error('Product not found');
             }
-            
+
             if (!product.available) {
                 throw new Error('Product is not available');
             }
-            
-            // Ensure we have a valid size
-            const selectedSize = item.variantSize || 'M';
-            
+
+            // Use provided variant/size/color fields when available; don't default silently
+            const selectedSize = item.variantSize ?? item.size ?? null;
+            const variantId = item.variantId ?? null;
+            const color = item.color ?? null;
+            const colorCode = item.colorCode ?? null;
+            const qtyToAdd = Math.max(1, Number(item.quantity ?? 1));
+
             const cartItem = {
                 proId: proId,
-                quantity: Math.max(1, item.quantity || 1), // Ensure quantity is at least 1
-                price: item.price,
-                mrp: item.mrp,
-                variantSize: selectedSize
+                quantity: qtyToAdd,
+                price: item.price ?? product.price,
+                mrp: item.mrp ?? product.mrp,
+                variantSize: selectedSize,
+                variantId: variantId,
+                color,
+                colorCode,
+                image: item.image ?? product.primaryImage ?? null,
+                name: item.name ?? product.name
             };
-            
-            console.log('Cart item to be added:', cartItem);
-            
-            // First check if item already exists in cart
-            const existingCart = await Cart.findOne({ 
-                user: userId, 
-                'items.proId': proId 
+
+            // Load user's cart and try to match an existing item by proId + variantId/variantSize/color
+            let userCart = await Cart.findOne({ user: userId });
+            if (!userCart) {
+                // create a new cart document with this item
+                const created = await Cart.create({ user: userId, items: [cartItem] });
+                return { found: false, added: true, cart: created };
+            }
+
+            // find matching item index
+            const matchIndex = (userCart.items || []).findIndex(i => {
+                const matchesPro = String(i.proId) === String(proId);
+                const matchesVariantId = (variantId && i.variantId) ? String(i.variantId) === String(variantId) : (!variantId && !i.variantId);
+                const matchesSize = (selectedSize != null) ? (i.variantSize === selectedSize) : (i.variantSize == null || i.variantSize === '');
+                const matchesColor = (color != null) ? (i.color === color) : (i.color == null || i.color === '');
+                // require pro match and all provided metadata to match
+                return matchesPro && matchesVariantId && matchesSize && matchesColor;
             });
-            
-            if (existingCart) {
-                console.log('Item exists in cart, updating quantity');
-                // Item exists, update quantity
-                const result = await Cart.updateOne(
-                    { user: userId, 'items.proId': proId },
-                    { $inc: { 'items.$.quantity': Math.max(1, item.quantity || 1) } }
-                );
-                console.log('Update result:', result);
-                return { found: true, updated: true };
+
+            if (matchIndex !== -1) {
+                // increment that specific item's quantity
+                userCart.items[matchIndex].quantity = Math.max(1, userCart.items[matchIndex].quantity + qtyToAdd);
+                // update price/mrp if provided (optional)
+                if (item.price != null) userCart.items[matchIndex].price = item.price;
+                if (item.mrp != null) userCart.items[matchIndex].mrp = item.mrp;
+                await userCart.save();
+                return { found: true, updated: true, cart: userCart };
             } else {
-                console.log('Item does not exist in cart, adding new item');
-                // Item doesn't exist, add new item
-                const result = await Cart.findOneAndUpdate(
-                    { user: userId },
-                    { $push: { items: cartItem } },
-                    { upsert: true, new: true }
-                );
-                console.log('Add result:', result);
-                return { found: false, added: true };
+                // push a new distinct variant/size/color entry
+                userCart.items.push(cartItem);
+                await userCart.save();
+                return { found: false, added: true, cart: userCart };
             }
         } catch (error) {
             console.error('Error in addToCart:', error);
@@ -358,7 +356,7 @@ export default {
         return Wishlist.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
     },
 
-    removeItemCart: ({ userId, proId }) => {
+    removeItemCart: ({ userId, proId ,variantId,size,}) => {
         // Ensure proId is an ObjectId
         const objectId = toObjectId(proId);
         if (!objectId) {
@@ -368,37 +366,64 @@ export default {
         return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
     },
 
-    changeQuantityCart: async ({ userId, proId, quantity }) => {
-        // Ensure proId is an ObjectId
-        const objectId = toObjectId(proId);
-        if (!objectId) {
-            throw new Error('Invalid product ID');
+    changeQuantityCart: async ({ userId, proId, quantity, cartItemId, variantSize, variantId }) => {
+        // proId may be optional if cartItemId provided
+        try {
+            if (!userId) throw new Error('User ID required');
+
+            // Validate quantity
+            quantity = Number(quantity);
+            if (Number.isNaN(quantity) || quantity < 0) {
+                throw new Error('Invalid quantity');
+            }
+
+            // If cartItemId is provided, update by that id
+            if (cartItemId) {
+                if (quantity === 0) {
+                    // remove the item
+                    return Cart.updateOne({ user: userId }, { $pull: { items: { _id: cartItemId } } });
+                }
+                return Cart.updateOne({ user: userId, 'items._id': cartItemId }, { $set: { 'items.$.quantity': quantity } });
+            }
+
+            // Otherwise require proId to identify item(s)
+            const objectId = toObjectId(proId);
+            if (!objectId) {
+                throw new Error('Invalid product ID');
+            }
+
+            // Load cart and find matching item by proId + optional variantSize/variantId
+            const cart = await Cart.findOne({ user: userId });
+            if (!cart) throw new Error('Cart not found');
+
+            const idx = (cart.items || []).findIndex(i => {
+                const matchesPro = String(i.proId) === String(objectId);
+                const matchesSize = (typeof variantSize !== 'undefined' && variantSize !== null)
+                    ? (i.variantSize === variantSize)
+                    : true;
+                const matchesVariantId = (typeof variantId !== 'undefined' && variantId !== null)
+                    ? ((i.variantId && String(i.variantId) === String(variantId)))
+                    : true;
+                return matchesPro && matchesSize && matchesVariantId;
+            });
+
+            if (idx === -1) {
+                throw new Error('Item not found in cart');
+            }
+
+            if (quantity === 0) {
+                // remove that item
+                cart.items.splice(idx, 1);
+            } else {
+                cart.items[idx].quantity = quantity;
+            }
+
+            await cart.save();
+            return { ok: true };
+        } catch (error) {
+            console.error('changeQuantityCart error:', error);
+            throw error;
         }
-        
-        // Validate quantity
-        if (quantity < 0) {
-            throw new Error('Quantity cannot be negative');
-        }
-        
-        // Check if product is still available
-        const product = await Product.findById(objectId);
-        if (!product) {
-            throw new Error('Product not found');
-        }
-        
-        if (!product.available) {
-            throw new Error('Product is no longer available');
-        }
-        
-        if (quantity === 0) {
-            return Cart.updateOne({ user: userId }, { $pull: { items: { proId: objectId } } });
-        }
-        
-        // Use $set to directly set the quantity
-        return Cart.updateOne(
-            { user: userId, 'items.proId': objectId },
-            { $set: { 'items.$.quantity': quantity } }
-        );
     },
     
     createOrder: (details) => {
@@ -785,4 +810,4 @@ export default {
             order: products.map(p => p.orderItem)
         };
     },
-}; 
+};

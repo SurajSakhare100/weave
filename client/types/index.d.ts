@@ -95,6 +95,7 @@ export interface ProductImage {
 
 // Product with reviews interface
 export interface ProductWithReviews extends Product {
+  id: any
   vendorId: {
     _id: string;
     name: string;

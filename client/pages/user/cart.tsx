@@ -6,12 +6,10 @@ import { Button } from '../../components/ui/button';
 import { useRouter } from 'next/router';
 import MainLayout from "@/components/layout/MainLayout"
 import Breadcrumb from "@/components/ui/Breadcrumb"
-import MobilePageHeader from "@/components/ui/MobilePageHeader"
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { calculateCartSummary } from '../../utils/cartCalculations';
-import { CartItemType } from '@/types';
-import CartItem from '@/components/cart/CartItem';
+import CartItem from '@/components/cart/CartItem.jsx';
 
 
 const CartPage = () => {
@@ -36,43 +34,116 @@ const CartPage = () => {
     }
   }, [isAuthenticated, dispatch]);
 
-  // Memoize filtered items to prevent unnecessary re-renders
-  const filteredItems = useMemo(() => {
-    return items.filter(item => item && item.proId && item.item);
+  // Normalize items and build a stable unique key per product+variant+size so similar products with different variants are treated separately
+  const normalizedItems = useMemo(() => {
+    if (!Array.isArray(items)) return [];
+    return items
+      .filter(item => item && item.proId && item.item) // keep existing guard
+      .map((it: any) => {
+        const proId = String(it.proId);
+        // variant id can come from multiple shapes
+        const variantId = it.item?.variantId ?? it.variantId ?? it.item?.variant?._id ?? '';
+        // size may be stored directly on item or under item.size / variantSize
+        const size = (it.item?.size ?? it.item?.variantSize ?? it.size ?? '') as string;
+        // color metadata
+        const color = it.item?.color ?? it.color ?? it.item?.colorName ?? null;
+        const colorCode = it.item?.colorCode ?? it.colorCode ?? null;
+        // image fallback
+        const image = it.item?.image ?? it.image ?? it.item?.images?.[0]?.url ?? it.item?.productImage ?? null;
+        // title / name fallback
+        const title = it.item?.name ?? it.item?.title ?? it.item?.productName ?? it.item?.itemName ?? it.item?.item?.name ?? it.name ?? '';
+        // prefer a server-provided cart item id if present (e.g. it._id or it.cartId)
+        const cartItemId = it._id ?? it.cartId ?? '';
+        const uniqueKey = cartItemId || `${proId}_${variantId || 'novar'}_${size || 'nosize'}_${color || 'nocolor'}`;
+        return {
+          ...it,
+          proId,
+          variantId,
+          size,
+          color,
+          colorCode,
+          image,
+          title,
+          cartItemId,
+          uniqueKey,
+        };
+      });
   }, [items]);
 
   // Memoize cart summary to prevent unnecessary recalculations
   const cartSummary = useMemo(() => {
-    return calculateCartSummary(filteredItems);
-  }, [filteredItems]);
+    return calculateCartSummary(normalizedItems);
+  }, [normalizedItems]);
 
   const { subtotal, mrpTotal, shipping, discount, total } = cartSummary;
 
-  const handleQuantityChange = useCallback(async (proId: string, newQuantity: number) => {
+  // Find item helper
+  const findNormalizedItem = useCallback((uniqueKey: string) => {
+    return normalizedItems.find((i: any) => i.uniqueKey === uniqueKey);
+  }, [normalizedItems]);
+
+  const handleQuantityChange = useCallback(async (uniqueKey: string, newQuantity: number) => {
     if (newQuantity < 1) return;
 
+    const item = findNormalizedItem(uniqueKey);
+    if (!item) {
+      toast.error('Invalid item');
+      return;
+    }
+
     try {
-      await dispatch(updateCartQuantity({ proId, quantity: newQuantity })).unwrap();
+      // Build explicit payload: prefer cartItemId, also include proId/productId, and only set variantId/size when present
+      const payload: any = { quantity: newQuantity };
+
+      if (item.cartItemId) {
+        payload.cartItemId = item.cartItemId;
+      }
+
+      // include both shapes backend might accept
+      payload.proId = item.proId;
+      payload.productId = item.proId;
+
+      if (item.variantId && item.variantId !== '') payload.variantId = item.variantId;
+      if (item.size && item.size !== '') payload.size = item.size;
+
+      await dispatch(updateCartQuantity(payload)).unwrap();
       toast.success('Quantity updated successfully');
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
       toast.error(error.message || 'Failed to update quantity. Please try again.');
     }
-  }, [dispatch]);
+  }, [dispatch, findNormalizedItem]);
 
-  const handleRemoveItem = useCallback(async (proId: string) => {
-    if (!proId) {
+  const handleRemoveItem = useCallback(async (uniqueKey: string) => {
+    const item = findNormalizedItem(uniqueKey);
+    if (!item) {
       toast.error('Invalid item');
       return;
     }
     try {
-      await dispatch(removeCartItem(proId)).unwrap();
+      // Prefer removing by cartItemId (server-side unique id).
+      // Fallback to proId + variantId/size/color when cartItemId not available.
+      const payload: any = {};
+      if (item.cartItemId) {
+        payload.cartItemId = item.cartItemId;
+      } else {
+        payload.proId = item.proId;
+        if (item.variantId && item.variantId !== '') payload.variantId = item.variantId;
+        if (item.size && item.size !== '') payload.size = item.size;
+        if (item.color && item.color !== '') payload.color = item.color;
+      }
+
+      await dispatch(removeCartItem(payload)).unwrap();
+
+      // ensure UI stays in sync
+      await dispatch(fetchCart());
+
       toast.success('Item removed from cart');
     } catch (error: any) {
       console.error('Failed to remove item:', error);
       toast.error(error.message || 'Failed to remove item. Please try again.');
     }
-  }, [dispatch]);
+  }, [dispatch, findNormalizedItem]);
 
   if (!isAuthenticated) {
     return (
@@ -116,7 +187,7 @@ const CartPage = () => {
     );
   }
 
-  if (filteredItems.length === 0) {
+  if (normalizedItems.length === 0) {
     return (
       <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -145,12 +216,13 @@ const CartPage = () => {
           <div className="w-full lg:w-7xl flex-col lg:flex-row flex gap-6 sm:gap-8">
             {/* Cart Items */}
             <div className="w-full lg:w-lg flex flex-col gap-4 sm:gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-300 scrollbar-none sm:max-h-[60vh]">
-              {filteredItems.map((item: CartItemType) => (
+              {normalizedItems.map((item: any) => (
                 <CartItem
-                  key={item.proId}
+                  key={item.uniqueKey}
                   item={item}
-                  onQuantityChange={handleQuantityChange}
-                  onRemove={handleRemoveItem}
+                  // bind handlers to uniqueKey so CartItem doesn't need to know composite ids
+                  onQuantityChange={(newQty: number) => handleQuantityChange(item.uniqueKey, newQty)}
+                  onRemove={() => handleRemoveItem(item.uniqueKey)}
                 />
               ))}
             </div>

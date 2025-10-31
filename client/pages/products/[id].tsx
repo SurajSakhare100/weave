@@ -153,29 +153,78 @@ export default function ProductDetailPage() {
     }
   }, [id, loadProduct])
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (item?: any) => {
     if (!product) {
       toast.error('Product not available');
       return;
     }
 
-    if (!product._id) {
+    // item comes from ProductDetails (detailed payload). If not provided, fall back to minimal defaults.
+    const payloadFromUI = item ?? {};
+
+    const productId = payloadFromUI.productId ?? product._id ?? (product as any).id;
+    if (!productId) {
       toast.error('Invalid product data');
       return;
     }
 
+    const variantId = payloadFromUI.variantId ?? undefined;
+    const size = typeof payloadFromUI.size !== 'undefined' ? payloadFromUI.size : (payloadFromUI.variantSize ?? null);
+    const quantity = Math.max(1, Number(payloadFromUI.quantity ?? 1));
+    const price = Number(payloadFromUI.price ?? product.price ?? 0);
+    const mrp = Number(payloadFromUI.mrp ?? product.mrp ?? 0);
+    const name = payloadFromUI.name ?? product.name;
+    const image = payloadFromUI.image ?? displayImages[0] ?? product.images?.[0]?.url ?? null;
+    const color = payloadFromUI.color ?? undefined;
+    const colorCode = payloadFromUI.colorCode ?? undefined;
+
+    // Validate required fields
+    if (!price || !mrp) {
+      toast.error('Product price information missing');
+      return;
+    }
+
+    // If product defines sizes, ensure size selected (ProductDetails should already enforce this)
+    const productHasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+    if (productHasSizes && (size === null || typeof size === 'undefined')) {
+      toast.error('Please select a size before adding to cart');
+      return;
+    }
+
+    console.log('Adding to cart with payload:', {
+      productId,
+      quantity,
+
+      variantId,
+      size,
+      price,
+      mrp,
+      name,
+      image,
+      color,
+      colorCode,
+    });
+
     try {
       await dispatch(addCartItem({
-        product,
-        quantity: 1,
-      })).unwrap()
-      toast.success('Added to cart successfully!')
-      
+        productId,
+        quantity,
+        variantId,
+        size,
+        price,
+        mrp,
+        name,
+        image,
+        color,
+        colorCode,
+      })).unwrap();
+
+      toast.success('Added to cart successfully!');
       // Refresh cart to ensure UI is updated immediately
-      dispatch(fetchCart())
+      dispatch(fetchCart());
     } catch (error: any) {
-      console.error('Failed to add to cart:', error)
-      toast.error(error.message || 'Failed to add to cart')
+      console.error('Failed to add to cart:', error);
+      toast.error(error.message || 'Failed to add to cart');
     }
   }
 
